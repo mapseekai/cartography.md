@@ -1,0 +1,331 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mapseekai/Cartography.md/main/schema/cartography.schema.json",
+  "title": "CARTOGRAPHY.md front matter",
+  "description": "Machine-readable cartographic design contract for coding agents and MapLibre style tooling.",
+  "type": "object",
+  "required": [
+    "version",
+    "name",
+    "target",
+    "intent",
+    "data",
+    "zoom",
+    "tokens",
+    "scales",
+    "encodings",
+    "layerOrder"
+  ],
+  "properties": {
+    "version": {"const": "0.1.0"},
+    "name": {"$ref": "#/$defs/nonEmptyString"},
+    "description": {"type": "string"},
+    "locale": {"$ref": "#/$defs/nonEmptyString"},
+    "target": {"$ref": "#/$defs/target"},
+    "intent": {"$ref": "#/$defs/intent"},
+    "data": {"$ref": "#/$defs/data"},
+    "agent": {"type": "object", "additionalProperties": true},
+    "zoom": {"$ref": "#/$defs/zoom"},
+    "hierarchy": {"type": "object", "additionalProperties": true},
+    "tokens": {"$ref": "#/$defs/tokens"},
+    "scales": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/scale"}
+    },
+    "encodings": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/encoding"}
+    },
+    "layerOrder": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/layerOrderItem"}
+    },
+    "labels": {"type": "object", "additionalProperties": true},
+    "states": {"type": "object", "additionalProperties": true},
+    "accessibility": {"$ref": "#/$defs/accessibility"},
+    "security": {"type": "object", "additionalProperties": true},
+    "performance": {"type": "object", "additionalProperties": true},
+    "maplibre": {"$ref": "#/$defs/maplibre"},
+    "validation": {"$ref": "#/$defs/validation"},
+    "outputs": {"type": "object", "additionalProperties": true},
+    "extensions": {"type": "object", "additionalProperties": true},
+    "omitted": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {"$ref": "#/$defs/nonEmptyString"},
+          {
+            "type": "object",
+            "required": ["section"],
+            "properties": {
+              "section": {"$ref": "#/$defs/nonEmptyString"},
+              "reason": {"type": "string"}
+            },
+            "additionalProperties": true
+          }
+        ]
+      }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "nonEmptyString": {"type": "string", "minLength": 1},
+    "stringArray": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/nonEmptyString"}
+    },
+    "zoomValue": {"type": "number", "minimum": 0, "maximum": 24},
+    "zoomRange": {
+      "type": "array",
+      "prefixItems": [
+        {"$ref": "#/$defs/zoomValue"},
+        {"$ref": "#/$defs/zoomValue"}
+      ],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "target": {
+      "type": "object",
+      "required": ["renderer", "styleSpecVersion"],
+      "properties": {
+        "renderer": {"const": "maplibre"},
+        "styleSpecVersion": {"enum": [8, "8"]},
+        "platforms": {"$ref": "#/$defs/stringArray"},
+        "modes": {"$ref": "#/$defs/stringArray"},
+        "projection": {"$ref": "#/$defs/nonEmptyString"},
+        "compatibility": {"enum": ["strict", "portable", "renderer-specific"]}
+      },
+      "additionalProperties": true
+    },
+    "intent": {
+      "type": "object",
+      "required": ["mapType", "primaryTask", "audience"],
+      "properties": {
+        "mapType": {
+          "enum": ["reference", "thematic", "operational", "navigation", "editing", "imagery", "hybrid"]
+        },
+        "primaryTask": {"$ref": "#/$defs/nonEmptyString"},
+        "audience": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/nonEmptyString"}
+        },
+        "subject": {"$ref": "#/$defs/nonEmptyString"},
+        "context": {"$ref": "#/$defs/stringArray"},
+        "aesthetic": {
+          "type": "object",
+          "properties": {
+            "keywords": {"$ref": "#/$defs/stringArray"},
+            "avoid": {"$ref": "#/$defs/stringArray"},
+            "contrast": {"enum": ["low", "medium", "high"]},
+            "saturation": {"enum": ["low", "medium", "high"]},
+            "density": {"enum": ["sparse", "standard", "dense"]}
+          },
+          "additionalProperties": true
+        },
+        "successCriteria": {"$ref": "#/$defs/stringArray"}
+      },
+      "additionalProperties": true
+    },
+    "data": {
+      "type": "object",
+      "required": ["bindings"],
+      "properties": {
+        "profile": {"$ref": "#/$defs/nonEmptyString"},
+        "profileRequired": {"type": "boolean"},
+        "bindings": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [{"$ref": "#/$defs/nonEmptyString"}, {"type": "null"}]
+          }
+        },
+        "fallbackLabels": {"$ref": "#/$defs/stringArray"},
+        "nullPolicy": {"$ref": "#/$defs/nonEmptyString"},
+        "unknownCategoryPolicy": {"$ref": "#/$defs/nonEmptyString"},
+        "zeroIsNotNull": {"type": "boolean"},
+        "preserveUnits": {"type": "boolean"},
+        "sensitiveDataPolicy": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "additionalProperties": true
+    },
+    "zoom": {
+      "type": "object",
+      "required": ["bands"],
+      "properties": {
+        "strategy": {"$ref": "#/$defs/nonEmptyString"},
+        "bands": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"$ref": "#/$defs/zoomRange"}
+        },
+        "referenceZooms": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/zoomValue"}
+        },
+        "visibility": {"type": "object", "additionalProperties": true},
+        "generalization": {"type": "object", "additionalProperties": true}
+      },
+      "additionalProperties": true
+    },
+    "tokens": {
+      "type": "object",
+      "required": ["colors"],
+      "properties": {
+        "colors": {"type": "object", "minProperties": 1, "additionalProperties": true}
+      },
+      "additionalProperties": true
+    },
+    "scale": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["nominal", "ordinal", "quantitative", "diverging", "identity"]},
+        "field": {"$ref": "#/$defs/nonEmptyString"},
+        "values": {"type": "object", "additionalProperties": true},
+        "stops": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [{"type": "number"}, {}],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "fallback": {},
+        "clamp": {"type": "boolean"},
+        "unit": {"$ref": "#/$defs/nonEmptyString"},
+        "description": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "encodingRule": {
+      "type": "object",
+      "required": ["id", "channel"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonEmptyString"},
+        "field": {"$ref": "#/$defs/nonEmptyString"},
+        "channel": {"$ref": "#/$defs/nonEmptyString"},
+        "scale": {"$ref": "#/$defs/nonEmptyString"},
+        "value": {},
+        "composite": {"type": "boolean"},
+        "critical": {"type": "boolean"},
+        "secondaryChannel": {"$ref": "#/$defs/nonEmptyString"},
+        "priority": {"type": "number"}
+      },
+      "additionalProperties": true,
+      "anyOf": [{"required": ["scale"]}, {"required": ["value"]}]
+    },
+    "encoding": {
+      "type": "object",
+      "required": ["source", "geometry", "role", "layerGroup"],
+      "properties": {
+        "source": {"$ref": "#/$defs/nonEmptyString"},
+        "sourceLayer": {"$ref": "#/$defs/nonEmptyString"},
+        "geometry": {"enum": ["point", "line", "polygon", "raster", "model", "mixed"]},
+        "role": {"enum": ["background", "context", "primary", "focus", "critical"]},
+        "layerGroup": {"$ref": "#/$defs/nonEmptyString"},
+        "minzoom": {"$ref": "#/$defs/zoomValue"},
+        "maxzoom": {"$ref": "#/$defs/zoomValue"},
+        "filter": {},
+        "rules": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/encodingRule"},
+          "default": []
+        },
+        "labels": {
+          "type": "object",
+          "properties": {
+            "field": {"$ref": "#/$defs/nonEmptyString"},
+            "fallbacks": {"$ref": "#/$defs/stringArray"},
+            "minzoom": {"$ref": "#/$defs/zoomValue"},
+            "priority": {"type": "number"},
+            "allowOverlap": {"type": "boolean"}
+          },
+          "additionalProperties": true
+        },
+        "states": {"type": "object", "additionalProperties": true}
+      },
+      "additionalProperties": true
+    },
+    "layerOrderItem": {
+      "type": "object",
+      "required": ["id", "order"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonEmptyString"},
+        "order": {"type": "number"}
+      },
+      "additionalProperties": true
+    },
+    "contrastPair": {
+      "type": "object",
+      "required": ["id", "foreground", "background", "minimum"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonEmptyString"},
+        "foreground": {"$ref": "#/$defs/nonEmptyString"},
+        "background": {"$ref": "#/$defs/nonEmptyString"},
+        "minimum": {"type": "number", "exclusiveMinimum": 0},
+        "kind": {"enum": ["text", "large-text", "graphic"]}
+      },
+      "additionalProperties": true
+    },
+    "accessibility": {
+      "type": "object",
+      "properties": {
+        "textContrast": {
+          "type": "object",
+          "additionalProperties": {"type": "number", "exclusiveMinimum": 0}
+        },
+        "nonTextGraphicContrast": {"type": "number", "exclusiveMinimum": 0},
+        "requireSecondaryChannelForCriticalSemantics": {"type": "boolean"},
+        "contrastPairs": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/contrastPair"}
+        }
+      },
+      "additionalProperties": true
+    },
+    "maplibre": {
+      "type": "object",
+      "properties": {
+        "rootMetadataPrefix": {"$ref": "#/$defs/nonEmptyString"},
+        "layerIdPattern": {"$ref": "#/$defs/nonEmptyString"},
+        "layerMetadata": {
+          "type": "object",
+          "properties": {
+            "required": {"$ref": "#/$defs/stringArray"},
+            "optional": {"$ref": "#/$defs/stringArray"}
+          },
+          "additionalProperties": true
+        },
+        "featureStatePaintOnly": {"type": "boolean"},
+        "stableFeatureIdRequired": {"type": "boolean"},
+        "runtimeOptions": {"type": "object", "additionalProperties": true}
+      },
+      "additionalProperties": true
+    },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "fixtures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id"],
+            "properties": {
+              "id": {"$ref": "#/$defs/nonEmptyString"},
+              "required": {
+                "oneOf": [{"type": "boolean"}, {"$ref": "#/$defs/nonEmptyString"}]
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "checks": {"$ref": "#/$defs/stringArray"},
+        "report": {"type": "object", "additionalProperties": true}
+      },
+      "additionalProperties": true
+    }
+  }
+}

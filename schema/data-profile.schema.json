@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mapseekai/Cartography.md/main/schema/data-profile.schema.json",
+  "title": "Cartography.md data profile",
+  "description": "Observed source, source-layer, geometry, field, category, unit, zoom, density, and stable-ID facts used to validate CARTOGRAPHY.md.",
+  "type": "object",
+  "required": ["version", "sources"],
+  "properties": {
+    "version": {"type": "string", "minLength": 1},
+    "name": {"type": "string", "minLength": 1},
+    "generatedAt": {"type": "string"},
+    "sources": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/source"}
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "zoom": {"type": "number", "minimum": 0, "maximum": 24},
+    "field": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["string", "number", "integer", "boolean", "date", "datetime", "json", "unknown"]},
+        "nullable": {"type": "boolean"},
+        "unit": {"type": "string", "minLength": 1},
+        "categories": {
+          "type": "array",
+          "items": {"type": ["string", "number", "boolean", "null"]}
+        },
+        "minimum": {"type": "number"},
+        "maximum": {"type": "number"},
+        "description": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "layer": {
+      "type": "object",
+      "required": ["geometry", "fields"],
+      "properties": {
+        "geometry": {"enum": ["point", "line", "polygon", "mixed", "raster"]},
+        "minzoom": {"$ref": "#/$defs/zoom"},
+        "maxzoom": {"$ref": "#/$defs/zoom"},
+        "idField": {"type": "string", "minLength": 1},
+        "featureCount": {"type": "integer", "minimum": 0},
+        "density": {"enum": ["sparse", "standard", "dense", "extreme"]},
+        "fields": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/field"}
+        }
+      },
+      "additionalProperties": true
+    },
+    "source": {
+      "type": "object",
+      "required": ["type", "sourceLayers"],
+      "properties": {
+        "type": {"enum": ["vector", "geojson", "raster", "raster-dem", "other"]},
+        "sourceLayers": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/layer"}
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

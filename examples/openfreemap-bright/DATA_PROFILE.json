@@ -1,0 +1,139 @@
+{
+  "version": "0.1.0",
+  "name": "OpenFreeMap planet (OpenMapTiles schema), governed subset",
+  "generatedAt": "2026-08-28",
+  "source": {
+    "tileJson": "https://tiles.openfreemap.org/planet",
+    "tileMaxZoom": 14,
+    "note": "Layer zoom ranges and field lists are taken from the TileJSON vector_layers declaration of the served source. Field value categories marked \"inferred\": true come from the published OpenMapTiles schema documentation and were not sampled from tile features."
+  },
+  "sources": {
+    "openmaptiles": {
+      "type": "vector",
+      "url": "https://tiles.openfreemap.org/planet",
+      "sourceLayers": {
+        "water": {
+          "geometry": "polygon",
+          "minzoom": 0,
+          "maxzoom": 14,
+          "fields": {
+            "intermittent": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1,
+              "inferred": true,
+              "description": "1 marks intermittent water; absence means perennial."
+            },
+            "brunnel": {
+              "type": "string",
+              "nullable": true,
+              "inferred": true,
+              "description": "bridge, tunnel, or ford classification; absent on surface features."
+            }
+          }
+        },
+        "waterway": {
+          "geometry": "line",
+          "minzoom": 3,
+          "maxzoom": 14,
+          "fields": {
+            "class": {
+              "type": "string",
+              "categories": ["river", "canal", "stream", "ditch", "drain"],
+              "inferred": true,
+              "description": "Waterway class consumed by the governed river encoding."
+            },
+            "brunnel": {
+              "type": "string",
+              "nullable": true,
+              "inferred": true
+            }
+          }
+        },
+        "building": {
+          "geometry": "polygon",
+          "minzoom": 13,
+          "maxzoom": 14,
+          "fields": {
+            "colour": {
+              "type": "string",
+              "nullable": true
+            },
+            "hide_3d": {
+              "type": "boolean"
+            },
+            "render_height": {
+              "type": "number"
+            },
+            "render_min_height": {
+              "type": "number"
+            }
+          }
+        },
+        "transportation": {
+          "geometry": "line",
+          "minzoom": 4,
+          "maxzoom": 14,
+          "fields": {
+            "class": {
+              "type": "string",
+              "categories": ["motorway", "trunk", "primary", "secondary", "tertiary", "minor"],
+              "inferred": true,
+              "description": "Road classes consumed by the roadClass scale."
+            },
+            "brunnel": {
+              "type": "string",
+              "nullable": true,
+              "inferred": true
+            },
+            "ramp": {
+              "type": "integer",
+              "nullable": true,
+              "inferred": true,
+              "description": "1 marks highway ramps; the governed encoding excludes them."
+            }
+          }
+        },
+        "place": {
+          "geometry": "point",
+          "minzoom": 0,
+          "maxzoom": 14,
+          "fields": {
+            "name": {
+              "type": "string",
+              "description": "Local display name used by city labels. Not guaranteed unique; not a feature identifier."
+            },
+            "name:latin": {
+              "type": "string",
+              "nullable": true
+            },
+            "name:nonlatin": {
+              "type": "string",
+              "nullable": true
+            },
+            "name_en": {
+              "type": "string",
+              "nullable": true
+            },
+            "class": {
+              "type": "string",
+              "categories": ["city", "town", "village", "suburb", "neighbourhood", "state", "country"],
+              "inferred": true
+            },
+            "rank": {
+              "type": "integer",
+              "nullable": true,
+              "inferred": true
+            },
+            "capital": {
+              "type": "integer",
+              "nullable": true,
+              "inferred": true,
+              "description": "2 marks country capitals; the governed encoding excludes them."
+            }
+          }
+        }
+      }
+    }
+  }
+}

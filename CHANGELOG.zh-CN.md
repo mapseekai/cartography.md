@@ -1,6 +1,6 @@
 # 更新日志
 
-Cartography.md 的所有重要变更都将记录在此。
+cartography.md 的所有重要变更都将记录在此。
 
 English: [CHANGELOG.md](CHANGELOG.md)
 

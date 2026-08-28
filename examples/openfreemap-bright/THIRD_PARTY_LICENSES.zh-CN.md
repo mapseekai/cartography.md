@@ -4,7 +4,7 @@
 
 本目录中的 `style.json` 是 [OpenFreeMap bright 样式](https://tiles.openfreemap.org/styles/bright)的修改副本，源自
 [hyperknot/openfreemap-styles](https://github.com/hyperknot/openfreemap-styles) 项目。本项目仅添加了
-Cartography.md 治理 metadata，并将三处旧式 filter 表达式升级为表达式语法；所有绘制值、图层与设计决策均来自上游。
+cartography.md 治理 metadata，并将三处旧式 filter 表达式升级为表达式语法；所有绘制值、图层与设计决策均来自上游。
 
 ## OpenFreeMap（样式托管与工具链）
 

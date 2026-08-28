@@ -1,7 +1,7 @@
 # CARTOGRAPHY.md 格式规范
 
 **状态：** 草案 0.1.0  
-**仓库：** `mapseekai/Cartography.md`  
+**仓库：** `mapseekai/cartography.md`  
 **主要目标：** MapLibre Style Specification v8  
 **规范文件名：** `CARTOGRAPHY.md`
 

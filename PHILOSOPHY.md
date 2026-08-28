@@ -1,7 +1,7 @@
-# Cartography.md philosophy
+# cartography.md philosophy
 中文版：[PHILOSOPHY.zh-CN.md](PHILOSOPHY.zh-CN.md)
 
-Cartography.md exists because a map style is more than a collection of renderer properties. A useful electronic map is a negotiated relationship between purpose, data, scale, perception, interaction, and implementation.
+cartography.md exists because a map style is more than a collection of renderer properties. A useful electronic map is a negotiated relationship between purpose, data, scale, perception, interaction, and implementation.
 
 ## A style is execution; the contract is intent
 
@@ -37,7 +37,7 @@ A cartographic choice is valid only when its data assumptions are valid.
 
 Maps often need to show several attributes at once. Without an explicit ownership model, agents repeatedly overload color and produce attractive but unreadable results.
 
-Cartography.md treats color, lightness, width, size, opacity, pattern, shape, and casing as limited resources. A channel should have one primary semantic owner. Deliberate combinations must be declared and explained.
+cartography.md treats color, lightness, width, size, opacity, pattern, shape, and casing as limited resources. A channel should have one primary semantic owner. Deliberate combinations must be declared and explained.
 
 Critical meanings may require a second channel so they remain distinguishable under color-vision differences, poor displays, imagery backgrounds, and fast operational use.
 
@@ -76,7 +76,7 @@ The project separates:
 1. document validity;
 2. data-contract validity;
 3. official MapLibre style validity;
-4. Cartography.md-to-style consistency;
+4. cartography.md-to-style consistency;
 5. render evidence;
 6. task review.
 
@@ -91,4 +91,4 @@ A durable map style connects four things:
 - **prose** provides judgment;
 - **validation evidence** provides confidence.
 
-Cartography.md keeps those four things in one agent-readable contract.
+cartography.md keeps those four things in one agent-readable contract.

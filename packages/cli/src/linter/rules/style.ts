@@ -72,7 +72,7 @@ export const styleMetadataRule: LintRule<CartographyConfig, DataProfile> = {
   id: 'style-metadata',
   severity: 'warning',
   scope: 'style',
-  description: 'Governed style layers require traceable Cartography.md metadata.',
+  description: 'Governed style layers require traceable cartography.md metadata.',
   run(context) {
     if (!context.cartography || context.style === undefined) return [];
     const findings: Finding[] = [];

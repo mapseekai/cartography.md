@@ -1,7 +1,7 @@
 # CARTOGRAPHY.md Format Specification
 
 **Status:** Draft 0.1.0  
-**Repository:** `mapseekai/Cartography.md`  
+**Repository:** `mapseekai/cartography.md`  
 **Primary target:** MapLibre Style Specification v8  
 **Canonical file name:** `CARTOGRAPHY.md`
 **中文版：** [spec.zh-CN.md](spec.zh-CN.md)

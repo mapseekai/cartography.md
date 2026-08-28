@@ -1,4 +1,4 @@
-# Cartography.md
+# cartography.md
 
 A format specification for describing cartographic intent to coding agents.
 
@@ -14,7 +14,7 @@ It follows the same core idea as [`DESIGN.md`](https://github.com/google-labs-co
 
 A valid `style.json` can still be visually noisy, semantically misleading, inconsistent across zoom levels, inaccessible, or detached from the source data. MapLibre defines how a renderer draws layers; it does not capture why one feature must dominate another, which field owns a visual channel, or how an agent should preserve business meaning while editing the style.
 
-Cartography.md adds that upstream contract:
+cartography.md adds that upstream contract:
 
 ```text
 CARTOGRAPHY.md + DATA_PROFILE.json + existing style.json
@@ -107,7 +107,7 @@ pnpm add -D @mapseekai/cartography.md
 Validate a contract, its data profile, and its MapLibre style:
 
 ```bash
-pnpm --package=@mapseekai/cartography.md dlx cartographymd lint \
+pnpm dlx --package=@mapseekai/cartography.md cartographymd lint \
   CARTOGRAPHY.md \
   --profile DATA_PROFILE.json \
   --style style.json
@@ -116,7 +116,7 @@ pnpm --package=@mapseekai/cartography.md dlx cartographymd lint \
 Output defaults to structured JSON so agents and CI systems can consume it. Use `--format text` for a readable terminal report.
 
 ```bash
-pnpm --package=@mapseekai/cartography.md dlx cartographymd lint \
+pnpm dlx --package=@mapseekai/cartography.md cartographymd lint \
   CARTOGRAPHY.md \
   --profile DATA_PROFILE.json \
   --style style.json \
@@ -205,7 +205,7 @@ The package also exports the parser, Zod schemas, default rules, style-contract 
 ## Repository structure
 
 ```text
-Cartography.md/
+cartography.md/
 ├── docs/
 │   ├── spec.md                    # normative format specification
 │   ├── spec.zh-CN.md              # Chinese translation of the specification

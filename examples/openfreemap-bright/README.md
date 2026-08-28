@@ -27,7 +27,7 @@ pnpm lint:example
 Or directly:
 
 ```bash
-pnpm --package=@mapseekai/cartography.md dlx cartographymd lint \
+pnpm dlx --package=@mapseekai/cartography.md cartographymd lint \
   CARTOGRAPHY.md \
   --profile DATA_PROFILE.json \
   --style style.json \

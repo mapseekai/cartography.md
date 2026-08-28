@@ -1,4 +1,4 @@
-# Cartography.md
+# cartography.md
 
 一个面向编码 Agent 的地图制图设计契约格式。
 
@@ -28,7 +28,7 @@ MapLibre `style.json` 主要回答“如何绘制”，但通常不会回答：
 - Agent 可以修改哪些图层、必须保留哪些人工成果；
 - 样式通过语法校验后，是否仍存在制图层级和数据表达问题。
 
-Cartography.md 位于 `style.json` 上游：
+cartography.md 位于 `style.json` 上游：
 
 ```text
 CARTOGRAPHY.md + DATA_PROFILE.json + 现有 style.json
@@ -119,7 +119,7 @@ pnpm add -D @mapseekai/cartography.md
 同时验证制图契约、数据画像和 MapLibre 样式：
 
 ```bash
-pnpm --package=@mapseekai/cartography.md dlx cartographymd lint \
+pnpm dlx --package=@mapseekai/cartography.md cartographymd lint \
   CARTOGRAPHY.md \
   --profile DATA_PROFILE.json \
   --style style.json
@@ -128,7 +128,7 @@ pnpm --package=@mapseekai/cartography.md dlx cartographymd lint \
 默认输出 JSON，便于 Agent 和 CI 处理。人工查看时可使用：
 
 ```bash
-pnpm --package=@mapseekai/cartography.md dlx cartographymd lint \
+pnpm dlx --package=@mapseekai/cartography.md cartographymd lint \
   CARTOGRAPHY.md \
   --profile DATA_PROFILE.json \
   --style style.json \
@@ -199,7 +199,7 @@ pnpm lint:example
 ## 仓库组织
 
 ```text
-Cartography.md/
+cartography.md/
 ├── docs/spec.md
 ├── docs/spec.zh-CN.md
 ├── docs/api.md

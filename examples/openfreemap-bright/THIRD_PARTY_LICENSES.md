@@ -5,7 +5,7 @@ English | [中文](THIRD_PARTY_LICENSES.zh-CN.md)
 `style.json` in this directory is a modified copy of the [OpenFreeMap "bright"
 style](https://tiles.openfreemap.org/styles/bright), served from the
 [hyperknot/openfreemap-styles](https://github.com/hyperknot/openfreemap-styles)
-project. This project added Cartography.md governance metadata and modernized
+project. This project added cartography.md governance metadata and modernized
 three legacy filter expressions; all paint values, layers, and design decisions
 are upstream work.
 

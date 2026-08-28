@@ -1,6 +1,6 @@
 # Contributing
 
-Cartography.md is a draft specification and reference implementation. Contributions may improve the format, deterministic validation rules, documentation, interoperability, or examples.
+cartography.md is a draft specification and reference implementation. Contributions may improve the format, deterministic validation rules, documentation, interoperability, or examples.
 
 ## Development setup
 

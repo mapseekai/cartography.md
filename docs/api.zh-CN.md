@@ -1,4 +1,4 @@
-# Cartography.md CLI 和 TypeScript API
+# cartography.md CLI 和 TypeScript API
 
 npm 包 `@mapseekai/cartography.md` 基于同一解析器、schema 和确定性规则集，提供命令行界面与类型化 API。
 
@@ -197,7 +197,7 @@ const resolved = resolveReferences(parsed.rawFrontmatter);
 针对已解析的契约运行全部内置样式范围规则：
 
 - 官方 MapLibre 样式规范验证；
-- Cartography.md 溯源元数据；
+- cartography.md 溯源元数据；
 - 编码、source 和 source-layer 一致性；
 - token 引用和 token 绑定漂移；
 - 受治理的图层组顺序；

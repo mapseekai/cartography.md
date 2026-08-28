@@ -1,4 +1,4 @@
-# Cartography.md CLI and TypeScript API
+# cartography.md CLI and TypeScript API
 中文版：[api.zh-CN.md](api.zh-CN.md)
 
 The npm package `@mapseekai/cartography.md` exposes a command-line interface and a typed API over the same parser, schemas, and deterministic rule set.
@@ -198,7 +198,7 @@ const resolved = resolveReferences(parsed.rawFrontmatter);
 Runs all built-in style-scope rules against an already parsed contract:
 
 - official MapLibre Style Specification validation;
-- Cartography.md provenance metadata;
+- cartography.md provenance metadata;
 - encoding/source/source-layer consistency;
 - token reference and token-binding drift;
 - governed layer-group order;

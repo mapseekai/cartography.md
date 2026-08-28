@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/mapseekai/Cartography.md/main/schema/data-profile.schema.json",
-  "title": "Cartography.md data profile",
+  "$id": "https://raw.githubusercontent.com/mapseekai/cartography.md/main/schema/data-profile.schema.json",
+  "title": "cartography.md data profile",
   "description": "Observed source, source-layer, geometry, field, category, unit, zoom, density, and stable-ID facts used to validate CARTOGRAPHY.md.",
   "type": "object",
   "required": ["version", "sources"],

@@ -41,7 +41,7 @@ export const RULE_CATALOG: RuleDescriptor[] = [
   {id: 'stable-feature-id', severity: 'warning', scope: 'profile', description: 'Requires stable feature identifiers for feature-state styling.'},
   {id: 'style-file', severity: 'error', scope: 'style', description: 'Reports companion style file read failures.'},
   {id: 'maplibre-style-spec', severity: 'error', scope: 'style', description: 'Runs the official MapLibre Style Specification validator.'},
-  {id: 'style-metadata', severity: 'warning', scope: 'style', description: 'Checks Cartography.md traceability metadata on governed layers.'},
+  {id: 'style-metadata', severity: 'warning', scope: 'style', description: 'Checks cartography.md traceability metadata on governed layers.'},
   {id: 'style-source-rule', severity: 'error', scope: 'style', description: 'Checks style layers against their declared encoding source rule.'},
   {id: 'style-token-ref', severity: 'error', scope: 'style', description: 'Checks token references embedded in layer metadata.'},
   {id: 'style-token-drift', severity: 'warning', scope: 'style', description: 'Detects literal style properties that drift from token bindings.'},

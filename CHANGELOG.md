@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Cartography.md will be documented here.
+All notable changes to cartography.md will be documented here.
 
 中文版：[CHANGELOG.zh-CN.md](CHANGELOG.zh-CN.md)
 

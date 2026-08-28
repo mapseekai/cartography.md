@@ -18,12 +18,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mapseekai/Cartography.md.git"
+    "url": "git+https://github.com/mapseekai/cartography.md.git"
   },
   "bugs": {
-    "url": "https://github.com/mapseekai/Cartography.md/issues"
+    "url": "https://github.com/mapseekai/cartography.md/issues"
   },
-  "homepage": "https://github.com/mapseekai/Cartography.md#readme",
+  "homepage": "https://github.com/mapseekai/cartography.md#readme",
   "main": "./dist/api.js",
   "types": "./dist/api.d.ts",
   "files": [

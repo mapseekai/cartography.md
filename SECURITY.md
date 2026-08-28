@@ -6,7 +6,7 @@ Please report security vulnerabilities privately to the repository maintainers r
 
 ## Security boundaries
 
-Cartography.md files are configuration and documentation, not executable programs. The reference parser intentionally rejects YAML custom tags, anchors, aliases, merge keys, and other constructs that can create inconsistent or unsafe interpretation.
+cartography.md files are configuration and documentation, not executable programs. The reference parser intentionally rejects YAML custom tags, anchors, aliases, merge keys, and other constructs that can create inconsistent or unsafe interpretation.
 
 The CLI does not fetch network resources while linting. Custom rules should remain deterministic and network independent.
 

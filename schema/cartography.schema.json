@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/mapseekai/Cartography.md/main/schema/cartography.schema.json",
+  "$id": "https://raw.githubusercontent.com/mapseekai/cartography.md/main/schema/cartography.schema.json",
   "title": "CARTOGRAPHY.md front matter",
   "description": "Machine-readable cartographic design contract for coding agents and MapLibre style tooling.",
   "type": "object",

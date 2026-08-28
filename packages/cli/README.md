@@ -1,9 +1,9 @@
 # @mapseekai/cartography.md
 
-CLI and TypeScript API for the [Cartography.md](https://github.com/mapseekai/Cartography.md) cartographic design contract.
+CLI and TypeScript API for the [cartography.md](https://github.com/mapseekai/cartography.md) cartographic design contract.
 
 ```bash
-pnpm --package=@mapseekai/cartography.md dlx cartographymd lint \
+pnpm dlx --package=@mapseekai/cartography.md cartographymd lint \
   CARTOGRAPHY.md --profile DATA_PROFILE.json --style style.json
 ```
 
@@ -16,4 +16,4 @@ const report = await lintFile('CARTOGRAPHY.md', {
 });
 ```
 
-The package validates document structure, token references, data semantics, the official MapLibre Style Specification, and the Cartography.md-to-style contract. See the repository for the full specification and examples.
+The package validates document structure, token references, data semantics, the official MapLibre Style Specification, and the cartography.md-to-style contract. See the repository for the full specification and examples.

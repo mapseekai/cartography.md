@@ -50,21 +50,21 @@ CARTOGRAPHY.md + DATA_PROFILE.json + 现有 style.json
 ```md
 ---
 version: "0.1.0"
-name: 城市燃气管网运行图
+name: 城市道路运行图
 target:
   renderer: maplibre
   styleSpecVersion: 8
   modes: [light, dark]
 intent:
   mapType: operational
-  primaryTask: 快速定位异常管线和设施
+  primaryTask: 快速定位异常路段
   audience: [dispatcher, network-manager]
 data:
   profile: ./DATA_PROFILE.json
   profileRequired: true
   bindings:
     status: operating_status
-    importance: pressure_level
+    importance: traffic_level
 zoom:
   bands:
     city: [8, 12]
@@ -84,8 +84,8 @@ scales:
       fault: "{tokens.colors.danger}"
     fallback: "{tokens.colors.unknown}"
 encodings:
-  pipelines:
-    source: gas-network
+  road-segments:
+    source: road-network
     geometry: line
     role: primary
     layerGroup: subject-line
@@ -105,7 +105,7 @@ layerOrder:
 
 ## 概述
 
-该地图应保持克制、清晰，并使异常管线明显高于普通背景。
+该地图应保持克制、清晰，并使异常路段明显高于普通背景。
 ```
 
 完整规范见 [`docs/spec.zh-CN.md`](docs/spec.zh-CN.md)（[English](docs/spec.md)）。

@@ -138,7 +138,7 @@ code: "0012"
 
 ```yaml
 scales:
-  pipeline-status:
+  road-status:
     type: nominal
     field: operating_status
     values:
@@ -248,9 +248,9 @@ target:
 ```yaml
 intent:
   mapType: operational
-  primaryTask: locate and assess abnormal gas-network assets
+  primaryTask: locate and assess abnormal road-network assets
   audience: [dispatcher, network-manager]
-  subject: gas distribution network
+  subject: road network
   context: [roads, buildings, administrative areas]
   aesthetic:
     keywords: [technical, calm, precise]
@@ -301,8 +301,8 @@ data:
     id: asset_id
     label: name
     category: asset_type
-    importance: pressure_level
-    magnitude: diameter_mm
+    importance: traffic_level
+    magnitude: traffic_volume
     status: operating_status
     uncertainty: position_accuracy
     time: updated_at
@@ -360,10 +360,10 @@ data:
 ```json
 {
   "version": "0.1.0",
-  "name": "Urban gas network sample",
+  "name": "Road network sample",
   "generatedAt": "2026-08-28T09:00:00Z",
   "sources": {
-    "gas-network": {
+    "road-network": {
       "type": "geojson",
       "sourceLayers": {
         "default": {
@@ -424,8 +424,8 @@ GeoJSON 源 SHOULD 使用合成源图层键 `default`。
   "nullable": true,
   "unit": "mm",
   "minimum": 0,
-  "maximum": 1400,
-  "description": "Nominal pipe diameter"
+  "maximum": 4000,
+  "description": "Traffic volume per hour"
 }
 ```
 
@@ -447,7 +447,7 @@ zoom:
     site: [16, 24]
   referenceZooms: [8, 12, 15, 18]
   visibility:
-    pipelines:
+    road-segments:
       regional: hidden
       city: primary-only
       street: all-operational
@@ -477,7 +477,7 @@ zoom:
 
 ### 14.4 制图综合边界
 
-样式可以控制可见性、宽度、不透明度、过滤、聚类和标注。真正的几何简化、位移、聚合和保持拓扑的制图综合应在数据或切片生产管线中进行。样式不得声称已经解决几何制图综合，若其仅隐藏了要素。
+样式可以控制可见性、宽度、不透明度、过滤、聚类和标注。真正的几何简化、位移、聚合和保持拓扑的制图综合应在数据或切片生产流程中进行。样式不得声称已经解决几何制图综合，若其仅隐藏了要素。
 
 ## 15. 视觉层级
 
@@ -552,7 +552,7 @@ Token 键应描述角色而非外观。当该值为语义决策时，应优先�
 
 ```yaml
 scales:
-  pipeline-status:
+  road-status:
     type: nominal
     field: operating_status
     values:
@@ -561,22 +561,22 @@ scales:
       fault: "{tokens.colors.semantic.danger}"
       unknown: "{tokens.colors.semantic.unknown}"
     fallback: "{tokens.colors.semantic.unknown}"
-  pressure-width:
+  traffic-width:
     type: ordinal
-    field: pressure_level
+    field: traffic_level
     values:
       low: "{tokens.lineWidth.thin}"
       medium: "{tokens.lineWidth.regular}"
       high: "{tokens.lineWidth.strong}"
-  diameter-size:
+  traffic-volume:
     type: quantitative
-    field: diameter_mm
+    field: traffic_volume
     stops:
-      - [50, 1]
-      - [300, 2]
-      - [1000, 5]
+      - [200, 1]
+      - [1000, 2]
+      - [3000, 5]
     clamp: true
-    unit: mm
+    unit: veh/h
 ```
 
 ### 17.1 类型
@@ -601,24 +601,24 @@ scales:
 
 ```yaml
 encodings:
-  pipelines:
-    source: gas-network
+  road-segments:
+    source: road-network
     geometry: line
     role: primary
     layerGroup: subject-line
     minzoom: 10
     maxzoom: 24
     rules:
-      - id: pipeline-status-color
+      - id: road-status-color
         field: operating_status
         channel: line-color
-        scale: pipeline-status
+        scale: road-status
         critical: true
         secondaryChannel: line-pattern
-      - id: pressure-level-width
-        field: pressure_level
+      - id: traffic-level-width
+        field: traffic_level
         channel: line-width
-        scale: pressure-width
+        scale: traffic-width
     labels:
       field: name
       fallbacks: [asset_code]
@@ -668,7 +668,7 @@ encodings:
 
 推荐的网络地图词汇如下：
 
-- 宽度 → 网络重要性或压力等级；
+- 宽度 → 路段重要性或交通等级；
 - 色相 → 运行状态；
 - 虚线／图案 → 生命周期或不确定性；
 - 不透明度 → 置信度或时效性；
@@ -875,8 +875,8 @@ MapLibre 元数据不影响渲染，用于溯源。
     "cartography:group": "subject-line",
     "cartography:role": "primary",
     "cartography:owner": "agent",
-    "cartography:sourceRule": "pipelines",
-    "cartography:ruleIds": ["pipeline-status-color", "pressure-level-width"],
+    "cartography:sourceRule": "road-segments",
+    "cartography:ruleIds": ["road-status-color", "traffic-level-width"],
     "cartography:tokenRefs": [
       "{tokens.colors.semantic.normal}",
       "{tokens.lineWidth.regular}"
@@ -1244,8 +1244,8 @@ scales:
       fault: "{tokens.colors.fault}"
     fallback: "{tokens.colors.unknown}"
 encodings:
-  pipelines:
-    source: gas-network
+  road-segments:
+    source: road-network
     geometry: line
     role: primary
     layerGroup: subject-line

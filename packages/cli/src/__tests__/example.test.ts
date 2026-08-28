@@ -11,7 +11,7 @@ function readJson(url: URL): unknown {
   return JSON.parse(readFileSync(url, 'utf8')) as unknown;
 }
 
-describe('urban gas network example', () => {
+describe('openfreemap-bright example', () => {
   it('passes the complete contract, profile, and style validation chain', () => {
     const report = lint(readFileSync(contractUrl, 'utf8'), {
       sourcePath: fileURLToPath(contractUrl),

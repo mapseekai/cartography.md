@@ -49,7 +49,7 @@ Style-level visibility is not the same as geometric generalization. Simplificati
 
 ## Selection must not rewrite truth
 
-Interaction is emphasis, not a new business classification. A selected faulty pipe remains faulty. A hovered maintenance asset remains under maintenance. Additive casing, stroke, halo, or controlled width changes are generally safer than replacing the subject color.
+Interaction is emphasis, not a new business classification. A selected faulty road segment remains faulty. A hovered maintenance asset remains under maintenance. Additive casing, stroke, halo, or controlled width changes are generally safer than replacing the subject color.
 
 The same principle applies to quality flags, validation errors, and permissions: independent meanings should not silently overwrite one another.
 

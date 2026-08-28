@@ -137,7 +137,7 @@ An exact string in the form `{path.to.value}` is a token reference.
 
 ```yaml
 scales:
-  pipeline-status:
+  road-status:
     type: nominal
     field: operating_status
     values:
@@ -247,9 +247,9 @@ A validator MAY use platform capability tables in future versions. Version 0.1.0
 ```yaml
 intent:
   mapType: operational
-  primaryTask: locate and assess abnormal gas-network assets
+  primaryTask: locate and assess abnormal road-network assets
   audience: [dispatcher, network-manager]
-  subject: gas distribution network
+  subject: road network
   context: [roads, buildings, administrative areas]
   aesthetic:
     keywords: [technical, calm, precise]
@@ -300,8 +300,8 @@ data:
     id: asset_id
     label: name
     category: asset_type
-    importance: pressure_level
-    magnitude: diameter_mm
+    importance: traffic_level
+    magnitude: traffic_volume
     status: operating_status
     uncertainty: position_accuracy
     time: updated_at
@@ -359,10 +359,10 @@ The optional companion data profile makes semantic validation possible without e
 ```json
 {
   "version": "0.1.0",
-  "name": "Urban gas network sample",
+  "name": "Road network sample",
   "generatedAt": "2026-08-28T09:00:00Z",
   "sources": {
-    "gas-network": {
+    "road-network": {
       "type": "geojson",
       "sourceLayers": {
         "default": {
@@ -423,8 +423,8 @@ A field profile contains:
   "nullable": true,
   "unit": "mm",
   "minimum": 0,
-  "maximum": 1400,
-  "description": "Nominal pipe diameter"
+  "maximum": 4000,
+  "description": "Traffic volume per hour"
 }
 ```
 
@@ -446,7 +446,7 @@ zoom:
     site: [16, 24]
   referenceZooms: [8, 12, 15, 18]
   visibility:
-    pipelines:
+    road-segments:
       regional: hidden
       city: primary-only
       street: all-operational
@@ -476,7 +476,7 @@ A generator SHOULD avoid introducing many unrelated layers at the same zoom thre
 
 ### 14.4 Generalization boundary
 
-Styling can control visibility, width, opacity, filtering, clustering, and labeling. True geometry simplification, displacement, aggregation, and topology-preserving generalization SHOULD occur in the data or tile-production pipeline. A style MUST NOT claim to have solved geometry generalization when it only hides features.
+Styling can control visibility, width, opacity, filtering, clustering, and labeling. True geometry simplification, displacement, aggregation, and topology-preserving generalization SHOULD occur in data or tile-production tooling. A style MUST NOT claim to have solved geometry generalization when it only hides features.
 
 ## 15. Visual hierarchy
 
@@ -551,7 +551,7 @@ A scale maps a field or value domain to a visual range.
 
 ```yaml
 scales:
-  pipeline-status:
+  road-status:
     type: nominal
     field: operating_status
     values:
@@ -560,22 +560,22 @@ scales:
       fault: "{tokens.colors.semantic.danger}"
       unknown: "{tokens.colors.semantic.unknown}"
     fallback: "{tokens.colors.semantic.unknown}"
-  pressure-width:
+  traffic-width:
     type: ordinal
-    field: pressure_level
+    field: traffic_level
     values:
       low: "{tokens.lineWidth.thin}"
       medium: "{tokens.lineWidth.regular}"
       high: "{tokens.lineWidth.strong}"
-  diameter-size:
+  traffic-volume:
     type: quantitative
-    field: diameter_mm
+    field: traffic_volume
     stops:
-      - [50, 1]
-      - [300, 2]
-      - [1000, 5]
+      - [200, 1]
+      - [1000, 2]
+      - [3000, 5]
     clamp: true
-    unit: mm
+    unit: veh/h
 ```
 
 ### 17.1 Types
@@ -600,24 +600,24 @@ Quantitative class breaks SHOULD be derived from declared domain knowledge or a 
 
 ```yaml
 encodings:
-  pipelines:
-    source: gas-network
+  road-segments:
+    source: road-network
     geometry: line
     role: primary
     layerGroup: subject-line
     minzoom: 10
     maxzoom: 24
     rules:
-      - id: pipeline-status-color
+      - id: road-status-color
         field: operating_status
         channel: line-color
-        scale: pipeline-status
+        scale: road-status
         critical: true
         secondaryChannel: line-pattern
-      - id: pressure-level-width
-        field: pressure_level
+      - id: traffic-level-width
+        field: traffic_level
         channel: line-width
-        scale: pressure-width
+        scale: traffic-width
     labels:
       field: name
       fallbacks: [asset_code]
@@ -667,7 +667,7 @@ Within one encoding, one visual channel SHOULD have one primary semantic owner. 
 
 A recommended network-map vocabulary is:
 
-- width → network importance or pressure level;
+- width → segment importance or traffic level;
 - hue → operating status;
 - dash/pattern → lifecycle or uncertainty;
 - opacity → confidence or recency;
@@ -874,8 +874,8 @@ MapLibre metadata does not affect rendering and is used for provenance.
     "cartography:group": "subject-line",
     "cartography:role": "primary",
     "cartography:owner": "agent",
-    "cartography:sourceRule": "pipelines",
-    "cartography:ruleIds": ["pipeline-status-color", "pressure-level-width"],
+    "cartography:sourceRule": "road-segments",
+    "cartography:ruleIds": ["road-status-color", "traffic-level-width"],
     "cartography:tokenRefs": [
       "{tokens.colors.semantic.normal}",
       "{tokens.lineWidth.regular}"
@@ -1244,8 +1244,8 @@ scales:
       fault: "{tokens.colors.fault}"
     fallback: "{tokens.colors.unknown}"
 encodings:
-  pipelines:
-    source: gas-network
+  road-segments:
+    source: road-network
     geometry: line
     role: primary
     layerGroup: subject-line

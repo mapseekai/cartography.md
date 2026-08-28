@@ -36,21 +36,21 @@ A `CARTOGRAPHY.md` file has two coordinated layers:
 ```md
 ---
 version: "0.1.0"
-name: Gas network operations map
+name: Road network operations map
 target:
   renderer: maplibre
   styleSpecVersion: 8
   modes: [light, dark]
 intent:
   mapType: operational
-  primaryTask: locate abnormal network assets
+  primaryTask: locate abnormal road segments
   audience: [dispatcher]
 data:
   profile: ./DATA_PROFILE.json
   profileRequired: true
   bindings:
     status: operating_status
-    importance: pressure_level
+    importance: traffic_level
 zoom:
   bands:
     city: [8, 12]
@@ -70,8 +70,8 @@ scales:
       fault: "{tokens.colors.danger}"
     fallback: "{tokens.colors.unknown}"
 encodings:
-  pipelines:
-    source: gas-network
+  road-segments:
+    source: road-network
     geometry: line
     role: primary
     layerGroup: subject-line
@@ -91,7 +91,7 @@ layerOrder:
 
 ## Overview
 
-A calm operational map in which network faults dominate neutral context.
+A calm operational map in which disrupted road segments dominate neutral context.
 ```
 
 The complete normative definition is in [`docs/spec.md`](docs/spec.md).

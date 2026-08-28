@@ -44,7 +44,7 @@ target:
 intent:
   mapType: operational
   primaryTask: locate abnormal road segments
-  audience: [dispatcher]
+  audience: [map-user]
 data:
   profile: ./DATA_PROFILE.json
   profileRequired: true

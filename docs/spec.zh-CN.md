@@ -249,9 +249,9 @@ target:
 intent:
   mapType: operational
   primaryTask: locate and assess abnormal road-network assets
-  audience: [dispatcher, network-manager]
+  audience: [map-user, gis-operator]
   subject: road network
-  context: [roads, buildings, administrative areas]
+  context: [buildings, landuse, administrative areas]
   aesthetic:
     keywords: [technical, calm, precise]
     avoid: [neon, decorative, excessive-saturation]
@@ -422,7 +422,7 @@ GeoJSON 源 SHOULD 使用合成源图层键 `default`。
 {
   "type": "number",
   "nullable": true,
-  "unit": "mm",
+  "unit": "veh/h",
   "minimum": 0,
   "maximum": 4000,
   "description": "Traffic volume per hour"

@@ -58,7 +58,7 @@ target:
 intent:
   mapType: operational
   primaryTask: 快速定位异常路段
-  audience: [dispatcher, network-manager]
+  audience: [map-user, gis-operator]
 data:
   profile: ./DATA_PROFILE.json
   profileRequired: true

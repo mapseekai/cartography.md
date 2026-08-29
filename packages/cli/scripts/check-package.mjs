@@ -1,4 +1,4 @@
-import {access, readFile} from 'node:fs/promises';
+import {access, readFile, readdir} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -18,13 +18,11 @@ for (const relative of required) {
   await access(path.join(packageRoot, relative));
 }
 
-try {
-  await access(path.join(packageRoot, 'dist/schema-json/data-profile.schema.json'));
-  throw new Error('dist/schema-json/data-profile.schema.json must not be packaged.');
-} catch (error) {
-  if (error?.code !== 'ENOENT') {
-    throw error;
-  }
+const schemaFiles = await readdir(path.join(packageRoot, 'dist/schema-json'));
+if (schemaFiles.length !== 1 || schemaFiles[0] !== 'cartography.schema.json') {
+  throw new Error(
+    `dist/schema-json must contain only cartography.schema.json; found ${schemaFiles.join(', ') || '(empty)'}.`,
+  );
 }
 
 const cli = await readFile(path.join(packageRoot, 'dist/cli.js'), 'utf8');

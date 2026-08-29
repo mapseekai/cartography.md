@@ -1,4 +1,5 @@
 import type {Finding, LintRule} from '../../model/types.js';
+import {maskMarkdownReferenceLiterals} from '../../parser/markdown.js';
 import {CANONICAL_SECTIONS, normalizeHeading, SECTION_SEVERITY} from '../../parser/sections.js';
 import {
   exactTokenReference,
@@ -20,6 +21,11 @@ const RECOGNIZED_ROOT_KEYS = new Set([
   'extensions',
   'omitted',
 ]);
+const YAML_REFERENCE_OPTIONS = {knownRoots: RECOGNIZED_ROOT_KEYS};
+const MARKDOWN_REFERENCE_OPTIONS = {
+  knownRoots: RECOGNIZED_ROOT_KEYS,
+  requireKnownRoot: true,
+};
 
 function editDistance(left: string, right: string): number {
   const rows = Array.from({length: left.length + 1}, () => Array<number>(right.length + 1).fill(0));
@@ -221,9 +227,9 @@ export const tokenReferenceRule: LintRule = {
     const root = context.cartography;
     for (const entry of walkObject(root)) {
       if (typeof entry.value !== 'string') continue;
-      const candidates = extractTokenReferenceCandidates(entry.value);
+      const candidates = extractTokenReferenceCandidates(entry.value, YAML_REFERENCE_OPTIONS);
       if (candidates.length === 0) continue;
-      const invalid = extractInvalidTokenReferences(entry.value);
+      const invalid = extractInvalidTokenReferences(entry.value, YAML_REFERENCE_OPTIONS);
       if (invalid.length > 0) {
         findings.push(...invalid.map((reference) => ({
           ruleId: this.id,
@@ -259,7 +265,11 @@ export const tokenReferenceRule: LintRule = {
       }
     }
     for (const section of context.parsed.sections) {
-      for (const reference of extractInvalidTokenReferences(section.body)) {
+      const visibleProse = maskMarkdownReferenceLiterals(section.body);
+      for (const reference of extractInvalidTokenReferences(
+        visibleProse,
+        MARKDOWN_REFERENCE_OPTIONS,
+      )) {
         findings.push({
           ruleId: this.id,
           severity: 'error',
@@ -269,7 +279,10 @@ export const tokenReferenceRule: LintRule = {
           suggestion: 'Use dot-separated names with optional numeric bracket indices, such as {tokens.colors.ink} or {tokens.custom.palette[0]}.',
         });
       }
-      for (const reference of extractTokenReferences(section.body)) {
+      for (const reference of extractTokenReferences(
+        visibleProse,
+        MARKDOWN_REFERENCE_OPTIONS,
+      )) {
         const resolved = resolveTokenReference(root, reference);
         if (resolved.resolved) continue;
         findings.push({

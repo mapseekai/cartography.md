@@ -2,39 +2,8 @@ import {parseDocument} from 'yaml';
 import {cartographySchema, type CartographyConfig} from '../schema/cartography.js';
 import type {Finding, MarkdownSection, ParsedCartography} from '../model/types.js';
 import {walkObject} from '../utils/object.js';
+import {maskHtmlComments, type CommentState} from './markdown.js';
 import {CANONICAL_SECTIONS, normalizeHeading} from './sections.js';
-
-interface CommentState {
-  inComment: boolean;
-}
-
-function maskHtmlComments(line: string, state: CommentState): string {
-  let cursor = 0;
-  let visible = '';
-  while (cursor < line.length) {
-    if (state.inComment) {
-      const end = line.indexOf('-->', cursor);
-      if (end < 0) return visible + ' '.repeat(line.length - cursor);
-      visible += ' '.repeat(end + 3 - cursor);
-      cursor = end + 3;
-      state.inComment = false;
-      continue;
-    }
-
-    const start = line.indexOf('<!--', cursor);
-    if (start < 0) return visible + line.slice(cursor);
-    visible += line.slice(cursor, start);
-    const end = line.indexOf('-->', start + 4);
-    if (end < 0) {
-      visible += ' '.repeat(line.length - start);
-      state.inComment = true;
-      return visible;
-    }
-    visible += ' '.repeat(end + 3 - start);
-    cursor = end + 3;
-  }
-  return visible;
-}
 
 function extractSections(body: string, frontmatterLines: number): MarkdownSection[] {
   const lines = body.split('\n');

@@ -24,61 +24,110 @@ export function walkObject(value: unknown, path = '$'): WalkEntry[] {
 export const REFERENCE_PATH_SOURCE =
   '[A-Za-z0-9_-]+(?:\\[\\d+\\])*(?:\\.[A-Za-z0-9_-]+(?:\\[\\d+\\])*)*';
 const bracedReferenceCandidatePattern = /\{([^{}\r\n]*)\}/g;
-const pathOutsideBracketsPattern = /^[A-Za-z0-9_.\[\]-]+$/;
 const referencePathPattern = new RegExp(`^(?:${REFERENCE_PATH_SOURCE})$`);
 const exactReferencePattern = new RegExp(`^\\{(${REFERENCE_PATH_SOURCE})\\}$`);
+
+export interface ExtractTokenReferenceOptions {
+  knownRoots?: ReadonlySet<string>;
+  requireKnownRoot?: boolean;
+}
 
 export function validReferencePath(path: string): boolean {
   return referencePathPattern.test(path);
 }
 
-function referencePathCandidate(path: string): boolean {
-  if (validReferencePath(path)) return true;
+function referenceRoot(path: string): string | undefined {
+  return /^\.*([A-Za-z0-9_-]+)/.exec(path)?.[1];
+}
 
-  let bracketDepth = 0;
-  let outsideBrackets = '';
+function tokenLikeBracketPayload(payload: string): boolean {
+  return /^\s*$/.test(payload) || /^[A-Za-z0-9_.+\/-]+$/.test(payload);
+}
+
+function malformedReferencePathCandidate(path: string): boolean {
+  let cursor = 0;
+  let hasName = false;
   let hasPathStructure = false;
-  for (const character of path) {
-    if (character === '[') {
+  while (cursor < path.length) {
+    const character = path[cursor]!;
+    if (/[A-Za-z0-9_-]/.test(character)) {
+      hasName = true;
+      cursor += 1;
+      continue;
+    }
+    if (character === '.') {
       hasPathStructure = true;
-      if (bracketDepth === 0) outsideBrackets += '[]';
-      bracketDepth += 1;
+      cursor += 1;
       continue;
     }
     if (character === ']') {
       hasPathStructure = true;
-      if (bracketDepth === 0) outsideBrackets += ']';
-      else bracketDepth -= 1;
+      cursor += 1;
       continue;
     }
-    if (bracketDepth > 0) continue;
-    if (character === '.') hasPathStructure = true;
-    outsideBrackets += character;
-  }
+    if (character !== '[') return false;
 
-  return (
-    hasPathStructure &&
-    /[A-Za-z0-9_-]/.test(outsideBrackets) &&
-    pathOutsideBracketsPattern.test(outsideBrackets)
-  );
+    hasPathStructure = true;
+    const payloadStart = cursor + 1;
+    cursor = payloadStart;
+    let depth = 1;
+    let nested = false;
+    while (cursor < path.length && depth > 0) {
+      if (path[cursor] === '[') {
+        nested = true;
+        depth += 1;
+      } else if (path[cursor] === ']') {
+        depth -= 1;
+      }
+      cursor += 1;
+    }
+    const closed = depth === 0;
+    const payloadEnd = closed ? cursor - 1 : path.length;
+    const payload = path.slice(payloadStart, payloadEnd);
+    if (!nested && !tokenLikeBracketPayload(payload)) return false;
+  }
+  return hasName && hasPathStructure;
+}
+
+function referencePathCandidate(
+  path: string,
+  options: ExtractTokenReferenceOptions,
+): boolean {
+  const root = referenceRoot(path);
+  const knownRoot = root !== undefined && options.knownRoots?.has(root) === true;
+  if (validReferencePath(path)) return options.requireKnownRoot !== true || knownRoot;
+  if (!malformedReferencePathCandidate(path)) return false;
+  return options.knownRoots === undefined || knownRoot;
 }
 
 export function normalizeReferencePath(path: string): string {
   return path.replace(/\[(\d+)\]/g, '.$1').replace(/^\./, '');
 }
 
-export function extractTokenReferences(value: string): string[] {
-  return extractTokenReferenceCandidates(value).filter(validReferencePath);
+export function extractTokenReferences(
+  value: string,
+  options: ExtractTokenReferenceOptions = {},
+): string[] {
+  return extractTokenReferenceCandidates(value, options).filter(validReferencePath);
 }
 
-export function extractTokenReferenceCandidates(value: string): string[] {
+export function extractTokenReferenceCandidates(
+  value: string,
+  options: ExtractTokenReferenceOptions = {},
+): string[] {
   return Array.from(value.matchAll(bracedReferenceCandidatePattern), (match) => match[1]).filter(
-    (path): path is string => path !== undefined && referencePathCandidate(path),
+    (path): path is string =>
+      path !== undefined && referencePathCandidate(path, options),
   );
 }
 
-export function extractInvalidTokenReferences(value: string): string[] {
-  return extractTokenReferenceCandidates(value).filter((path) => !validReferencePath(path));
+export function extractInvalidTokenReferences(
+  value: string,
+  options: ExtractTokenReferenceOptions = {},
+): string[] {
+  return extractTokenReferenceCandidates(value, options).filter(
+    (path) => !validReferencePath(path),
+  );
 }
 
 export function exactTokenReference(value: unknown): string | undefined {

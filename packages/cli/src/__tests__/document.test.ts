@@ -117,6 +117,34 @@ const style = {color: '#25221D'};
     expect(report.findings.some((finding) => finding.ruleId === 'token-reference')).toBe(false);
   });
 
+  it('ignores reviewer indexing examples in inline code, JSX, and plain expressions', () => {
+    const report = lint(base.replace('Quiet.', `Advance with \`{items[index + 1]}\` when another item exists.
+
+Render <Item>{items[index + 1]}</Item>, evaluate {items[index + 1]}, and retain {items[0]} as ordinary code.`));
+
+    expect(report.findings.some((finding) => finding.ruleId === 'token-reference')).toBe(false);
+  });
+
+  it('scans visible references while ignoring Markdown code and HTML comments', () => {
+    const report = lint(base.replace('Quiet.', `Use {tokens.colors.ink} in visible prose.
+
+Ignore \`{tokens.colors.missing}\` and \`\`{tokens.colors.ink[ ]}\`\` inline.
+
+\`\`\`js
+const color = '{tokens.colors.missing}';
+const next = {items[index + 1]};
+\`\`\`
+
+~~~jsx
+<Item>{tokens.colors.ink[+1]}</Item>
+~~~
+
+<!-- Ignore {tokens.colors.missing}
+and {tokens.colors.ink[a/b]} here. -->`));
+
+    expect(report.findings.some((finding) => finding.ruleId === 'token-reference')).toBe(false);
+  });
+
   it('accepts dotted and hyphenated names with numeric bracket indices', () => {
     const report = lint(`---
 version: "0.2.0"

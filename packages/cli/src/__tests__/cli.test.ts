@@ -35,6 +35,14 @@ describe('lint CLI', () => {
     expect(JSON.parse(result.stdout)).toMatchObject({valid: true});
   });
 
+  it('rejects a bare dash unless it is the only lint input', () => {
+    const result = runCli(['lint', file, '-']);
+
+    expect(result.status).toBe(2);
+    expect(result.stdout).not.toContain('"valid"');
+    expect(result.stderr).not.toContain('"valid"');
+  });
+
   it.each([
     ['--profile', 'profile.json'],
     ['--style', 'target.json'],

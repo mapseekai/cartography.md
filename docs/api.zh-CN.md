@@ -1,123 +1,108 @@
-# cartography.md CLI 和 TypeScript API
+# TypeScript API
 
-npm 包 `@mapseekai/cartography.md` 基于同一解析器、schema 和确定性规则集，提供命令行界面与类型化 API。
+**版本：** 0.2.0  
+**包：** `@mapseekai/cartography.md`  
+**English:** [api.md](api.md)
 
-## 安装
+公共 API 解析、校验、解析引用并比较一份 CARTOGRAPHY.md。普通文档无效会以结构化 finding 返回。
 
-```bash
-pnpm add -D @mapseekai/cartography.md
-```
-
-需要 Node.js 20 或更高版本。
-
-## CLI
-
-该包安装两个等价的二进制文件：
-
-- `cartography.md` — 规范名称；
-- `cartographymd` — 推荐在 Windows 上使用的跨平台别名。
-
-### `lint`
-
-```bash
-cartographymd lint <CARTOGRAPHY.md> \
-  [--profile DATA_PROFILE.json] \
-  [--style style.json] \
-  [--format json|text] \
-  [--strict]
-```
-
-示例：
-
-```bash
-cartographymd lint CARTOGRAPHY.md
-cartographymd lint CARTOGRAPHY.md --profile DATA_PROFILE.json --style style.json
-cartographymd lint CARTOGRAPHY.md --strict --format text
-cat CARTOGRAPHY.md | cartographymd lint - --profile DATA_PROFILE.json
-```
-
-`--strict` 会使警告对 `report.valid` 和退出代码具有阻断作用。它不会改写 finding 严重性。
-
-对于普通文件输入，除非显式提供 `--profile`，否则 CLI 会相对于包含 `CARTOGRAPHY.md` 的目录自动解析 `data.profile`。
-
-### `parse`
-
-```bash
-cartographymd parse CARTOGRAPHY.md
-```
-
-解析 YAML front matter 和规范 Markdown 节，但不运行语义、数据画像或样式规则。
-
-### `diff`
-
-```bash
-cartographymd diff CARTOGRAPHY.md CARTOGRAPHY.next.md
-```
-
-比较契约叶节点值和 Markdown 节正文。若变更后的文档引入验证回归，该命令以 `1` 退出。
-
-### `rules`
-
-```bash
-cartographymd rules
-```
-
-以 JSON 格式输出内置规则目录。
-
-### `spec`
-
-```bash
-cartographymd spec
-cartographymd spec --output CARTOGRAPHY-SPEC.md
-```
-
-输出或复制随附的 `docs/spec.md`。
-
-### 退出代码
-
-| 代码 | 含义 |
-|---:|---|
-| `0` | 命令已完成，并在所选严格程度下通过。 |
-| `1` | 验证或 diff 已完成，且结果具有阻断性。 |
-| `2` | 用法、文件访问、JSON 解析或执行失败。 |
-
-## 公共 API
+## 导入
 
 ```ts
 import {
-  DEFAULT_RULES,
   cartographySchema,
-  dataProfileSchema,
   diffCartography,
   getRuleCatalog,
   getSpecification,
   lint,
+  lintCartography,
   lintFile,
   parseCartography,
   resolveReferences,
-  validateMapLibreStyle,
+  type CartographyConfig,
+  type LintOptions,
+  type LintReport,
 } from '@mapseekai/cartography.md';
 ```
 
-## `lint(source, options?)`
+## 公共值与函数
 
-同步解析并验证原始 `CARTOGRAPHY.md` 字符串。
+| 导出 | 签名 | 用途 |
+|---|---|---|
+| `parseCartography` | `(source: string) => ParsedCartography<CartographyConfig>` | 解析 front matter 和 Markdown 章节，并返回 parser finding。 |
+| `cartographySchema` | Zod schema | 校验版本 0.2.0 front-matter 值。 |
+| `lint` | `(source: string, options?: LintOptions) => LintReport` | 对源码字符串运行 parser 检查和 document rule。 |
+| `lintCartography` | `lint` 的别名 | `lint` 的兼容名称。 |
+| `lintFile` | `(file: string, options?: LintFileOptions) => Promise<LintReport>` | 读取并校验文件，在报告中记录其路径。 |
+| `resolveReferences` | `(frontmatter: unknown) => unknown` | 返回深拷贝值，并尽可能解析精确引用。 |
+| `diffCartography` | `(beforeSource: string, afterSource: string, options?) => CartographyDiffReport` | 比较解析后的叶子值、散文章节和 finding 数量。 |
+| `getSpecification` | `() => string` | 返回随包提供的英文规范。 |
+| `getRuleCatalog` | `() => RuleDescriptor[]` | 返回内置 document-rule 目录的副本。 |
+
+## `parseCartography(source)`
+
+`parseCartography` 会规范化 byte-order mark 和换行符，解析必需的 YAML front matter，以 `cartographySchema` 校验它，提取 `##` 章节，规范化已识别标题，并报告重复的规范章节。
 
 ```ts
-import {lint} from '@mapseekai/cartography.md';
+const parsed = parseCartography(`---
+version: "0.2.0"
+name: Quiet atlas
+---
 
-const report = lint(content, {
-  sourcePath: '/project/CARTOGRAPHY.md',
-  dataProfile,
-  style,
-  strict: false,
-});
+## Overview
+
+Warm paper and restrained ink.
+`);
+
+if (parsed.config) {
+  console.log(parsed.config.name);
+}
+console.log(parsed.sections[0]?.canonicalHeading); // Overview
 ```
+
+Parser 和 schema 错误位于 `parsed.findings`；普通无效输入不会抛出异常。
+
+## `cartographySchema`
+
+`cartographySchema` 是 front matter 的 Zod 权威来源。
+
+```ts
+const result = cartographySchema.safeParse({
+  version: '0.2.0',
+  name: 'Quiet atlas',
+});
+
+if (result.success) {
+  const config: CartographyConfig = result.data;
+}
+```
+
+该对象使用 pass-through：未知根键会被保留。Linter 会另行通过 `unknown-root-key` 报告自定义根键。
+
+## `lint(source, options?)`
+
+`lint` 运行 parser finding 和合并后的规则集，对 finding 排序并汇总严重级别，在配置有效时解析精确引用，然后计算 `valid`。
+
+```ts
+const report = lint(source, {
+  sourcePath: 'CARTOGRAPHY.md',
+  strict: true,
+  maxDocumentBytes: 256_000,
+});
+
+if (!report.valid) {
+  for (const finding of report.findings) {
+    console.error(finding.ruleId, finding.message);
+  }
+}
+```
+
+`lintCartography` 与 `lint` 是同一个函数对象。
+
+### `LintOptions`
 
 ```ts
 interface LintOptions {
-  style?: unknown;
-  dataProfile?: unknown;
   sourcePath?: string;
   strict?: boolean;
   rules?: LintRule[];
@@ -125,163 +110,161 @@ interface LintOptions {
 }
 ```
 
-`lintCartography` 是 `lint` 的别名。
+- `sourcePath` 会复制到 `report.document.path` 并提供给规则。
+- `strict` 默认为 `false`。设为 true 时，warning 会阻断有效性。
+- `rules` 按 ID 添加自定义规则。与现有 ID 相同的自定义规则会替换对应内置规则。
+- `maxDocumentBytes` 默认为 `512_000`。
+
+### `LintReport`
+
+```ts
+interface LintReport {
+  valid: boolean;
+  strict: boolean;
+  findings: Finding[];
+  summary: FindingSummary;
+  cartography?: CartographyConfig;
+  resolved?: unknown;
+  sections: string[];
+  document: {
+    path?: string;
+    name?: string;
+    version?: string;
+  };
+}
+```
+
+只有 front matter 通过 `cartographySchema` 时，`cartography` 和 `resolved` 才存在。`sections` 按源码顺序包含规范化标题。`document.name` 和 `document.version` 来自解析后的配置。
+
+没有 error 时，`valid` 为 true；在严格模式下还要求没有 warning。Info finding 不会阻断有效性。该结果只证明 CARTOGRAPHY.md 文档及其可确定内部关系有效。
 
 ## `lintFile(file, options?)`
 
-异步读取文档和可选的配套文件。
-
 ```ts
-import {lintFile} from '@mapseekai/cartography.md';
+type LintFileOptions = Omit<LintOptions, 'sourcePath'>;
 
-const report = await lintFile('CARTOGRAPHY.md', {
-  dataProfilePath: 'DATA_PROFILE.json',
-  stylePath: 'style.json',
-  strict: true,
-});
+const report = await lintFile('CARTOGRAPHY.md', {strict: true});
 ```
 
-```ts
-interface LintFileOptions {
-  style?: unknown;
-  dataProfile?: unknown;
-  stylePath?: string;
-  dataProfilePath?: string;
-  strict?: boolean;
-  rules?: LintRule[];
-  maxDocumentBytes?: number;
-}
-```
-
-预解析的 `style` 和 `dataProfile` 值优先于路径。当省略 `dataProfilePath` 和 `dataProfile` 时，`lintFile` 会相对于文档解析 `data.profile`。
-
-## `parseCartography(source)`
-
-返回已解析的 front matter、可用时已验证的配置、正文、规范节和解析器 finding。
-
-```ts
-const parsed = parseCartography(content);
-
-if (parsed.config) {
-  console.log(parsed.config.intent.primaryTask);
-}
-
-for (const finding of parsed.findings) {
-  console.log(finding.ruleId, finding.message);
-}
-```
-
-```ts
-interface ParsedCartography<TConfig = CartographyConfig> {
-  source: string;
-  rawFrontmatter: unknown;
-  config?: TConfig;
-  body: string;
-  sections: MarkdownSection[];
-  findings: Finding[];
-}
-```
-
-解析以恢复为导向：尽可能返回结构性 finding，而不是抛出异常。文件 I/O 和 JSON 解析由 `lintFile` 和 CLI 处理。
+`lintFile` 读取 UTF-8 文本，调用 `lint`，并将 `document.path` 设为所提供路径。传入 `-` 会读取标准输入。文件读取失败会 reject promise。
 
 ## `resolveReferences(frontmatter)`
 
-返回深拷贝，其中有效的精确 `{path.to.value}` 引用已解析。损坏的引用和循环保持不变；需要 finding 时请调用 `lint`。
+`resolveReferences` 使用所提供值作为根，递归替换精确的 `{path.to.value}` 字符串。
 
 ```ts
-const resolved = resolveReferences(parsed.rawFrontmatter);
-```
-
-## `validateMapLibreStyle(style, cartography, dataProfile?)`
-
-针对已解析的契约运行全部内置样式范围规则：
-
-- 官方 MapLibre 样式规范验证；
-- cartography.md 溯源元数据；
-- 编码、source 和 source-layer 一致性；
-- token 引用和 token 绑定漂移；
-- 受治理的图层组顺序；
-- 稳定的 feature ID；
-- 可移植的资源协议；
-- 旧版 filter 警告；
-- 仅 paint 的 `feature-state` 约束。
-
-```ts
-const findings = validateMapLibreStyle(style, cartography, dataProfile);
-```
-
-## `diffCartography(before, after, options?)`
-
-```ts
-const diff = diffCartography(beforeContent, afterContent);
-
-if (diff.regression) {
-  console.error(diff.findings.delta);
-}
-```
-
-可选的第三个参数 `{before?: LintOptions; after?: LintOptions}` 为任一侧提供数据画像或样式，使 finding 增量反映对 artifact 感知的验证。
-
-该报告将新增、移除和修改后的已解析路径，与新增、移除和修改后的规范 Markdown 节分开列出。
-
-## Schema
-
-该包导出 Zod schema：
-
-```ts
-const contractResult = cartographySchema.safeParse(frontmatter);
-const profileResult = dataProfileSchema.safeParse(profileJson);
-```
-
-仓库还维护可移植的 JSON schema：
-
-- `schema/cartography.schema.json`；
-- `schema/data-profile.schema.json`。
-
-## 规范与规则
-
-```ts
-const markdown = getSpecification();
-const catalog = getRuleCatalog();
-```
-
-`getSpecification()` 读取随附的规范性规范。`getRuleCatalog()` 返回公共规则描述符的副本。
-
-## 自定义规则
-
-```ts
-import {
-  DEFAULT_RULES,
-  lint,
-  type LintRule,
-} from '@mapseekai/cartography.md';
-
-const reservedDangerColor: LintRule = {
-  id: 'acme-danger-color-reserved',
-  severity: 'error',
-  scope: 'document',
-  description: 'Reserve the organizational danger color for operational faults.',
-  run(context) {
-    if (!context.cartography) return [];
-
-    const danger = context.cartography.tokens.colors;
-    // Evaluate a deterministic organization-specific condition.
-    return [];
+const resolved = resolveReferences({
+  tokens: {
+    colors: {
+      ink: '#24303A',
+      label: '{tokens.colors.ink}',
+    },
   },
-};
-
-const report = lint(content, {
-  rules: [...DEFAULT_RULES, reservedDangerColor],
 });
 ```
 
-自定义规则按 ID 合并。具有相同 ID 的自定义规则会在该次调用中替换内置规则。规则应当是确定性的、无副作用的，并且独立于网络。
+数组和对象会被递归复制。缺失引用和循环仍保留为未解析字符串；需要将这些情况报告为 finding 时，请调用 `lint`。
 
-## 报告类型
+## `diffCartography(beforeSource, afterSource, options?)`
+
+```ts
+const report = diffCartography(before, after, {
+  before: {strict: false},
+  after: {strict: true},
+});
+```
+
+可选的第三个参数是：
+
+```ts
+{
+  before?: LintOptions;
+  after?: LintOptions;
+}
+```
+
+结果分别列出解析后叶子路径和规范化散文章节的新增、删除与修改项。当新报告的 error 或 warning 数量高于旧报告时，`regression` 为 true。
+
+## `getSpecification()` 与 `getRuleCatalog()`
+
+```ts
+const specification: string = getSpecification();
+const rules: RuleDescriptor[] = getRuleCatalog();
+```
+
+`getSpecification` 返回随包提供的 `docs/spec.md`。`getRuleCatalog` 返回包含内置描述符的新数组；当前每个描述符都具有 `scope: 'document'`。
+
+## 导出的 schema 类型
+
+包会导出以下从 schema 推导的类型：
+
+```ts
+type TokenReference = string;
+
+type DimensionToken =
+  | number
+  | string; // 经过校验的尺寸字符串或精确引用
+
+type TypographyToken =
+  | TokenReference
+  | {
+      fontFamily?: string | string[];
+      fontSize?: DimensionToken;
+      fontWeight?: number | string;
+      lineHeight?: number | DimensionToken;
+      letterSpacing?: number | string;
+      [key: string]: unknown;
+    };
+
+interface ContrastPair {
+  id: string;
+  foreground: string;
+  background: string;
+  minimum: number;
+  kind?: 'text' | 'large-text' | 'graphic';
+  [key: string]: unknown;
+}
+
+type OmittedSection =
+  | string
+  | {
+      section: string;
+      reason?: string;
+      [key: string]: unknown;
+    };
+
+interface CartographyConfig {
+  version: '0.2.0';
+  name: string;
+  description?: string;
+  locale?: string;
+  tokens?: {
+    colors?: Record<string, string>;
+    typography?: Record<string, TypographyToken>;
+    widths?: Record<string, DimensionToken>;
+    sizes?: Record<string, DimensionToken>;
+    opacities?: Record<string, number | TokenReference>;
+    [group: string]: unknown;
+  };
+  accessibility?: {
+    contrastPairs?: ContrastPair[];
+    [key: string]: unknown;
+  };
+  omitted?: OmittedSection[];
+  extensions?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+```
+
+这些别名由 Zod 推导；上面的注释概括其运行时约束，但不能替代 schema 校验。
+
+## 导出的 model 类型
+
+### Finding 与解析后的文档
 
 ```ts
 type Severity = 'error' | 'warning' | 'info';
-type RuleScope = 'document' | 'profile' | 'style';
+type RuleScope = 'document';
 
 interface Finding {
   ruleId: string;
@@ -294,33 +277,75 @@ interface Finding {
   evidence?: unknown;
 }
 
-interface LintReport<TConfig = CartographyConfig> {
-  valid: boolean;
-  strict: boolean;
+interface FindingSummary {
+  errors: number;
+  warnings: number;
+  infos: number;
+}
+
+interface MarkdownSection {
+  heading: string;
+  canonicalHeading: string;
+  line: number;
+  body: string;
+}
+
+interface ParsedCartography<TConfig = CartographyConfig> {
+  source: string;
+  rawFrontmatter: unknown;
+  config?: TConfig;
+  body: string;
+  sections: MarkdownSection[];
   findings: Finding[];
-  summary: {
-    errors: number;
-    warnings: number;
-    infos: number;
-  };
-  cartography?: TConfig;
-  resolved?: unknown;
-  sections: string[];
-  document: {
-    path?: string;
-    name?: string;
-    version?: string;
-  };
-  artifacts: {
-    dataProfileChecked: boolean;
-    styleChecked: boolean;
-    officialMapLibreValidation: boolean;
-  };
 }
 ```
 
-`officialMapLibreValidation` 表示由于提供了样式值而调用了官方验证器。验证错误会表示为普通 finding。
+### 规则
 
-## API 稳定性
+```ts
+interface LintContext {
+  source: string;
+  parsed: ParsedCartography;
+  cartography?: CartographyConfig;
+  sourcePath?: string;
+  maxDocumentBytes: number;
+}
 
-该格式和包均为草案 `0.1.0`。finding ID 和报告形状旨在在 `0.1.x` 版本线内保持稳定。补丁版本中可能会新增警告；严格模式消费者应在 CI 中固定包版本。
+interface LintRule {
+  id: string;
+  severity: Severity;
+  scope: RuleScope;
+  description: string;
+  run(context: LintContext): Finding[];
+}
+
+interface RuleDescriptor {
+  id: string;
+  severity: Severity;
+  scope: RuleScope;
+  description: string;
+}
+```
+
+### Diff 报告
+
+```ts
+interface DiffBucket {
+  added: string[];
+  removed: string[];
+  modified: string[];
+}
+
+interface CartographyDiffReport {
+  values: DiffBucket;
+  sections: DiffBucket;
+  findings: {
+    before: FindingSummary;
+    after: FindingSummary;
+    delta: {errors: number; warnings: number; infos: number};
+  };
+  regression: boolean;
+}
+```
+
+`LintOptions`、`LintFileOptions` 和 `LintReport` 也会按上文所示完整导出。

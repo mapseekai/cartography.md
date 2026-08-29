@@ -3,16 +3,9 @@ import {diffCartography} from '../linter/diff.js';
 import {getRuleCatalog, getSpecification} from '../spec.js';
 
 const before = `---
-version: "0.1.0"
+version: "0.2.0"
 name: A
-target: {renderer: maplibre, styleSpecVersion: 8}
-intent: {mapType: reference, primaryTask: lookup, audience: [reader]}
-data: {bindings: {label: name}}
-zoom: {bands: {city: [8, 12]}}
 tokens: {colors: {text: "#222222"}}
-scales: {}
-encodings: {labels: {source: places, geometry: point, role: primary, layerGroup: labels, rules: []}}
-layerOrder: [{id: labels, order: 10}]
 ---
 
 ## Overview
@@ -30,6 +23,8 @@ describe('diff and bundled metadata', () => {
 
   it('bundles the specification and rule catalog', () => {
     expect(getSpecification()).toContain('# CARTOGRAPHY.md Format Specification');
-    expect(getRuleCatalog().some((rule) => rule.id === 'maplibre-style-spec')).toBe(true);
+    expect(getSpecification()).toContain('**Status:** Draft 0.2.0');
+    expect(getSpecification()).toContain('## Markdown sections');
+    expect(getRuleCatalog().every((rule) => rule.scope === 'document')).toBe(true);
   });
 });

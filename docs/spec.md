@@ -1,1115 +1,293 @@
 # CARTOGRAPHY.md Format Specification
 
-**Status:** Draft 0.1.0  
+**Status:** Draft 0.2.0  
 **Repository:** `mapseekai/cartography.md`  
-**Primary target:** MapLibre Style Specification v8  
-**Canonical file name:** `CARTOGRAPHY.md`
-**中文版：** [spec.zh-CN.md](spec.zh-CN.md)
+**Canonical file name:** `CARTOGRAPHY.md`  
+**中文版:** [spec.zh-CN.md](spec.zh-CN.md)
 
-CARTOGRAPHY.md is a format for describing a persistent cartographic design contract to coding agents and map-style tooling. It combines machine-readable YAML with human-readable Markdown so an agent can understand both the exact values to use and the cartographic reasons behind them.
+CARTOGRAPHY.md is a self-contained format for preserving a cartographic design system. It combines machine-readable YAML tokens with human-readable Markdown judgment so people and agents can apply one stable visual identity across datasets, subjects, and tasks.
 
-This document is normative unless a section is explicitly marked informative.
+This document is normative unless a passage is explicitly marked informative.
 
-## 1. Purpose
+## Purpose
 
-A MapLibre `style.json` tells a renderer how to draw a map. It does not, by itself, explain:
+A CARTOGRAPHY.md document records durable visual identity and cartographic judgment:
 
-- the purpose of the map;
-- the intended audience and decision task;
-- which data fields carry semantic meaning;
-- which features should dominate or recede;
-- how the representation changes across zoom levels;
-- which visual channels own which meanings;
-- which colors are reserved for warnings, selection, or uncertainty;
-- how accessibility, privacy, and data quality should be handled;
-- how an agent should preserve human-authored work;
-- how the result should be validated beyond style syntax.
+- the visual world the design should evoke;
+- the audience and long-lived contexts it serves;
+- the relative prominence of background, context, subject, focus, and critical states;
+- exact reusable color, typography, width, size, and opacity values;
+- principles for labels, geometry, symbols, scale transitions, composition, interaction states, accessibility, and review.
 
-CARTOGRAPHY.md fills that gap. It is an upstream design contract from which an agent may generate, modify, review, or explain a MapLibre style.
+The document does not record a one-time user request, the fields or sources of a particular dataset, or instructions for a particular output system. Those are operation-time inputs. Core parsing, linting, and diffing accept one CARTOGRAPHY.md document and assess only that document.
 
-CARTOGRAPHY.md is not:
+## Normative language
 
-- a replacement for the MapLibre Style Specification;
-- a data schema or vector-tile schema;
-- a complete rendering engine;
-- a guarantee that a map is aesthetically successful without render review;
-- a place to embed secrets, access tokens, or sensitive feature data.
+The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHOULD**, **SHOULD NOT**, and **MAY** express normative requirement levels.
 
-## 2. Normative language
+## Design goals
 
-The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHOULD**, **SHOULD NOT**, and **MAY** are to be interpreted as normative requirement levels.
+The format has these goals:
 
-## 3. Design goals
+1. **Prose first.** Prose carries design judgment, boundaries, tradeoffs, and exceptions.
+2. **Exact context.** Tokens provide reusable values where precision matters.
+3. **Portability.** A document remains useful across datasets, subjects, tasks, and output technologies.
+4. **Human and agent readability.** The same file supports professional review and agent use.
+5. **Determinism.** Equivalent source produces equivalent parsed values and findings.
+6. **Open growth.** Named extensions and unknown token groups can preserve project-specific information without changing core meaning.
+7. **Honest validation.** A successful lint establishes document-internal validity only.
 
-The format is designed around the following properties:
-
-1. **Agent readability.** Important choices are explicit and stable across sessions.
-2. **Human readability.** A cartographer can review the same file without specialized tooling.
-3. **Determinism.** Equivalent inputs produce equivalent parsed models and findings.
-4. **Semantic correctness.** Styling decisions remain connected to real data fields and domains.
-5. **Renderer portability.** Renderer-specific behavior is declared rather than assumed.
-6. **Minimal diffs.** Agents can change one decision without rewriting unrelated style layers.
-7. **Traceability.** Generated style layers record the contract rules and tokens that produced them.
-8. **Progressive validation.** Syntax, semantics, style conformance, and render evidence are separate checks.
-
-## 4. File name and discovery
+## Discovery
 
 The canonical file name is `CARTOGRAPHY.md`.
 
-Tools SHOULD discover it in this order:
+A tool SHOULD use an explicit caller-supplied path when present. Otherwise it MAY search the current directory and then its ancestors for the nearest file with the canonical name. File-name matching SHOULD be case-sensitive on every platform for reproducibility.
 
-1. a path explicitly provided by the caller;
-2. `CARTOGRAPHY.md` in the current working directory;
-3. the nearest ancestor containing `CARTOGRAPHY.md`;
-4. a project-specific configured path.
+A repository MAY contain multiple documents. Unless a tool defines a narrower scope, a document applies to its containing directory and descendants.
 
-A repository MAY contain more than one contract. A contract applies to the directory that contains it and its descendants unless a tool defines a more specific scope.
+## Document structure
 
-File-name matching SHOULD be case-sensitive on all platforms for reproducibility.
+A document has exactly two structural layers:
 
-## 5. Document structure
-
-A document has two layers:
-
-1. **YAML front matter** delimited by `---` at the beginning of the file;
-2. **Markdown body** containing rationale in canonical `##` sections.
+1. YAML front matter delimited by `---` at the beginning of the file;
+2. Markdown prose organized with canonical `##` headings.
 
 ```md
 ---
-version: 0.1.0
-name: Example operational map
-target:
-  renderer: maplibre
-  styleSpecVersion: 8
-# ...
+version: "0.2.0"
+name: Quiet civic atlas
+tokens:
+  colors:
+    ink: "#24303A"
+    canvas: "#F4F1E8"
 ---
-
-# Example operational map
 
 ## Overview
 
-The map supports operators locating abnormal assets without losing local context.
+An archival civic atlas with warm paper, restrained ink, and one scarce accent.
 ```
 
-The YAML values are normative. Markdown prose explains intent and resolves ambiguity. When they conflict, the precedence rules in section 28 apply.
+The front matter supplies exact values. The Markdown body explains why those values exist, when they apply, and which relationships an implementation must preserve.
 
-## 6. Deterministic YAML profile
+## Deterministic YAML
 
-### 6.1 Supported values
+Front matter MUST use a safe, deterministic YAML subset.
 
-The front matter MAY use:
+It MAY contain mappings with string keys, sequences, strings, finite numbers, booleans, and `null`. Dates, timestamps, leading-zero values, and ambiguous words SHOULD be quoted.
 
-- mappings with string keys;
-- sequences;
-- strings;
-- finite numbers;
-- booleans;
-- `null`;
-- quoted or unquoted plain scalars that remain unambiguous.
+It MUST NOT contain:
 
-### 6.2 Prohibited constructs
-
-The front matter MUST NOT use:
-
+- duplicate mapping keys;
 - anchors or aliases;
-- custom tags;
 - merge keys;
-- non-finite numbers;
-- executable values;
+- custom tags or executable values;
+- tab indentation;
+- block scalars;
 - implicit environment-variable expansion;
-- duplicate mapping keys.
+- non-finite numbers.
 
-These features are prohibited because different YAML runtimes and agents may interpret them differently. Reuse SHOULD be expressed with token references.
+Long rationale belongs in Markdown. Reusable exact values SHOULD be expressed as named tokens and token references.
 
-### 6.3 Dates and ambiguous scalars
+## Root schema
 
-Dates, timestamps, values with leading zeroes, and words that may be interpreted as booleans SHOULD be quoted.
+The front matter has the following root fields. This table is the complete normative root schema for version 0.2.0.
 
-```yaml
-version: "0.1.0"
-generatedAt: "2026-08-28T09:00:00Z"
-code: "0012"
-```
+| Field | Required | Type | Meaning |
+|---|---:|---|---|
+| `version` | yes | literal `"0.2.0"` | Format version used by the document. |
+| `name` | yes | non-empty string | Human-readable name of the design system. |
+| `description` | no | string | Concise catalog description. |
+| `locale` | no | non-empty string | Primary language or locale of the document. |
+| `tokens` | no | `TokenSet` | Open collection of exact reusable design values. |
+| `accessibility` | no | `Accessibility` | Explicit document-internal contrast relationships. |
+| `omitted` | no | `OmittedSection[]` | Canonical Markdown sections intentionally omitted. |
+| `extensions` | no | object | Project-specific structured data with no core semantics. |
 
-## 7. Token references
+Unknown root keys are preserved. A validator MAY warn about them, especially when a key resembles a normative key. Intentional custom data SHOULD be placed under `extensions`, use an `x-` prefix, or use a namespaced key such as `acme:review`.
 
-An exact string in the form `{path.to.value}` is a token reference.
+`version` and `name` are the only required root fields. Version 0.2.0 does not define root fields for operation-time tasks, datasets, output technologies, generated files, or provenance.
 
-```yaml
-scales:
-  road-status:
-    type: nominal
-    field: operating_status
-    values:
-      active: "{tokens.colors.semantic.normal}"
-      fault: "{tokens.colors.semantic.danger}"
-```
+## Token types
 
-Rules:
+`tokens` is an open mapping. A document MAY define any additional token group, and consumers MUST preserve unknown groups. The following groups have core validation semantics.
 
-1. A reference MUST resolve from the YAML root.
-2. A reference path uses dot-separated mapping keys.
-3. Reference cycles are errors.
-4. Array indexes MAY be written as `[n]` and are normalized to path segments by the reference implementation. Object tokens are preferred when the same value can be named semantically.
-5. Version 0.1.0 permits references only when they occupy the entire string. Embedded references such as `1px solid {tokens.colors.border}` are errors.
-6. Unknown references MUST NOT silently fall back to arbitrary values.
-7. A MapLibre style does not interpret CARTOGRAPHY.md references directly. A generator MUST compile references to concrete style values and SHOULD record the source references in layer metadata.
+| Group | Value type | Requirements |
+|---|---|---|
+| `colors` | map of strings | Each value MUST be a non-empty generic CSS color or an exact reference resolving to one. |
+| `typography` | map of `TypographyToken` | Each value is an exact reference or an open typography object. |
+| `widths` | map of `DimensionToken` | Each value is a non-negative number, a supported dimension string, or an exact reference. |
+| `sizes` | map of `DimensionToken` | Each value is a non-negative number, a supported dimension string, or an exact reference. |
+| `opacities` | map of numbers or references | Each number MUST be in the inclusive range 0–1. |
 
-## 8. Root schema
+A dimension string is a non-negative decimal followed by `px`, `pt`, `mm`, `cm`, `in`, `em`, `rem`, or `%`.
 
-The front matter has the following root shape:
+A typography object is open and MAY contain:
 
-```yaml
-version: <string>
-name: <string>
-description: <string?>
-target: <Target>
-intent: <Intent>
-data: <DataContract>
-agent: <object?>
-zoom: <ZoomModel>
-hierarchy: <object?>
-tokens: <TokenSet>
-scales: <map<string, Scale>>
-encodings: <map<string, Encoding>>
-layerOrder: <LayerOrderItem[]>
-labels: <object?>
-states: <object?>
-accessibility: <Accessibility?>
-security: <object?>
-performance: <object?>
-maplibre: <MapLibreContract?>
-validation: <ValidationContract?>
-outputs: <object?>
-extensions: <object?>
-omitted: <OmittedSection[]?>
-```
-
-Unknown root keys MAY be preserved by a parser. A conforming validator SHOULD report unknown keys only when they resemble misspellings of normative keys. Extension keys SHOULD use a namespaced prefix such as `acme:`.
-
-## 9. Core metadata
-
-### 9.1 `version`
-
-`version` is REQUIRED and identifies the CARTOGRAPHY.md format version used by the document.
-
-```yaml
-version: "0.1.0"
-```
-
-The value does not identify the MapLibre Style Specification version; that belongs in `target.styleSpecVersion`.
-
-### 9.2 `name`
-
-`name` is REQUIRED and provides a human-readable map or style-system name.
-
-### 9.3 `description`
-
-`description` is OPTIONAL and SHOULD be one concise sentence suitable for a catalog or agent prompt.
-
-## 10. Target
-
-`target` declares the renderer and portability expectations.
-
-```yaml
-target:
-  renderer: maplibre
-  styleSpecVersion: 8
-  platforms: [web, android, ios]
-  modes: [light, dark, imagery]
-  projection: mercator
-  compatibility: portable
-```
-
-### 10.1 Fields
-
-| Field | Required | Meaning |
-|---|---:|---|
-| `renderer` | yes | Primary rendering family. Version 0.1.0 is designed for `maplibre`. |
-| `styleSpecVersion` | yes | Target style specification. MapLibre styles currently use version `8`. |
-| `platforms` | no | Runtime targets such as `web`, `android`, and `ios`. |
-| `modes` | no | Supported presentation modes, commonly `light`, `dark`, and `imagery`. |
-| `projection` | no | Intended map projection or projection family. |
-| `compatibility` | no | `strict`, `portable`, or `renderer-specific`. |
-
-### 10.2 Compatibility behavior
-
-- `strict` means the generator SHOULD use only features explicitly allowed by all declared platforms.
-- `portable` means renderer-specific features MAY be used only with a documented fallback.
-- `renderer-specific` permits target-specific properties but they MUST be identified in prose or extension metadata.
-
-A validator MAY use platform capability tables in future versions. Version 0.1.0 validates the declaration but does not claim complete cross-SDK parity.
-
-## 11. Intent
-
-`intent` defines why the map exists before describing how it looks.
-
-```yaml
-intent:
-  mapType: operational
-  primaryTask: locate and assess abnormal road-network assets
-  audience: [map-user, gis-operator]
-  subject: road network
-  context: [buildings, landuse, administrative areas]
-  aesthetic:
-    keywords: [technical, calm, precise]
-    avoid: [neon, decorative, excessive-saturation]
-    contrast: medium
-    saturation: low
-    density: standard
-  successCriteria:
-    - abnormal assets are recognizable within two seconds
-    - selected objects remain distinguishable from faults
-```
-
-### 11.1 Map type
-
-`mapType` MUST be one of:
-
-- `reference` — balanced orientation and lookup;
-- `thematic` — a subject or statistical theme dominates context;
-- `operational` — status, alarms, and actionable assets dominate;
-- `navigation` — route, location, and maneuver information dominate;
-- `editing` — editable geometry, errors, snapping, and selection dominate;
-- `imagery` — imagery is the primary visual field;
-- `hybrid` — two declared purposes share priority.
-
-A hybrid map SHOULD explain which purpose wins during conflicts.
-
-### 11.2 Primary task
-
-`primaryTask` is REQUIRED. It SHOULD describe an observable user task rather than a vague goal such as “show data.”
-
-### 11.3 Audience
-
-`audience` MUST contain at least one role. The audience influences density, terminology, label detail, and interaction states.
-
-### 11.4 Aesthetic direction
-
-Aesthetic keywords are constraints, not decoration. Agents SHOULD translate them into measurable choices such as saturation, contrast, line-weight range, label density, and background prominence.
-
-## 12. Data contract
-
-`data` binds cartographic semantics to real attributes.
-
-```yaml
-data:
-  profile: ./DATA_PROFILE.json
-  profileRequired: true
-  bindings:
-    id: asset_id
-    label: name
-    category: asset_type
-    importance: traffic_level
-    magnitude: traffic_volume
-    status: operating_status
-    uncertainty: position_accuracy
-    time: updated_at
-    quality: qc_status
-  fallbackLabels: [name, asset_code]
-  nullPolicy: neutral-and-visible
-  unknownCategoryPolicy: neutral-fallback-and-warning
-  zeroIsNotNull: true
-  preserveUnits: true
-  sensitiveDataPolicy: aggregate-or-omit
-```
-
-### 12.1 Semantic bindings
-
-Bindings create a stable vocabulary for agents. Common roles include:
-
-| Role | Typical use |
+| Field | Type |
 |---|---|
-| `id` | stable feature identity and feature-state |
-| `label` | primary text label |
-| `category` | nominal class or asset type |
-| `importance` | hierarchy, priority, or network level |
-| `magnitude` | quantitative size or intensity |
-| `status` | operational or lifecycle status |
-| `uncertainty` | positional, temporal, or classification confidence |
-| `time` | recency and temporal filtering |
-| `quality` | quality-control or validation state |
+| `fontFamily` | non-empty string or non-empty array of non-empty strings |
+| `fontSize` | `DimensionToken` |
+| `fontWeight` | number from 1 through 1000, or non-empty string |
+| `lineHeight` | positive number or `DimensionToken` |
+| `letterSpacing` | finite number or non-empty string |
 
-Projects MAY add roles. A role mapped to `null` is intentionally unavailable and MUST NOT be guessed by an agent.
+Token names SHOULD describe semantic roles rather than incidental appearance. A strong semantic color SHOULD have one stable meaning. Interaction emphasis SHOULD preserve an underlying business meaning when both must remain visible.
 
-### 12.2 Null, unknown, and zero
+## Token references
 
-A generator MUST distinguish:
-
-- missing/null;
-- an explicit unknown category;
-- numeric zero;
-- empty text;
-- a value outside the declared domain.
-
-When `zeroIsNotNull` is true, zero MUST retain its quantitative meaning. Unknown categories SHOULD receive a neutral fallback and a validation finding rather than being assigned a random palette color.
-
-### 12.3 Units
-
-When `preserveUnits` is true, a generator MUST NOT silently reinterpret or normalize numeric values without recording the conversion.
-
-### 12.4 Sensitive data
-
-The contract MAY declare privacy and security constraints. It MUST NOT contain credentials or raw sensitive feature values. Styling MUST NOT reveal a restricted category through hidden layers, labels, metadata, filters, or client-side expressions.
-
-## 13. DATA_PROFILE.json
-
-The optional companion data profile makes semantic validation possible without embedding the data itself.
-
-```json
-{
-  "version": "0.1.0",
-  "name": "Road network sample",
-  "generatedAt": "2026-08-28T09:00:00Z",
-  "sources": {
-    "road-network": {
-      "type": "geojson",
-      "sourceLayers": {
-        "default": {
-          "geometry": "line",
-          "idField": "asset_id",
-          "minzoom": 10,
-          "maxzoom": 24,
-          "density": "dense",
-          "fields": {
-            "asset_id": {"type": "string", "nullable": false},
-            "operating_status": {
-              "type": "string",
-              "categories": ["active", "maintenance", "fault", "unknown"]
-            }
-          }
-        }
-      }
-    }
-  }
-}
-```
-
-### 13.1 Root fields
-
-| Field | Required | Meaning |
-|---|---:|---|
-| `version` | yes | Data-profile format version. |
-| `name` | no | Human-readable profile name. |
-| `generatedAt` | no | Quoted timestamp. |
-| `sources` | yes | Map of source identifiers. |
-
-### 13.2 Source
-
-A source declares:
-
-- `type`: `vector`, `geojson`, `raster`, `raster-dem`, or `other`;
-- `sourceLayers`: a mapping of source-layer identifiers to profiles.
-
-GeoJSON sources SHOULD use the synthetic source-layer key `default`.
-
-### 13.3 Source-layer profile
-
-A layer profile declares:
-
-- `geometry`: `point`, `line`, `polygon`, `mixed`, or `raster`;
-- optional `minzoom` and `maxzoom` availability;
-- optional stable `idField`;
-- optional `featureCount` and density class;
-- a `fields` mapping.
-
-### 13.4 Field profile
-
-A field profile contains:
-
-```json
-{
-  "type": "number",
-  "nullable": true,
-  "unit": "veh/h",
-  "minimum": 0,
-  "maximum": 4000,
-  "description": "Traffic volume per hour"
-}
-```
-
-Nominal fields SHOULD declare `categories`. Quantitative fields SHOULD declare units and observed bounds when known.
-
-A profile describes observed and expected data; it is not a substitute for source authorization or server-side validation.
-
-## 14. Zoom model
-
-`zoom` defines how information is introduced and generalized.
-
-```yaml
-zoom:
-  strategy: progressive-disclosure
-  bands:
-    regional: [4, 8]
-    city: [8, 12]
-    street: [12, 16]
-    site: [16, 24]
-  referenceZooms: [8, 12, 15, 18]
-  visibility:
-    road-segments:
-      regional: hidden
-      city: primary-only
-      street: all-operational
-      site: all-with-labels
-  generalization:
-    geometry: upstream
-    labels: runtime-collision
-```
-
-### 14.1 Bands
-
-Each band is `[minzoom, maxzoom]`, where `minzoom < maxzoom`. Bands MUST NOT overlap. Adjacent bands MAY share a boundary because `maxzoom` is conventionally exclusive in MapLibre layers.
-
-Band names are project-defined. Common bands are `global`, `regional`, `city`, `street`, and `site`.
-
-### 14.2 Reference zooms
-
-Reference zooms are the zoom levels at which automated screenshots and human reviews SHOULD occur.
-
-### 14.3 Progressive disclosure
-
-A feature family MAY progress through representations such as:
-
-`hidden → aggregate → simplified → complete geometry → geometry + label → editing detail`
-
-A generator SHOULD avoid introducing many unrelated layers at the same zoom threshold.
-
-### 14.4 Generalization boundary
-
-Styling can control visibility, width, opacity, filtering, clustering, and labeling. True geometry simplification, displacement, aggregation, and topology-preserving generalization SHOULD occur in data or tile-production tooling. A style MUST NOT claim to have solved geometry generalization when it only hides features.
-
-## 15. Visual hierarchy
-
-`hierarchy` describes relative prominence. Its internal keys are extensible, but a project SHOULD define a small ordered system.
-
-```yaml
-hierarchy:
-  levels:
-    background: 10
-    context: 30
-    primary: 60
-    focus: 80
-    critical: 100
-  principles:
-    - establish hierarchy with lightness and size before saturated hue
-    - preserve one dominant visual focus per map state
-    - ordinary status must not look like an alarm
-```
-
-A hierarchy SHOULD be understandable without relying on color names alone. Size, line weight, contrast, casing, opacity, and label priority are valid hierarchy mechanisms.
-
-## 16. Tokens
-
-`tokens` stores exact reusable values. Only `tokens.colors` is required in version 0.1.0; additional families are strongly recommended.
+A token reference uses the form `{path.to.value}`. Paths contain letters, numbers, `_`, `-`, `.`, and array indexes written as `[n]`.
 
 ```yaml
 tokens:
   colors:
-    light:
-      canvas: "#F5F7FA"
-      contextLine: "#C7CED8"
-      text: "#27313D"
-    semantic:
-      normal: "#2F7D5B"
-      maintenance: "#D18B19"
-      danger: "#C63D45"
-      unknown: "#8A94A3"
-      selection: "#2F6FED"
-  typography:
-    label:
-      fontStack: [Noto Sans Regular, Arial Unicode MS Regular]
-      size: 12
-      haloWidth: 1.5
-  lineWidth:
-    thin: 1
-    regular: 2
-    strong: 4
-  opacity:
-    context: 0.55
-    subject: 0.95
-```
-
-### 16.1 Color syntax
-
-Color values MUST be accepted by the MapLibre style color parser. Hex and functional CSS-style colors supported by the target style package MAY be used. A project SHOULD prefer a consistent notation.
-
-### 16.2 Semantic colors
-
-Strong semantic colors SHOULD be scarce. Danger, warning, selection, and editing colors MUST have distinct meanings. Selection SHOULD be an additive outline, casing, halo, or size change when preserving the underlying business status is important.
-
-### 16.3 Modes
-
-Light, dark, and imagery modes SHOULD be designed independently. Dark mode MUST NOT be produced by blindly inverting every light-mode color. Imagery overlays generally require stronger casing, halo, or localized backing.
-
-### 16.4 Token naming
-
-Token keys SHOULD describe role rather than appearance. Prefer `semantic.danger` over `red500` when the value is a semantic decision. Raw palette scales MAY coexist with semantic aliases.
-
-## 17. Scales
-
-A scale maps a field or value domain to a visual range.
-
-```yaml
-scales:
-  road-status:
-    type: nominal
-    field: operating_status
-    values:
-      active: "{tokens.colors.semantic.normal}"
-      maintenance: "{tokens.colors.semantic.maintenance}"
-      fault: "{tokens.colors.semantic.danger}"
-      unknown: "{tokens.colors.semantic.unknown}"
-    fallback: "{tokens.colors.semantic.unknown}"
-  traffic-width:
-    type: ordinal
-    field: traffic_level
-    values:
-      low: "{tokens.lineWidth.thin}"
-      medium: "{tokens.lineWidth.regular}"
-      high: "{tokens.lineWidth.strong}"
-  traffic-volume:
-    type: quantitative
-    field: traffic_volume
-    stops:
-      - [200, 1]
-      - [1000, 2]
-      - [3000, 5]
-    clamp: true
-    unit: veh/h
-```
-
-### 17.1 Types
-
-- `nominal`: unordered categories;
-- `ordinal`: ordered categories;
-- `quantitative`: continuous or stepped numeric values;
-- `diverging`: numeric values around a meaningful center;
-- `identity`: values already match the output domain.
-
-### 17.2 Domain coverage
-
-Nominal scales SHOULD cover all categories reported by DATA_PROFILE.json and MUST define a fallback when values may be unknown. A generator MUST NOT assign colors based on unstable category iteration order.
-
-### 17.3 Classification
-
-Quantitative class breaks SHOULD be derived from declared domain knowledge or a reproducible profiling method. An agent MUST NOT invent “natural breaks” without access to the distribution and then present them as data-derived.
-
-## 18. Encodings
-
-`encodings` describe feature families and the ownership of visual channels.
-
-```yaml
-encodings:
-  road-segments:
-    source: road-network
-    geometry: line
-    role: primary
-    layerGroup: subject-line
-    minzoom: 10
-    maxzoom: 24
-    rules:
-      - id: road-status-color
-        field: operating_status
-        channel: line-color
-        scale: road-status
-        critical: true
-        secondaryChannel: line-pattern
-      - id: traffic-level-width
-        field: traffic_level
-        channel: line-width
-        scale: traffic-width
-    labels:
-      field: name
-      fallbacks: [asset_code]
-      minzoom: 16
-      priority: 60
-      allowOverlap: false
-    states:
-      selected:
-        channel: casing
-        token: "{tokens.colors.semantic.selection}"
-```
-
-### 18.1 Encoding fields
-
-| Field | Required | Meaning |
-|---|---:|---|
-| `source` | yes | MapLibre source identifier. |
-| `sourceLayer` | vector only | Vector-tile source layer. |
-| `geometry` | yes | `point`, `line`, `polygon`, `raster`, `model`, or `mixed`. |
-| `role` | yes | `background`, `context`, `primary`, `focus`, or `critical`. |
-| `layerGroup` | yes | Identifier from `layerOrder`. |
-| `minzoom`, `maxzoom` | no | Visibility range. |
-| `filter` | no | Optional data subset. |
-| `rules` | yes | Visual channel assignments. |
-| `labels` | no | Label source and priority. |
-| `states` | no | Hover, selection, warning, editing, or validation states. |
-
-### 18.2 Encoding rule
-
-A rule MUST define:
-
-- a unique `id` within its encoding;
-- a `channel`;
-- either `scale` or `value`.
-
-It MAY define:
-
-- `field`;
-- `composite`;
-- `critical`;
-- `secondaryChannel`;
-- `priority`.
-
-### 18.3 Channel ownership
-
-Within one encoding, one visual channel SHOULD have one primary semantic owner. Two rules MAY share a channel only when the later rule declares `composite: true` and the combination is explained in prose.
-
-A recommended network-map vocabulary is:
-
-- width → segment importance or traffic level;
-- hue → operating status;
-- dash/pattern → lifecycle or uncertainty;
-- opacity → confidence or recency;
-- casing/halo → selection;
-- symbol shape → asset category;
-- label priority → operational importance.
-
-### 18.4 Critical semantics
-
-When `accessibility.requireSecondaryChannelForCriticalSemantics` is true, a rule marked `critical: true` MUST define `secondaryChannel`. Critical status must not be communicated by color alone.
-
-### 18.5 Data validation
-
-With a data profile, a validator SHOULD verify:
-
-- source existence;
-- source-layer existence;
-- geometry compatibility;
-- field existence;
-- category-domain coverage;
-- source zoom availability;
-- stable identifiers for feature-state.
-
-## 19. Layer order
-
-`layerOrder` is the canonical group stack from bottom to top.
-
-```yaml
-layerOrder:
-  - id: background
-    order: 0
-  - id: context-fill
-    order: 10
-  - id: context-line
-    order: 20
-  - id: subject-casing
-    order: 50
-  - id: subject-line
-    order: 60
-  - id: subject-point
-    order: 70
-  - id: subject-label
-    order: 80
-  - id: interaction
-    order: 100
-```
-
-Group identifiers MUST be unique. Order values MUST be strictly increasing in document order. Every encoding MUST reference a declared group.
-
-A generated `style.layers` array SHOULD be monotonically ordered by these groups. Layers within a group MAY be ordered using project-specific priorities.
-
-## 20. Labels
-
-`labels` is extensible. It SHOULD define global label behavior not repeated by each encoding.
-
-```yaml
-labels:
-  language:
-    primary: zh-Hans
-    fallbacks: [name:zh, name, name:en]
-  collision:
-    defaultAllowOverlap: false
-    preserveCriticalLabels: true
-  typography:
-    minimumSize: 11
-    maximumSize: 18
-    defaultHaloWidth: 1.5
-  lineLabels:
-    minimumScreenLengthPx: 80
-    repeatDistancePx: 300
+    ink: "#24303A"
+    label: "{tokens.colors.ink}"
 ```
 
 Rules:
 
-- Label priority MUST follow semantic importance, not source order.
-- Collision should normally be resolved by hiding lower-priority labels.
-- Agents SHOULD reduce label density before reducing text below the declared readable minimum.
-- Chinese labels SHOULD NOT be automatically uppercased or given Latin-oriented letter spacing.
-- Font and glyph behavior MUST be reviewed on each declared platform.
-- Critical labels that allow overlap SHOULD be few and explicitly justified.
+1. Every reference MUST resolve within the same front matter.
+2. A reference in YAML MUST occupy the entire string.
+3. Markdown prose MAY embed references within a sentence.
+4. Array indexes such as `[0]` are normalized to path segments.
+5. Broken references and reference cycles are errors.
+6. Consumers MUST NOT silently substitute a fallback for an unresolved reference.
 
-## 21. Interaction states
+## Accessibility
 
-`states` describes global behavior for hover, selection, editing, warning, disabled, and validation states.
-
-```yaml
-states:
-  selected:
-    strategy: additive-casing
-    color: "{tokens.colors.semantic.selection}"
-    preserveBusinessColor: true
-  hover:
-    strategy: width-and-opacity
-  invalid:
-    strategy: color-plus-pattern
-```
-
-Selection SHOULD preserve the underlying business color when that color is meaningful. Hover SHOULD not resemble selection or alarm. Editing handles and topology errors SHOULD use dedicated symbols or patterns.
-
-When feature-state is used:
-
-- source features MUST have stable identifiers;
-- `promoteId` or feature `id` behavior SHOULD be documented;
-- if `maplibre.featureStatePaintOnly` is true, feature-state MUST NOT appear in layout expressions;
-- state cleanup and source refresh behavior SHOULD be tested.
-
-## 22. Accessibility
+`accessibility.contrastPairs` declares exact color relationships that the core validator can calculate.
 
 ```yaml
 accessibility:
-  textContrast:
-    normal: 4.5
-    large: 3
-  nonTextGraphicContrast: 3
-  requireSecondaryChannelForCriticalSemantics: true
   contrastPairs:
-    - id: primary-label-on-canvas
-      foreground: "{tokens.colors.light.text}"
-      background: "{tokens.colors.light.canvas}"
+    - id: label-on-canvas
+      foreground: "{tokens.colors.ink}"
+      background: "{tokens.colors.canvas}"
       minimum: 4.5
       kind: text
 ```
 
-Declared contrast pairs are deterministic token checks. They do not replace actual-render checks over imagery, raster data, antialiasing, opacity, blending, or variable geometry.
+Each contrast pair has this shape:
 
-A conforming workflow SHOULD also review:
+| Field | Required | Type | Meaning |
+|---|---:|---|---|
+| `id` | yes | non-empty string | Stable identifier for the declared relationship. |
+| `foreground` | yes | non-empty string | CSS color or exact reference resolving to a color. |
+| `background` | yes | non-empty string | CSS color or exact reference resolving to a color. |
+| `minimum` | yes | positive finite number | Minimum WCAG 2.1 contrast ratio. |
+| `kind` | no | `text`, `large-text`, or `graphic` | Informative classification of the relationship. |
 
-- common color-vision deficiencies;
-- grayscale distinguishability;
-- small-screen readability;
-- high-density label collisions;
-- critical symbols without color;
-- keyboard and screen-reader behavior of surrounding UI when applicable.
+The object is open, so additional project keys are preserved.
 
-## 23. Security and privacy
+A passing contrast-pair check proves only that the declared, fully opaque color values meet the declared numeric minimum. It does not establish accessibility for every composition, background, scale, state, device, or use context. The Markdown `Accessibility` section MUST carry the broader design judgment.
 
-`security` is extensible and MAY describe:
+## Markdown sections
 
-- restricted layers;
-- minimum aggregation levels;
-- redaction rules;
-- client/server enforcement boundaries;
-- prohibited labels or metadata;
-- export restrictions.
-
-Security rules MUST be enforced at the data and service layers where needed. Hiding a MapLibre layer is not an authorization mechanism. Sensitive features MUST NOT be delivered to an unauthorized client merely because they are invisible by default.
-
-## 24. Performance
-
-`performance` MAY define budgets such as:
-
-```yaml
-performance:
-  maximumStyleLayers: 120
-  maximumSymbolLayers: 30
-  maximumExpressionDepth: 16
-  preferSharedSources: true
-  avoidUnboundedAllowOverlap: true
-```
-
-Budgets SHOULD be treated as review thresholds, not universal truths. Performance depends on tile density, source count, expression complexity, symbol placement, device capability, pitch, terrain, and runtime SDK.
-
-An agent SHOULD prefer clarity and correctness over premature micro-optimization, but MUST avoid generating redundant layers when one expression can express the same design without harming maintainability.
-
-## 25. MapLibre contract
-
-```yaml
-maplibre:
-  rootMetadataPrefix: "cartography"
-  layerIdPattern: "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
-  layerMetadata:
-    required:
-      - "cartography:group"
-      - "cartography:role"
-      - "cartography:owner"
-      - "cartography:sourceRule"
-    optional:
-      - "cartography:tokenRefs"
-      - "cartography:ruleIds"
-  featureStatePaintOnly: true
-  stableFeatureIdRequired: true
-  runtimeOptions:
-    localIdeographFontFamily: "Noto Sans CJK SC"
-```
-
-### 25.1 Style version
-
-A MapLibre style generated for version 0.1.0 MUST use style version `8` unless the target renderer explicitly supports another declared version.
-
-### 25.2 Sources and source layers
-
-- Every non-background layer MUST reference an existing source.
-- A layer using a vector source MUST identify a valid `source-layer`.
-- A GeoJSON encoding SHOULD omit `sourceLayer` and use the data-profile key `default`.
-- Source and source-layer names MUST match the data profile when one is supplied.
-
-### 25.3 Layer metadata
-
-MapLibre metadata does not affect rendering and is used for provenance.
-
-```json
-{
-  "metadata": {
-    "cartography:group": "subject-line",
-    "cartography:role": "primary",
-    "cartography:owner": "agent",
-    "cartography:sourceRule": "road-segments",
-    "cartography:ruleIds": ["road-status-color", "traffic-level-width"],
-    "cartography:tokenRefs": [
-      "{tokens.colors.semantic.normal}",
-      "{tokens.lineWidth.regular}"
-    ]
-  }
-}
-```
-
-A generator SHOULD preserve metadata on unchanged layers. It MUST NOT use provenance metadata as a substitute for actual style validation.
-
-### 25.4 Filters
-
-Expression filter syntax is preferred for generated styles. A generator SHOULD avoid mixing legacy property-filter operands with expression operands in one filter.
-
-### 25.5 Expressions
-
-- Continuous changes SHOULD use `interpolate` when interpolation is meaningful.
-- Discrete category or threshold changes SHOULD use `match` or `step`.
-- Expressions SHOULD include explicit fallbacks.
-- Deep repeated expressions SHOULD be factored at the generator level or documented.
-- A generator MUST distinguish `null`, unknown, and zero according to the data contract.
-
-### 25.6 Protocol portability
-
-In `portable` or `strict` mode, `mapbox://` URLs are errors unless a declared runtime adapter resolves them. Public or self-hosted glyph, sprite, tile, and resource URLs SHOULD be explicit.
-
-## 26. Validation contract
-
-```yaml
-validation:
-  checks:
-    - document
-    - token-references
-    - data-profile
-    - maplibre-style-spec
-    - style-contract
-    - accessibility
-    - render-fixtures
-  fixtures:
-    - id: dense-urban
-      required: true
-    - id: sparse-suburban
-      required: true
-    - id: null-and-unknown
-      required: true
-    - id: light-mode
-      required: true
-    - id: dark-mode
-      required: true
-    - id: mobile
-      required: true
-    - id: desktop
-      required: true
-  report:
-    format: json
-    includeResolvedContract: true
-```
-
-### 26.1 Validation layers
-
-A complete workflow has five layers:
-
-1. **Document validation** — front matter, schema, sections, references, ordering.
-2. **Data validation** — sources, source layers, fields, domains, units, IDs.
-3. **Style validation** — official MapLibre Style Specification validation.
-4. **Contract validation** — style provenance, layer groups, encodings, semantics, portability.
-5. **Render validation** — screenshots, collision behavior, density, modes, states, and task review.
-
-The CLI supplied by this repository implements deterministic layers 1–4 and checks that render fixtures are declared. It does not claim to judge screenshots automatically in version 0.1.0.
-
-### 26.2 Recommended fixtures
-
-At minimum, a production map SHOULD include fixtures for:
-
-- dense urban data;
-- sparse suburban or rural data;
-- null and unknown categories;
-- light mode;
-- dark mode when declared;
-- imagery mode when declared;
-- mobile viewport;
-- desktop viewport;
-- default, hover, selected, critical, and invalid states when those states exist;
-- 1× and 2× device pixel ratios where text and symbols are sensitive.
-
-### 26.3 Task review
-
-A map SHOULD be reviewed separately for:
-
-- task fit;
-- visual hierarchy;
-- legibility;
-- consistency;
-- data honesty;
-- accessibility;
-- technical correctness.
-
-A single averaged “beauty score” MUST NOT allow a data-honesty or security failure to pass.
-
-## 27. Outputs
-
-`outputs` MAY declare expected generated artifacts.
-
-```yaml
-outputs:
-  style: ./dist/style.json
-  report: ./dist/cartography-report.json
-  screenshots: ./dist/screenshots
-```
-
-A generator SHOULD avoid writing undeclared files unless explicitly requested. Reports SHOULD include tool version, contract version, findings, and which companion artifacts were checked.
-
-## 28. Markdown body
-
-### 28.1 Canonical section order
-
-The Markdown body uses `##` headings. Canonical sections, in order, are:
+The Markdown body uses the following canonical `##` sections in this order:
 
 1. `Overview`
 2. `Intent & Audience`
-3. `Data Semantics`
-4. `Visual Hierarchy`
-5. `Color`
-6. `Typography & Labels`
-7. `Geometry & Symbols`
-8. `Zoom & Generalization`
-9. `Layer Order`
-10. `Interaction States`
-11. `Accessibility`
-12. `MapLibre Implementation`
-13. `Validation`
-14. `Do's and Don'ts`
+3. `Visual Hierarchy`
+4. `Color`
+5. `Typography & Labels`
+6. `Geometry & Symbols`
+7. `Scale & Generalization`
+8. `Layering & Composition`
+9. `Interaction States`
+10. `Accessibility`
+11. `Review Principles`
+12. `Do's and Don'ts`
 
-Chinese aliases such as `概述`, `意图与受众`, `数据语义`, `视觉层级`, `色彩`, `字体与标注`, `几何与符号`, `缩放与制图综合`, `图层顺序`, `交互状态`, `无障碍`, `MapLibre 实现`, `验证`, and `正反例` MAY be recognized by tools.
+Their responsibilities are:
 
-Unknown sections MUST be preserved. Duplicate canonical sections are errors. Present canonical sections SHOULD remain in order.
+| Section | Responsibility |
+|---|---|
+| `Overview` | Establish a concrete visual world and recognizable family, not a list of generic adjectives. |
+| `Intent & Audience` | Describe long-lived contexts and people served by the design system, not a one-time request. |
+| `Visual Hierarchy` | Define stable prominence relationships among background, context, subject, focus, and critical states. |
+| `Color` | Explain palette roles, scarcity of emphasis, and lightness and saturation tradeoffs. |
+| `Typography & Labels` | Define typographic character, label hierarchy, density, conflict handling, and readability. |
+| `Geometry & Symbols` | Define the family language for points, lines, areas, textures, patterns, and symbols without binding it to particular data. |
+| `Scale & Generalization` | Describe output-independent stages of progressive disclosure and cartographic generalization without numeric view levels. |
+| `Layering & Composition` | Explain stacking, whitespace, density, balance, and focal composition without concrete identifiers or ordering values. |
+| `Interaction States` | Define visual relationships among hover, selection, alert, invalid, and related states while preserving underlying semantics. |
+| `Accessibility` | Cover redundant channels, color vision, contrast, small-screen labels, and critical-state legibility. |
+| `Review Principles` | State durable professional review dimensions and questions. |
+| `Do's and Don'ts` | Protect the visual family with forceful positive and negative examples. |
 
-### 28.2 Omitted sections
+English headings and the recognized Chinese aliases normalize to the same canonical names. Unknown `##` sections are preserved. A canonical section MUST NOT appear more than once. Present canonical sections SHOULD follow the order above. An empty canonical section produces a warning. Missing sections produce findings unless declared in `omitted`.
 
-A section MAY be intentionally omitted:
+## Omitted sections and extensions
+
+An omitted entry is either a non-empty canonical section name or an open object with `section` and optional `reason` fields.
 
 ```yaml
 omitted:
   - section: Interaction States
-    reason: Static export only; no interactive states exist.
+    reason: The design system has no interactive use context.
 ```
 
-An omitted declaration MUST NOT be used to conceal a relevant unresolved decision.
+Omission is an explicit design decision. A document SHOULD include a reason whenever the absence would otherwise be ambiguous. Omission MUST NOT be used to hide an unresolved decision that affects the design system.
 
-### 28.3 Prose quality
+The `extensions` object and unknown token groups are preserved but have no core interpretation. An extension MUST NOT redefine a normative field with incompatible meaning. Unknown Markdown sections are likewise preserved and MUST NOT duplicate a canonical section under an alias.
 
-Prose SHOULD explain:
+## Precedence
 
-- why a decision exists;
-- which cases are exceptions;
-- how conflicts are resolved;
-- what an agent must preserve;
-- what must be verified in rendered output.
+When instructions conflict, a consumer SHOULD apply this order:
 
-Prose SHOULD NOT merely repeat token values already present in YAML.
+1. applicable safety, legal, and organizational requirements;
+2. explicit human constraints for the current operation;
+3. exact front-matter values;
+4. normative statements in the Markdown body;
+5. consumer defaults.
 
-## 29. Precedence and conflict resolution
+Current-operation constraints do not become durable design-system content automatically. A consumer MUST NOT write task-specific facts into CARTOGRAPHY.md merely to resolve an operation-time need.
 
-When instructions conflict, consumers MUST apply this order:
+When an exact front-matter value conflicts with prose, the exact value wins. A tool MAY report a contradiction when it can do so deterministically, but it MUST NOT pretend to understand every natural-language conflict.
 
-1. security and privacy constraints;
-2. explicit human instructions supplied for the current operation;
-3. normative YAML values;
-4. normative statements in Markdown body;
-5. DATA_PROFILE.json facts;
-6. existing style provenance and protected ownership;
-7. generator defaults.
+## Agent use
 
-If YAML and prose conflict, the YAML value wins, but the validator SHOULD report the inconsistency when it can be detected deterministically.
+An agent using CARTOGRAPHY.md SHOULD:
 
-An agent MUST NOT silently resolve a high-impact ambiguity by inventing a business meaning. It SHOULD preserve the current style and report the ambiguity.
+1. locate and read the complete document;
+2. run the core linter and inspect every finding;
+3. resolve exact token references before applying values;
+4. understand the design family, audience, hierarchy, and declared exceptions from the prose;
+5. combine that stable guidance with the current task and facts supplied at operation time;
+6. make the smallest coherent change to the requested deliverable;
+7. preserve human-owned work and unresolved meaning;
+8. report where professional review or missing facts still matter.
 
-## 30. Agent behavior
+An agent MUST NOT:
 
-A conforming agent SHOULD:
+- invent data facts or business meanings;
+- convert a one-time task into durable front matter;
+- treat unknown prose as if it were a deterministic rule;
+- claim that a successful lint proves anything beyond document-internal validity;
+- overwrite a stable semantic role with a transient interaction state.
 
-1. read the full contract before editing style layers;
-2. load DATA_PROFILE.json when required;
-3. identify the primary task and visual focus;
-4. map real fields to declared semantics;
-5. resolve token references deterministically;
-6. preserve human-owned or protected layers;
-7. make the smallest coherent style change;
-8. record provenance metadata;
-9. run the CLI and official MapLibre validation;
-10. inspect declared render fixtures;
-11. report unresolved data, compatibility, and aesthetic risks.
+## Validator model
 
-A conforming agent MUST NOT:
-
-- invent source-layer or field names when a profile is required;
-- assign nominal colors based on unstable iteration order;
-- treat zero as null when prohibited;
-- use color as the sole signal for critical semantics when a secondary channel is required;
-- overwrite business status colors with selection colors when preservation is required;
-- expose restricted features through client-side styling;
-- claim that syntax validation proves aesthetic quality.
-
-## 31. Validator model
-
-The reference API returns:
+The reference linter accepts one source string or one file and returns a structured report:
 
 ```ts
 interface LintReport {
   valid: boolean;
   strict: boolean;
-  document: {
-    name?: string;
-    version?: string;
-    path?: string;
-  };
-  summary: {
-    errors: number;
-    warnings: number;
-    infos: number;
-  };
   findings: Finding[];
+  summary: FindingSummary;
   cartography?: CartographyConfig;
   resolved?: unknown;
   sections: string[];
-  artifacts: {
-    dataProfileChecked: boolean;
-    styleChecked: boolean;
-    officialMapLibreValidation: boolean;
+  document: {
+    path?: string;
+    name?: string;
+    version?: string;
   };
 }
 ```
 
-A finding contains:
+A finding has this shape:
 
 ```ts
 interface Finding {
@@ -1124,176 +302,148 @@ interface Finding {
 }
 ```
 
-### 31.1 Severity
+Normal mode is valid when the report has no errors. Strict mode is valid when it has neither errors nor warnings. Informational findings never block validity.
 
-- `error`: deterministic invalidity, unsafe behavior, broken contract, or missing required evidence;
-- `warning`: likely quality, portability, completeness, or maintainability problem;
-- `info`: non-blocking observation.
+Ordinary document invalidity is returned as findings. File-access, command-usage, and unexpected internal failures are operational errors.
 
-Normal mode is valid when there are no errors. Strict mode is valid only when there are no errors or warnings.
-
-### 31.2 Exit codes
+The command-line exit codes are:
 
 | Code | Meaning |
 |---:|---|
-| `0` | Validation passed under the selected strictness. |
-| `1` | Validation completed but findings are blocking. |
-| `2` | CLI usage, file access, JSON parsing, or internal execution failed. |
+| `0` | The operation completed and validation passed under the selected strictness. |
+| `1` | Validation completed with blocking findings, or a diff introduced more errors or warnings. |
+| `2` | Command usage, file access, or internal execution failed. |
 
-## 32. Core rule catalog
+Linting proves only that CARTOGRAPHY.md satisfies its schema and deterministic internal relationships. It does not prove that outside facts are correct, that any generated deliverable is valid, that a current task is satisfied, or that professional cartographic and accessibility review is complete.
 
-The reference implementation includes deterministic rules for:
+## Rule catalog
 
-- front matter presence and YAML syntax;
-- prohibited aliases and custom tags;
-- schema conformance;
-- duplicate, missing, and out-of-order Markdown sections;
-- broken and cyclic token references;
-- valid MapLibre color tokens;
-- zoom-band ordering and overlap;
-- layer-group uniqueness and ordering;
-- encoding rule identity and channel ownership;
-- critical secondary channels;
-- declared contrast pairs;
-- data-profile schema;
-- source, source-layer, geometry, and field contracts;
-- nominal-domain coverage;
-- stable feature identifiers;
-- official MapLibre Style Specification validation;
-- layer provenance metadata and group order;
-- portable resource protocols;
-- deprecated filter syntax;
-- declared render-fixture coverage.
+Every built-in rule has document scope.
 
-Projects MAY add rules through the TypeScript API. Custom rules SHOULD be deterministic, side-effect free, and network independent.
+| Rule ID | Severity | Purpose |
+|---|---|---|
+| `frontmatter-required` | error | Require a YAML front-matter fence at the beginning of the file. |
+| `frontmatter-unclosed` | error | Detect a missing closing front-matter fence. |
+| `yaml-syntax` | error | Report YAML syntax errors and duplicate keys. |
+| `yaml-alias-prohibited` | error | Reject anchors and aliases. |
+| `yaml-custom-tag-prohibited` | error | Reject custom YAML tags. |
+| `yaml-merge-key-prohibited` | error | Reject merge keys. |
+| `yaml-block-scalar-prohibited` | error | Keep long rationale in Markdown. |
+| `yaml-tab-indentation-prohibited` | error | Reject tab indentation in YAML. |
+| `schema` | error | Validate the version 0.2.0 front-matter schema. |
+| `duplicate-section` | error | Reject duplicate canonical Markdown sections. |
+| `document-size` | warning | Report a document larger than the configured byte limit. |
+| `required-sections` | warning or info | Report canonical sections that are neither present nor omitted. |
+| `empty-section` | warning | Report empty narrative sections. |
+| `section-order` | warning | Check canonical section order. |
+| `unknown-root-key` | warning | Preserve custom root keys while identifying likely mistakes. |
+| `token-reference` | error | Check exact references, embedded YAML references, broken paths, and cycles. |
+| `color-token` | error | Validate known color tokens as generic CSS colors. |
+| `contrast-pairs` | error | Calculate declared WCAG 2.1 contrast minimums. |
+| `contract-summary` | info | Summarize token leaves, token groups, and prose sections. |
+| `rule-execution` | error | Contain an unexpected custom-rule failure as a finding. |
 
-## 33. Conformance classes
+Custom rules MAY replace a built-in rule with the same ID. They SHOULD be deterministic, side-effect free, network independent, and scoped to the document.
 
-A tool MAY claim one or more classes:
-
-- **Parser conformant** — parses the deterministic YAML profile and Markdown sections.
-- **Document validator conformant** — validates schema, references, and canonical structure.
-- **Data-contract conformant** — validates DATA_PROFILE.json and encoding semantics.
-- **MapLibre-contract conformant** — runs official style validation and contract checks.
-- **Render-workflow conformant** — produces and reviews all required fixtures.
-- **Agent conformant** — follows the behavior and precedence rules in this specification.
-
-A tool MUST state which classes it implements.
-
-## 34. Extension model
-
-Unknown YAML keys and Markdown sections SHOULD be preserved. Extensions SHOULD use namespaced keys:
-
-```yaml
-acme:qualityGates:
-  maximumUnknownStatusPercent: 0.5
-```
-
-An extension MUST NOT redefine a normative key with incompatible meaning. A validator MAY warn about an extension it cannot evaluate but MUST NOT delete it.
-
-## 35. Versioning
+## Versioning
 
 The format uses semantic versioning.
 
-- Patch versions clarify wording or add backward-compatible validation.
-- Minor versions add optional fields, rules, or conformance behavior.
-- Major versions may change required structure or semantics.
+- A patch version clarifies wording or makes backward-compatible corrections.
+- A minor version may add optional fields, token semantics, sections, or findings.
+- A major version may change required structure or existing meaning.
 
-A consumer SHOULD reject an unsupported future major version or continue only in an explicit best-effort mode.
+A consumer SHOULD reject an unsupported version rather than silently reinterpret it. The reference schema for this specification accepts the exact literal `"0.2.0"`.
 
-## 36. Minimal conforming example
+## Minimal example
+
+The following complete document uses every canonical section and passes document-internal validation in normal mode.
 
 ```md
 ---
-version: "0.1.0"
-name: Minimal operational network map
-target:
-  renderer: maplibre
-  styleSpecVersion: 8
-  platforms: [web]
-  modes: [light]
-  compatibility: portable
-intent:
-  mapType: operational
-  primaryTask: locate abnormal network segments
-  audience: [operator]
-data:
-  profile: ./DATA_PROFILE.json
-  profileRequired: true
-  bindings:
-    id: asset_id
-    label: name
-    status: operating_status
-zoom:
-  bands:
-    city: [8, 12]
-    street: [12, 16]
-    site: [16, 24]
+version: "0.2.0"
+name: Quiet civic atlas
+description: A warm, restrained visual system for public-interest maps.
+locale: en
 tokens:
   colors:
-    canvas: "#F5F7FA"
-    active: "#2F7D5B"
-    fault: "#C63D45"
-    unknown: "#8A94A3"
-scales:
-  status:
-    type: nominal
-    field: operating_status
-    values:
-      active: "{tokens.colors.active}"
-      fault: "{tokens.colors.fault}"
-    fallback: "{tokens.colors.unknown}"
-encodings:
-  road-segments:
-    source: road-network
-    geometry: line
-    role: primary
-    layerGroup: subject-line
-    rules:
-      - id: status-color
-        field: operating_status
-        channel: line-color
-        scale: status
-layerOrder:
-  - id: background
-    order: 0
-  - id: subject-line
-    order: 50
+    canvas: "#F7F5EF"
+    ink: "#1F2933"
+    context: "#8A938B"
+    accent: "#A33A2B"
+  typography:
+    label:
+      fontFamily: ["Source Sans 3", "sans-serif"]
+      fontSize: 12px
+      fontWeight: 500
+      lineHeight: 1.35
+  widths:
+    hairline: 0.75px
+    emphasis: 2px
+  sizes:
+    compact-symbol: 6px
+  opacities:
+    context: 0.58
+accessibility:
+  contrastPairs:
+    - id: label-on-canvas
+      foreground: "{tokens.colors.ink}"
+      background: "{tokens.colors.canvas}"
+      minimum: 4.5
+      kind: text
+extensions:
+  acme:reviewCycle: annual
 ---
 
 ## Overview
 
-A calm operational map in which abnormal segments dominate neutral context.
+A quiet civic atlas: warm paper, precise dark ink, soft context, and a scarce brick accent.
 
 ## Intent & Audience
 
-Operators must identify faults quickly without mistaking selection for status.
-
-## Data Semantics
-
-`operating_status` is nominal. Unknown values use the neutral fallback.
+The system serves broad public audiences who need calm orientation before detailed comparison.
 
 ## Visual Hierarchy
 
-Background is subordinate; network segments are primary; faults are critical.
+Canvas recedes, context supports, the subject leads, and the accent is reserved for decisive focus.
 
-## Zoom & Generalization
+## Color
 
-The full network appears at street zoom. Labels are introduced only at site zoom.
+Lightness establishes order before hue. The brick accent never becomes a general category palette.
 
-## Layer Order
+## Typography & Labels
 
-Context remains below subject lines and interaction overlays.
+Labels are plainspoken and compact, with density reduced before type becomes too small to read.
 
-## MapLibre Implementation
+## Geometry & Symbols
 
-Generated layers carry `cartography:*` provenance metadata.
+Lines use restrained weight changes; symbols share simple silhouettes and avoid decorative detail.
 
-## Validation
+## Scale & Generalization
 
-Validate the contract, profile, style specification, and representative screenshots.
+The system moves from broad structure to local detail in deliberate stages, preserving identity as detail changes.
+
+## Layering & Composition
+
+Whitespace and soft context frame one primary subject; focus marks sit above but do not erase its meaning.
+
+## Interaction States
+
+Hover is subtle, selection is additive, and critical states retain a redundant cue beyond color.
+
+## Accessibility
+
+Important differences use shape, weight, text, or pattern as well as color and remain legible on small screens.
+
+## Review Principles
+
+Review hierarchy, label collisions, semantic consistency, density, contrast, and honest treatment of uncertainty.
+
+## Do's and Don'ts
+
+Do preserve warm restraint and scarce emphasis. Don't introduce unrelated saturated accents or ornamental symbols.
 ```
 
-## 37. Final principle
+## Final principle
 
-CARTOGRAPHY.md exists to make cartographic intent durable and executable. Tokens provide exact values; data bindings provide truth; prose provides judgment; validation provides evidence. A successful implementation keeps all four connected.
+> CARTOGRAPHY.md preserves transferable cartographic identity and durable design judgment. Core tools validate only the document itself; operation-time tasks and facts remain outside the format.

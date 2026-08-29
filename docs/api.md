@@ -1,124 +1,108 @@
-# cartography.md CLI and TypeScript API
-中文版：[api.zh-CN.md](api.zh-CN.md)
+# TypeScript API
 
-The npm package `@mapseekai/cartography.md` exposes a command-line interface and a typed API over the same parser, schemas, and deterministic rule set.
+**Version:** 0.2.0  
+**Package:** `@mapseekai/cartography.md`  
+**中文版:** [api.zh-CN.md](api.zh-CN.md)
 
-## Installation
+The public API parses, validates, resolves, and compares one CARTOGRAPHY.md document. Ordinary document invalidity is returned as structured findings.
 
-```bash
-pnpm add -D @mapseekai/cartography.md
-```
-
-Node.js 20 or newer is required.
-
-## CLI
-
-The package installs two equivalent binaries:
-
-- `cartography.md` — canonical name;
-- `cartographymd` — cross-platform alias recommended on Windows.
-
-### `lint`
-
-```bash
-cartographymd lint <CARTOGRAPHY.md> \
-  [--profile DATA_PROFILE.json] \
-  [--style style.json] \
-  [--format json|text] \
-  [--strict]
-```
-
-Examples:
-
-```bash
-cartographymd lint CARTOGRAPHY.md
-cartographymd lint CARTOGRAPHY.md --profile DATA_PROFILE.json --style style.json
-cartographymd lint CARTOGRAPHY.md --strict --format text
-cat CARTOGRAPHY.md | cartographymd lint - --profile DATA_PROFILE.json
-```
-
-`--strict` makes warnings blocking for `report.valid` and the exit code. It does not rewrite finding severities.
-
-For a normal file input, the CLI automatically resolves `data.profile` relative to the directory containing `CARTOGRAPHY.md` unless `--profile` is supplied explicitly.
-
-### `parse`
-
-```bash
-cartographymd parse CARTOGRAPHY.md
-```
-
-Parses YAML front matter and canonical Markdown sections without running semantic, profile, or style rules.
-
-### `diff`
-
-```bash
-cartographymd diff CARTOGRAPHY.md CARTOGRAPHY.next.md
-```
-
-Compares contract leaf values and Markdown section bodies. The command exits with `1` when the changed document introduces a validation regression.
-
-### `rules`
-
-```bash
-cartographymd rules
-```
-
-Prints the built-in rule catalog as JSON.
-
-### `spec`
-
-```bash
-cartographymd spec
-cartographymd spec --output CARTOGRAPHY-SPEC.md
-```
-
-Prints or copies the bundled `docs/spec.md`.
-
-### Exit codes
-
-| Code | Meaning |
-|---:|---|
-| `0` | The command completed and passed under the selected strictness. |
-| `1` | Validation or diff completed with a blocking result. |
-| `2` | Usage, file access, JSON parsing, or execution failed. |
-
-## Public API
+## Import
 
 ```ts
 import {
-  DEFAULT_RULES,
   cartographySchema,
-  dataProfileSchema,
   diffCartography,
   getRuleCatalog,
   getSpecification,
   lint,
+  lintCartography,
   lintFile,
   parseCartography,
   resolveReferences,
-  validateMapLibreStyle,
+  type CartographyConfig,
+  type LintOptions,
+  type LintReport,
 } from '@mapseekai/cartography.md';
 ```
 
-## `lint(source, options?)`
+## Public values and functions
 
-Synchronously parses and validates a raw `CARTOGRAPHY.md` string.
+| Export | Signature | Purpose |
+|---|---|---|
+| `parseCartography` | `(source: string) => ParsedCartography<CartographyConfig>` | Parse front matter and Markdown sections and return parser findings. |
+| `cartographySchema` | Zod schema | Validate the version 0.2.0 front-matter value. |
+| `lint` | `(source: string, options?: LintOptions) => LintReport` | Run parser checks and document rules against a source string. |
+| `lintCartography` | alias of `lint` | Compatibility name for `lint`. |
+| `lintFile` | `(file: string, options?: LintFileOptions) => Promise<LintReport>` | Read and lint a file, recording its path in the report. |
+| `resolveReferences` | `(frontmatter: unknown) => unknown` | Return a deep value with exact references resolved where possible. |
+| `diffCartography` | `(beforeSource: string, afterSource: string, options?) => CartographyDiffReport` | Compare parsed leaf values, prose sections, and finding counts. |
+| `getSpecification` | `() => string` | Return the bundled English normative specification. |
+| `getRuleCatalog` | `() => RuleDescriptor[]` | Return a copy of the built-in document-rule catalog. |
+
+## `parseCartography(source)`
+
+`parseCartography` normalizes a byte-order mark and line endings, parses the required YAML front matter, validates it with `cartographySchema`, extracts `##` sections, normalizes recognized headings, and reports duplicate canonical sections.
 
 ```ts
-import {lint} from '@mapseekai/cartography.md';
+const parsed = parseCartography(`---
+version: "0.2.0"
+name: Quiet atlas
+---
 
-const report = lint(content, {
-  sourcePath: '/project/CARTOGRAPHY.md',
-  dataProfile,
-  style,
-  strict: false,
-});
+## Overview
+
+Warm paper and restrained ink.
+`);
+
+if (parsed.config) {
+  console.log(parsed.config.name);
+}
+console.log(parsed.sections[0]?.canonicalHeading); // Overview
 ```
+
+Parser and schema errors appear in `parsed.findings`; ordinary invalid input does not throw.
+
+## `cartographySchema`
+
+`cartographySchema` is the Zod source of truth for front matter.
+
+```ts
+const result = cartographySchema.safeParse({
+  version: '0.2.0',
+  name: 'Quiet atlas',
+});
+
+if (result.success) {
+  const config: CartographyConfig = result.data;
+}
+```
+
+The object is pass-through: unknown root keys are preserved. The linter separately reports custom root keys through `unknown-root-key`.
+
+## `lint(source, options?)`
+
+`lint` runs parser findings and the merged rule set, sorts findings, summarizes severities, resolves exact references in a valid configuration, and computes `valid`.
+
+```ts
+const report = lint(source, {
+  sourcePath: 'CARTOGRAPHY.md',
+  strict: true,
+  maxDocumentBytes: 256_000,
+});
+
+if (!report.valid) {
+  for (const finding of report.findings) {
+    console.error(finding.ruleId, finding.message);
+  }
+}
+```
+
+`lintCartography` is the same function object as `lint`.
+
+### `LintOptions`
 
 ```ts
 interface LintOptions {
-  style?: unknown;
-  dataProfile?: unknown;
   sourcePath?: string;
   strict?: boolean;
   rules?: LintRule[];
@@ -126,163 +110,161 @@ interface LintOptions {
 }
 ```
 
-`lintCartography` is an alias of `lint`.
+- `sourcePath` is copied into `report.document.path` and supplied to rules.
+- `strict` defaults to `false`. When true, warnings block validity.
+- `rules` adds custom rules by ID. A custom rule with an existing ID replaces the built-in rule with that ID.
+- `maxDocumentBytes` defaults to `512_000`.
+
+### `LintReport`
+
+```ts
+interface LintReport {
+  valid: boolean;
+  strict: boolean;
+  findings: Finding[];
+  summary: FindingSummary;
+  cartography?: CartographyConfig;
+  resolved?: unknown;
+  sections: string[];
+  document: {
+    path?: string;
+    name?: string;
+    version?: string;
+  };
+}
+```
+
+`cartography` and `resolved` are present only when front matter passes `cartographySchema`. `sections` contains normalized headings in source order. `document.name` and `document.version` come from the parsed configuration.
+
+`valid` is true when there are no errors and, in strict mode, no warnings. Informational findings do not block validity. This result establishes only the validity of the CARTOGRAPHY.md document and its deterministic internal relationships.
 
 ## `lintFile(file, options?)`
 
-Asynchronously reads a document and optional companion files.
-
 ```ts
-import {lintFile} from '@mapseekai/cartography.md';
+type LintFileOptions = Omit<LintOptions, 'sourcePath'>;
 
-const report = await lintFile('CARTOGRAPHY.md', {
-  dataProfilePath: 'DATA_PROFILE.json',
-  stylePath: 'style.json',
-  strict: true,
-});
+const report = await lintFile('CARTOGRAPHY.md', {strict: true});
 ```
 
-```ts
-interface LintFileOptions {
-  style?: unknown;
-  dataProfile?: unknown;
-  stylePath?: string;
-  dataProfilePath?: string;
-  strict?: boolean;
-  rules?: LintRule[];
-  maxDocumentBytes?: number;
-}
-```
-
-Pre-parsed `style` and `dataProfile` values take precedence over paths. When `dataProfilePath` and `dataProfile` are omitted, `lintFile` resolves `data.profile` relative to the document.
-
-## `parseCartography(source)`
-
-Returns the parsed front matter, validated config when available, body, canonical sections, and parser findings.
-
-```ts
-const parsed = parseCartography(content);
-
-if (parsed.config) {
-  console.log(parsed.config.intent.primaryTask);
-}
-
-for (const finding of parsed.findings) {
-  console.log(finding.ruleId, finding.message);
-}
-```
-
-```ts
-interface ParsedCartography<TConfig = CartographyConfig> {
-  source: string;
-  rawFrontmatter: unknown;
-  config?: TConfig;
-  body: string;
-  sections: MarkdownSection[];
-  findings: Finding[];
-}
-```
-
-Parsing is recovery-oriented: structural findings are returned whenever possible instead of throwing. File I/O and JSON parsing are handled by `lintFile` and the CLI.
+`lintFile` reads UTF-8 text, calls `lint`, and sets `document.path` to the supplied path. Passing `-` reads standard input. File-read failures reject the promise.
 
 ## `resolveReferences(frontmatter)`
 
-Returns a deep copy with valid exact `{path.to.value}` references resolved. Broken references and cycles remain unchanged; call `lint` when findings are required.
+`resolveReferences` recursively replaces exact `{path.to.value}` strings using the supplied value as the root.
 
 ```ts
-const resolved = resolveReferences(parsed.rawFrontmatter);
-```
-
-## `validateMapLibreStyle(style, cartography, dataProfile?)`
-
-Runs all built-in style-scope rules against an already parsed contract:
-
-- official MapLibre Style Specification validation;
-- cartography.md provenance metadata;
-- encoding/source/source-layer consistency;
-- token reference and token-binding drift;
-- governed layer-group order;
-- stable feature IDs;
-- portable resource protocols;
-- legacy filter warnings;
-- paint-only `feature-state` constraints.
-
-```ts
-const findings = validateMapLibreStyle(style, cartography, dataProfile);
-```
-
-## `diffCartography(before, after, options?)`
-
-```ts
-const diff = diffCartography(beforeContent, afterContent);
-
-if (diff.regression) {
-  console.error(diff.findings.delta);
-}
-```
-
-An optional third argument `{before?: LintOptions; after?: LintOptions}` supplies a data profile or style for either side, so the findings delta reflects artifact-aware validation.
-
-The report separates added, removed, and modified resolved paths from added, removed, and modified canonical Markdown sections.
-
-## Schemas
-
-The package exports Zod schemas:
-
-```ts
-const contractResult = cartographySchema.safeParse(frontmatter);
-const profileResult = dataProfileSchema.safeParse(profileJson);
-```
-
-Portable JSON Schemas are also maintained in the repository:
-
-- `schema/cartography.schema.json`;
-- `schema/data-profile.schema.json`.
-
-## Specification and rules
-
-```ts
-const markdown = getSpecification();
-const catalog = getRuleCatalog();
-```
-
-`getSpecification()` reads the bundled normative specification. `getRuleCatalog()` returns a copy of the public rule descriptors.
-
-## Custom rules
-
-```ts
-import {
-  DEFAULT_RULES,
-  lint,
-  type LintRule,
-} from '@mapseekai/cartography.md';
-
-const reservedDangerColor: LintRule = {
-  id: 'acme-danger-color-reserved',
-  severity: 'error',
-  scope: 'document',
-  description: 'Reserve the organizational danger color for operational faults.',
-  run(context) {
-    if (!context.cartography) return [];
-
-    const danger = context.cartography.tokens.colors;
-    // Evaluate a deterministic organization-specific condition.
-    return [];
+const resolved = resolveReferences({
+  tokens: {
+    colors: {
+      ink: '#24303A',
+      label: '{tokens.colors.ink}',
+    },
   },
-};
-
-const report = lint(content, {
-  rules: [...DEFAULT_RULES, reservedDangerColor],
 });
 ```
 
-Custom rules are merged by ID. A custom rule with the same ID replaces the built-in rule for that invocation. Rules should be deterministic, side-effect free, and network independent.
+Arrays and objects are copied recursively. Missing references and cycles remain as their unresolved strings; call `lint` when those conditions must be reported as findings.
 
-## Report types
+## `diffCartography(beforeSource, afterSource, options?)`
+
+```ts
+const report = diffCartography(before, after, {
+  before: {strict: false},
+  after: {strict: true},
+});
+```
+
+The optional third argument is:
+
+```ts
+{
+  before?: LintOptions;
+  after?: LintOptions;
+}
+```
+
+The result separates added, removed, and modified parsed leaf paths from added, removed, and modified normalized prose sections. `regression` is true when the new report has more errors or warnings than the old report.
+
+## `getSpecification()` and `getRuleCatalog()`
+
+```ts
+const specification: string = getSpecification();
+const rules: RuleDescriptor[] = getRuleCatalog();
+```
+
+`getSpecification` returns the bundled `docs/spec.md`. `getRuleCatalog` returns a new array containing the built-in descriptors; every descriptor currently has `scope: 'document'`.
+
+## Exported schema types
+
+The package exports these schema-derived types:
+
+```ts
+type TokenReference = string;
+
+type DimensionToken =
+  | number
+  | string; // validated dimension string or exact reference
+
+type TypographyToken =
+  | TokenReference
+  | {
+      fontFamily?: string | string[];
+      fontSize?: DimensionToken;
+      fontWeight?: number | string;
+      lineHeight?: number | DimensionToken;
+      letterSpacing?: number | string;
+      [key: string]: unknown;
+    };
+
+interface ContrastPair {
+  id: string;
+  foreground: string;
+  background: string;
+  minimum: number;
+  kind?: 'text' | 'large-text' | 'graphic';
+  [key: string]: unknown;
+}
+
+type OmittedSection =
+  | string
+  | {
+      section: string;
+      reason?: string;
+      [key: string]: unknown;
+    };
+
+interface CartographyConfig {
+  version: '0.2.0';
+  name: string;
+  description?: string;
+  locale?: string;
+  tokens?: {
+    colors?: Record<string, string>;
+    typography?: Record<string, TypographyToken>;
+    widths?: Record<string, DimensionToken>;
+    sizes?: Record<string, DimensionToken>;
+    opacities?: Record<string, number | TokenReference>;
+    [group: string]: unknown;
+  };
+  accessibility?: {
+    contrastPairs?: ContrastPair[];
+    [key: string]: unknown;
+  };
+  omitted?: OmittedSection[];
+  extensions?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+```
+
+The aliases are inferred from Zod; the comments above summarize their runtime constraints rather than replacing schema validation.
+
+## Exported model types
+
+### Findings and parsed documents
 
 ```ts
 type Severity = 'error' | 'warning' | 'info';
-type RuleScope = 'document' | 'profile' | 'style';
+type RuleScope = 'document';
 
 interface Finding {
   ruleId: string;
@@ -295,33 +277,75 @@ interface Finding {
   evidence?: unknown;
 }
 
-interface LintReport<TConfig = CartographyConfig> {
-  valid: boolean;
-  strict: boolean;
+interface FindingSummary {
+  errors: number;
+  warnings: number;
+  infos: number;
+}
+
+interface MarkdownSection {
+  heading: string;
+  canonicalHeading: string;
+  line: number;
+  body: string;
+}
+
+interface ParsedCartography<TConfig = CartographyConfig> {
+  source: string;
+  rawFrontmatter: unknown;
+  config?: TConfig;
+  body: string;
+  sections: MarkdownSection[];
   findings: Finding[];
-  summary: {
-    errors: number;
-    warnings: number;
-    infos: number;
-  };
-  cartography?: TConfig;
-  resolved?: unknown;
-  sections: string[];
-  document: {
-    path?: string;
-    name?: string;
-    version?: string;
-  };
-  artifacts: {
-    dataProfileChecked: boolean;
-    styleChecked: boolean;
-    officialMapLibreValidation: boolean;
-  };
 }
 ```
 
-`officialMapLibreValidation` means the official validator was invoked because a style value was supplied. Validation errors are represented as normal findings.
+### Rules
 
-## API stability
+```ts
+interface LintContext {
+  source: string;
+  parsed: ParsedCartography;
+  cartography?: CartographyConfig;
+  sourcePath?: string;
+  maxDocumentBytes: number;
+}
 
-The format and package are draft `0.1.0`. Finding IDs and report shapes are intended to remain stable within the `0.1.x` line. New warnings may be added in patch releases; strict-mode consumers should pin package versions in CI.
+interface LintRule {
+  id: string;
+  severity: Severity;
+  scope: RuleScope;
+  description: string;
+  run(context: LintContext): Finding[];
+}
+
+interface RuleDescriptor {
+  id: string;
+  severity: Severity;
+  scope: RuleScope;
+  description: string;
+}
+```
+
+### Diff report
+
+```ts
+interface DiffBucket {
+  added: string[];
+  removed: string[];
+  modified: string[];
+}
+
+interface CartographyDiffReport {
+  values: DiffBucket;
+  sections: DiffBucket;
+  findings: {
+    before: FindingSummary;
+    after: FindingSummary;
+    delta: {errors: number; warnings: number; infos: number};
+  };
+  regression: boolean;
+}
+```
+
+`LintOptions`, `LintFileOptions`, and `LintReport` are also exported exactly as shown above.

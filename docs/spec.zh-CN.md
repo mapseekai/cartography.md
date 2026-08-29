@@ -1,1115 +1,293 @@
 # CARTOGRAPHY.md 格式规范
 
-**状态：** 草案 0.1.0  
+**状态：** 草案 0.2.0  
 **仓库：** `mapseekai/cartography.md`  
-**主要目标：** MapLibre Style Specification v8  
-**规范文件名：** `CARTOGRAPHY.md`
+**规范文件名：** `CARTOGRAPHY.md`  
+**English:** [spec.md](spec.md)
 
-> **本文件为非规范性中文翻译。** 如与英文原文 [spec.md](spec.md) 冲突，以英文版为准。
+CARTOGRAPHY.md 是一种用于保存制图设计系统的自包含格式。它将机器可读的 YAML token 与人类可读的 Markdown 判断结合起来，使人和 Agent 能够在不同数据集、主题和任务中应用同一套稳定的视觉身份。
 
-CARTOGRAPHY.md 是一种格式，用于向编码 Agent 和地图样式工具描述持久的制图设计契约。它结合机器可读的 YAML 与人类可读的 Markdown，使 Agent 能够理解应使用的精确值及其背后的制图原因。
+除非某段明确标为信息性内容，否则本文档具有规范性。
 
-除非某个章节明确标为信息性内容，否则本文档具有规范性。
+## 目的
 
-## 1. 目的
+CARTOGRAPHY.md 文档记录持久的视觉身份和制图判断：
 
-MapLibre `style.json` 会告诉渲染器如何绘制地图。但它本身不会说明：
+- 设计应唤起的视觉世界；
+- 设计长期服务的受众和场景；
+- 背景、上下文、主体、焦点与关键状态之间的相对显著性；
+- 可复用的精确色彩、字体、宽度、尺寸和透明度值；
+- 标注、几何、符号、比例尺变化、构图、交互状态、无障碍和评审原则。
 
-- 地图的目的；
-- 目标受众和决策任务；
-- 哪些数据字段承载语义含义；
-- 哪些要素应突出或弱化；
-- 表示方式如何随 zoom 级别变化；
-- 哪些视觉通道拥有何种含义；
-- 哪些颜色保留给警告、选择或不确定性；
-- 应如何处理无障碍、隐私和数据质量；
-- Agent 应如何保留人工创作的成果；
-- 除样式语法外，应如何验证结果。
+文档不记录单次用户请求、特定数据集的字段或来源，也不记录特定输出系统的指令。这些属于操作时输入。核心解析、校验和比较只接受一份 CARTOGRAPHY.md，并且只评估该文档本身。
 
-CARTOGRAPHY.md 填补了这一缺口。它是一份上游设计契约，Agent 可据此生成、修改、审查或解释 MapLibre 样式。
+## 规范性语言
 
-CARTOGRAPHY.md 不是：
+关键词 **MUST**、**MUST NOT**、**REQUIRED**、**SHOULD**、**SHOULD NOT** 和 **MAY** 表达规范性要求级别。
 
-- MapLibre Style Specification 的替代品；
-- 数据 schema 或矢量瓦片 schema；
-- 完整的渲染引擎；
-- 无需渲染审查即可保证地图美学成功的保证；
-- 嵌入密钥、访问 token 或敏感要素数据的场所。
+## 设计目标
 
-## 2. 规范性语言
+本格式具有以下目标：
 
-关键词 **MUST**、**MUST NOT**、**REQUIRED**、**SHOULD**、**SHOULD NOT** 和 **MAY** 应解释为规范性要求级别。
+1. **散文优先。** 散文承载设计判断、边界、取舍与例外。
+2. **精确上下文。** 在需要精确性的地方，token 提供可复用值。
+3. **可迁移性。** 文档可以跨数据集、主题、任务和输出技术继续使用。
+4. **人和 Agent 均可读。** 同一文件同时支持专业评审和 Agent 使用。
+5. **确定性。** 等价源码产生等价的解析值和 finding。
+6. **开放扩展。** 命名扩展和未知 token 组可以保存项目特定信息，而不改变核心含义。
+7. **诚实校验。** lint 成功只证明文档内部有效。
 
-## 3. 设计目标
+## 发现
 
-该格式围绕以下特性设计：
+规范文件名是 `CARTOGRAPHY.md`。
 
-1. **Agent 可读性。** 重要决策在会话之间保持明确和稳定。
-2. **人类可读性。** 制图师无需专用工具即可审查同一文件。
-3. **确定性。** 等效输入产生等效的解析模型和发现结果。
-4. **语义正确性。** 样式决策始终关联真实的数据字段和领域。
-5. **渲染器可移植性。** 明确声明渲染器特定行为，而非假设其存在。
-6. **最小差异。** Agent 可以变更一项决策，而无需重写无关的样式图层。
-7. **可追溯性。** 生成的样式图层会记录产生它们的契约规则和 token。
-8. **渐进式验证。** 语法、语义、样式一致性和渲染证据分别检查。
+当调用方提供显式路径时，工具 SHOULD 使用该路径。否则，工具 MAY 从当前目录开始向祖先目录查找最近的规范文件。为保证可复现性，文件名匹配 SHOULD 在所有平台上区分大小写。
 
-## 4. 文件名与发现
+一个仓库 MAY 包含多份文档。除非工具定义更窄的作用域，否则文档适用于其所在目录及后代目录。
 
-规范文件名为 `CARTOGRAPHY.md`。
+## 文档结构
 
-工具 SHOULD 按以下顺序发现它：
+文档恰好具有两个结构层：
 
-1. 调用方显式提供的路径；
-2. 当前工作目录中的 `CARTOGRAPHY.md`；
-3. 包含 `CARTOGRAPHY.md` 的最近祖先目录；
-4. 项目特定的配置路径。
-
-仓库 MAY 包含多个契约。除非工具定义更具体的作用域，否则契约适用于包含它的目录及其后代目录。
-
-为实现可复现性，文件名匹配 SHOULD 在所有平台上区分大小写。
-
-## 5. 文档结构
-
-文档具有两个层级：
-
-1. 文件开头由 `---` 分隔的 **YAML front matter**；
-2. 在规范 `##` 章节中包含原理说明的 **Markdown 正文**。
+1. 文件开头由 `---` 分隔的 YAML front matter；
+2. 使用规范 `##` 标题组织的 Markdown 散文。
 
 ```md
 ---
-version: 0.1.0
-name: Example operational map
-target:
-  renderer: maplibre
-  styleSpecVersion: 8
-# ...
+version: "0.2.0"
+name: Quiet civic atlas
+tokens:
+  colors:
+    ink: "#24303A"
+    canvas: "#F4F1E8"
 ---
-
-# Example operational map
 
 ## Overview
 
-The map supports operators locating abnormal assets without losing local context.
+An archival civic atlas with warm paper, restrained ink, and one scarce accent.
 ```
 
-YAML 值具有规范性。Markdown 散文解释意图并消除歧义。它们冲突时，适用第 28 节的优先级规则。
+front matter 提供精确值。Markdown 正文解释这些值存在的原因、适用时机，以及实现必须保留的关系。
 
-## 6. 确定性 YAML 配置
+## 确定性 YAML
 
-### 6.1 支持的值
+front matter MUST 使用安全、确定性的 YAML 子集。
 
-front matter MAY 使用：
+它 MAY 包含键为字符串的映射、序列、字符串、有限数字、布尔值和 `null`。日期、时间戳、前导零值和歧义词 SHOULD 加引号。
 
-- 键为字符串的映射；
-- 序列；
-- 字符串；
-- 有限数字；
-- 布尔值；
-- `null`；
-- 保持明确性的带引号或不带引号普通标量。
+它 MUST NOT 包含：
 
-### 6.2 禁止的构造
-
-front matter MUST NOT 使用：
-
-- 锚点或别名；
-- 自定义标签；
-- 合并键；
-- 非有限数字；
-- 可执行值；
+- 重复映射键；
+- anchor 或 alias；
+- merge key；
+- 自定义 tag 或可执行值；
+- tab 缩进；
+- block scalar；
 - 隐式环境变量展开；
-- 重复的映射键。
+- 非有限数字。
 
-禁止这些功能，是因为不同的 YAML 运行时和 Agent 可能会以不同方式解释它们。复用 SHOULD 通过 token 引用表达。
+长篇理由属于 Markdown。可复用的精确值 SHOULD 表达为命名 token 和 token 引用。
 
-### 6.3 日期与歧义标量
+## 根 schema
 
-日期、时间戳、带前导零的值，以及可能被解释为布尔值的词 SHOULD 加引号。
+front matter 具有以下根字段。该表是版本 0.2.0 完整的规范性根 schema。
 
-```yaml
-version: "0.1.0"
-generatedAt: "2026-08-28T09:00:00Z"
-code: "0012"
-```
+| 字段 | 必填 | 类型 | 含义 |
+|---|---:|---|---|
+| `version` | 是 | 字面量 `"0.2.0"` | 文档采用的格式版本。 |
+| `name` | 是 | 非空字符串 | 设计系统的人类可读名称。 |
+| `description` | 否 | 字符串 | 简洁的目录描述。 |
+| `locale` | 否 | 非空字符串 | 文档的主要语言或 locale。 |
+| `tokens` | 否 | `TokenSet` | 精确、可复用设计值的开放集合。 |
+| `accessibility` | 否 | `Accessibility` | 显式的文档内部对比关系。 |
+| `omitted` | 否 | `OmittedSection[]` | 有意省略的规范 Markdown 章节。 |
+| `extensions` | 否 | object | 核心不解释的项目特定结构化数据。 |
 
-## 7. Token 引用
+未知根键会被保留。validator MAY 对其给出 warning，尤其是键名与规范键相似时。有意的自定义数据 SHOULD 放在 `extensions` 下、使用 `x-` 前缀，或使用 `acme:review` 这样的命名空间键。
 
-形如 `{path.to.value}` 的精确字符串是 token 引用。
+`version` 和 `name` 是仅有的必填根字段。版本 0.2.0 不定义用于操作时任务、数据集、输出技术、生成文件或溯源的根字段。
 
-```yaml
-scales:
-  road-status:
-    type: nominal
-    field: operating_status
-    values:
-      active: "{tokens.colors.semantic.normal}"
-      fault: "{tokens.colors.semantic.danger}"
-```
+## Token 类型
 
-规则：
+`tokens` 是开放映射。文档 MAY 定义任何额外 token 组，consumer MUST 保留未知组。以下组具有核心校验语义。
 
-1. 引用 MUST 从 YAML 根节点解析。
-2. 引用路径使用点分隔的映射键。
-3. 引用循环是错误。
-4. 数组索引 MAY 写作 `[n]`，并由参考实现规范化为路径段。当同一值可以具有语义名称时，应优先使用对象 token。
-5. 版本 0.1.0 仅允许引用占据整个字符串。诸如 `1px solid {tokens.colors.border}` 的嵌入式引用是错误。
-6. 未知引用 MUST NOT 静默 fallback 到任意值。
-7. MapLibre 样式不会直接解释 CARTOGRAPHY.md 引用。生成器 MUST 将引用编译为具体样式值，并 SHOULD 在图层元数据中记录源引用。
+| 组 | 值类型 | 要求 |
+|---|---|---|
+| `colors` | 字符串映射 | 每个值 MUST 是非空的通用 CSS color，或解析到该值的精确引用。 |
+| `typography` | `TypographyToken` 映射 | 每个值是精确引用或开放的字体对象。 |
+| `widths` | `DimensionToken` 映射 | 每个值是非负数字、受支持的尺寸字符串或精确引用。 |
+| `sizes` | `DimensionToken` 映射 | 每个值是非负数字、受支持的尺寸字符串或精确引用。 |
+| `opacities` | 数字或引用映射 | 每个数字 MUST 位于闭区间 0–1。 |
 
-## 8. 根 schema
+尺寸字符串是非负十进制数，后接 `px`、`pt`、`mm`、`cm`、`in`、`em`、`rem` 或 `%`。
 
-front matter 具有以下根形状：
+字体对象是开放对象，MAY 包含：
 
-```yaml
-version: <string>
-name: <string>
-description: <string?>
-target: <Target>
-intent: <Intent>
-data: <DataContract>
-agent: <object?>
-zoom: <ZoomModel>
-hierarchy: <object?>
-tokens: <TokenSet>
-scales: <map<string, Scale>>
-encodings: <map<string, Encoding>>
-layerOrder: <LayerOrderItem[]>
-labels: <object?>
-states: <object?>
-accessibility: <Accessibility?>
-security: <object?>
-performance: <object?>
-maplibre: <MapLibreContract?>
-validation: <ValidationContract?>
-outputs: <object?>
-extensions: <object?>
-omitted: <OmittedSection[]?>
-```
-
-解析器 MAY 保留未知根键。仅当未知键看起来像规范键的拼写错误时，一致性验证器 SHOULD 报告它们。扩展键 SHOULD 使用命名空间前缀，例如 `acme:`。
-
-## 9. 核心元数据
-
-### 9.1 `version`
-
-`version` 为 REQUIRED，用于标识文档采用的 CARTOGRAPHY.md 格式版本。
-
-```yaml
-version: "0.1.0"
-```
-
-该值不标识 MapLibre Style Specification 版本；后者属于 `target.styleSpecVersion`。
-
-### 9.2 `name`
-
-`name` 为 REQUIRED，提供人类可读的地图或样式系统名称。
-
-### 9.3 `description`
-
-`description` 为 OPTIONAL，SHOULD 是适合目录或 Agent prompt 的一句简洁描述。
-
-## 10. 目标
-
-`target` 声明渲染器和可移植性预期。
-
-```yaml
-target:
-  renderer: maplibre
-  styleSpecVersion: 8
-  platforms: [web, android, ios]
-  modes: [light, dark, imagery]
-  projection: mercator
-  compatibility: portable
-```
-
-### 10.1 字段
-
-| 字段 | 必填 | 含义 |
-|---|---:|---|
-| `renderer` | 是 | 主要渲染系列。版本 0.1.0 专为 `maplibre` 设计。 |
-| `styleSpecVersion` | 是 | 目标样式规范。MapLibre 样式当前使用版本 `8`。 |
-| `platforms` | 否 | 运行时目标，例如 `web`、`android` 和 `ios`。 |
-| `modes` | 否 | 支持的呈现模式，常见为 `light`、`dark` 和 `imagery`。 |
-| `projection` | 否 | 预期地图投影或投影系列。 |
-| `compatibility` | 否 | `strict`、`portable` 或 `renderer-specific`。 |
-
-### 10.2 兼容性行为
-
-- `strict` 表示生成器 SHOULD 仅使用所有声明平台明确允许的功能。
-- `portable` 表示仅可在具有文档化 fallback 时使用渲染器特定功能。
-- `renderer-specific` 允许目标特定属性，但 MUST 在散文或扩展元数据中标识它们。
-
-验证器 MAY 在未来版本中使用平台能力表。版本 0.1.0 验证该声明，但不声称完整的跨 SDK 对等性。
-
-## 11. 意图
-
-`intent` 在描述地图外观之前定义地图为何存在。
-
-```yaml
-intent:
-  mapType: operational
-  primaryTask: locate and assess abnormal road-network assets
-  audience: [map-user, gis-operator]
-  subject: road network
-  context: [buildings, landuse, administrative areas]
-  aesthetic:
-    keywords: [technical, calm, precise]
-    avoid: [neon, decorative, excessive-saturation]
-    contrast: medium
-    saturation: low
-    density: standard
-  successCriteria:
-    - abnormal assets are recognizable within two seconds
-    - selected objects remain distinguishable from faults
-```
-
-### 11.1 地图类型
-
-`mapType` MUST 为以下之一：
-
-- `reference` — 均衡的定向与查找；
-- `thematic` — 某个主题或统计主题主导上下文；
-- `operational` — 状态、告警和可操作资产主导；
-- `navigation` — 路线、位置和转向信息主导；
-- `editing` — 可编辑几何、错误、捕捉和选择主导；
-- `imagery` — 影像是主要视觉场；
-- `hybrid` — 两个已声明目的共享优先级。
-
-混合地图 SHOULD 解释在冲突时哪个目的优先。
-
-### 11.2 主要任务
-
-`primaryTask` 为 REQUIRED。它 SHOULD 描述可观察的用户任务，而不是诸如“显示数据”的模糊目标。
-
-### 11.3 受众
-
-`audience` MUST 至少包含一个角色。受众会影响密度、术语、标注细节和交互状态。
-
-### 11.4 美学方向
-
-美学关键词是约束，而不是装饰。Agent SHOULD 将其转化为可度量的选择，例如饱和度、对比度、线宽范围、标注密度和背景突出程度。
-
-## 12. 数据契约
-
-`data` 将制图语义绑定到真实属性。
-
-```yaml
-data:
-  profile: ./DATA_PROFILE.json
-  profileRequired: true
-  bindings:
-    id: asset_id
-    label: name
-    category: asset_type
-    importance: traffic_level
-    magnitude: traffic_volume
-    status: operating_status
-    uncertainty: position_accuracy
-    time: updated_at
-    quality: qc_status
-  fallbackLabels: [name, asset_code]
-  nullPolicy: neutral-and-visible
-  unknownCategoryPolicy: neutral-fallback-and-warning
-  zeroIsNotNull: true
-  preserveUnits: true
-  sensitiveDataPolicy: aggregate-or-omit
-```
-
-### 12.1 语义绑定
-
-绑定为 Agent 创建稳定的词汇。常见角色包括：
-
-| 角色 | 典型用途 |
+| 字段 | 类型 |
 |---|---|
-| `id` | 稳定的要素标识和 feature-state |
-| `label` | 主要文本标注 |
-| `category` | 名义类别或资产类型 |
-| `importance` | 层级、优先级或网络级别 |
-| `magnitude` | 定量尺寸或强度 |
-| `status` | 运行或生命周期状态 |
-| `uncertainty` | 位置、时间或分类置信度 |
-| `time` | 新近度和时间筛选 |
-| `quality` | 质量控制或验证状态 |
+| `fontFamily` | 非空字符串，或由非空字符串组成的非空数组 |
+| `fontSize` | `DimensionToken` |
+| `fontWeight` | 1 至 1000 的数字，或非空字符串 |
+| `lineHeight` | 正数或 `DimensionToken` |
+| `letterSpacing` | 有限数字或非空字符串 |
 
-项目 MAY 添加角色。映射为 `null` 的角色是有意不可用的，Agent MUST NOT 猜测它。
+Token 名称 SHOULD 描述语义角色，而不是偶然的外观。强语义颜色 SHOULD 只有一种稳定含义。当交互强调和底层业务含义都必须可见时，前者 SHOULD 保留后者。
 
-### 12.2 空值、未知与零
+## Token 引用
 
-生成器 MUST 区分：
-
-- 缺失/null；
-- 显式的未知类别；
-- 数字零；
-- 空文本；
-- 超出声明域的值。
-
-当 `zeroIsNotNull` 为 true 时，零 MUST 保留其定量含义。未知类别 SHOULD 获得中性 fallback 和验证发现结果，而非被分配随机调色板颜色。
-
-### 12.3 单位
-
-当 `preserveUnits` 为 true 时，生成器 MUST NOT 在未记录转换的情况下静默重新解释或归一化数值。
-
-### 12.4 敏感数据
-
-契约 MAY 声明隐私和安全约束。它 MUST NOT 包含凭证或原始敏感要素值。样式 MUST NOT 通过隐藏图层、标注、元数据、过滤器或客户端表达式暴露受限类别。
-
-## 13. DATA_PROFILE.json
-
-可选的配套数据画像使语义验证成为可能，而无需嵌入数据本身。
-
-```json
-{
-  "version": "0.1.0",
-  "name": "Road network sample",
-  "generatedAt": "2026-08-28T09:00:00Z",
-  "sources": {
-    "road-network": {
-      "type": "geojson",
-      "sourceLayers": {
-        "default": {
-          "geometry": "line",
-          "idField": "asset_id",
-          "minzoom": 10,
-          "maxzoom": 24,
-          "density": "dense",
-          "fields": {
-            "asset_id": {"type": "string", "nullable": false},
-            "operating_status": {
-              "type": "string",
-              "categories": ["active", "maintenance", "fault", "unknown"]
-            }
-          }
-        }
-      }
-    }
-  }
-}
-```
-
-### 13.1 根字段
-
-| 字段 | 必填 | 含义 |
-|---|---:|---|
-| `version` | 是 | 数据画像格式版本。 |
-| `name` | 否 | 人类可读的画像名称。 |
-| `generatedAt` | 否 | 带引号的时间戳。 |
-| `sources` | 是 | 源标识符映射。 |
-
-### 13.2 源
-
-一个源声明：
-
-- `type`：`vector`、`geojson`、`raster`、`raster-dem` 或 `other`；
-- `sourceLayers`：源图层标识符到画像的映射。
-
-GeoJSON 源 SHOULD 使用合成源图层键 `default`。
-
-### 13.3 源图层画像
-
-图层画像声明：
-
-- `geometry`：`point`、`line`、`polygon`、`mixed` 或 `raster`；
-- 可选的 `minzoom` 和 `maxzoom` 可用性；
-- 可选的稳定 `idField`；
-- 可选的 `featureCount` 和密度类别；
-- 一个 `fields` 映射。
-
-### 13.4 字段画像
-
-字段画像包含：
-
-```json
-{
-  "type": "number",
-  "nullable": true,
-  "unit": "veh/h",
-  "minimum": 0,
-  "maximum": 4000,
-  "description": "Traffic volume per hour"
-}
-```
-
-名义字段 SHOULD 声明 `categories`。定量字段 SHOULD 在已知时声明单位和观测边界。
-
-画像描述已观测和预期的数据；它不能替代源授权或服务端验证。
-
-## 14. 缩放模型
-
-`zoom` 定义信息如何被引入和制图综合。
-
-```yaml
-zoom:
-  strategy: progressive-disclosure
-  bands:
-    regional: [4, 8]
-    city: [8, 12]
-    street: [12, 16]
-    site: [16, 24]
-  referenceZooms: [8, 12, 15, 18]
-  visibility:
-    road-segments:
-      regional: hidden
-      city: primary-only
-      street: all-operational
-      site: all-with-labels
-  generalization:
-    geometry: upstream
-    labels: runtime-collision
-```
-
-### 14.1 区间
-
-每个区间均为 `[minzoom, maxzoom]`，其中 `minzoom < maxzoom`。zoom 区间不得重叠。相邻区间可以共享边界，因为在 MapLibre 图层中，按惯例 `maxzoom` 为排他值。
-
-区间名称由项目定义。常见区间包括 `global`、`regional`、`city`、`street` 和 `site`。
-
-### 14.2 参考 zoom
-
-参考 zoom 是应当进行自动化截图和人工审查的缩放级别。
-
-### 14.3 渐进式披露
-
-一个要素族可以按如下表示形式逐步呈现：
-
-`hidden → aggregate → simplified → complete geometry → geometry + label → editing detail`
-
-生成器应避免在同一 zoom 阈值引入大量互不相关的图层。
-
-### 14.4 制图综合边界
-
-样式可以控制可见性、宽度、不透明度、过滤、聚类和标注。真正的几何简化、位移、聚合和保持拓扑的制图综合应在数据或切片生产流程中进行。样式不得声称已经解决几何制图综合，若其仅隐藏了要素。
-
-## 15. 视觉层级
-
-`hierarchy` 描述相对显著性。其内部键可扩展，但项目应定义一套小型有序系统。
-
-```yaml
-hierarchy:
-  levels:
-    background: 10
-    context: 30
-    primary: 60
-    focus: 80
-    critical: 100
-  principles:
-    - establish hierarchy with lightness and size before saturated hue
-    - preserve one dominant visual focus per map state
-    - ordinary status must not look like an alarm
-```
-
-视觉层级应无需仅依赖颜色名称即可理解。尺寸、线宽、对比度、字母大小写、不透明度和标注优先级均是有效的层级机制。
-
-## 16. Token
-
-`tokens` 存储精确的可复用值。仅版本 0.1.0 要求 `tokens.colors`；强烈建议提供额外的系列。
+Token 引用使用 `{path.to.value}` 形式。路径包含字母、数字、`_`、`-`、`.`，以及写成 `[n]` 的数组索引。
 
 ```yaml
 tokens:
   colors:
-    light:
-      canvas: "#F5F7FA"
-      contextLine: "#C7CED8"
-      text: "#27313D"
-    semantic:
-      normal: "#2F7D5B"
-      maintenance: "#D18B19"
-      danger: "#C63D45"
-      unknown: "#8A94A3"
-      selection: "#2F6FED"
-  typography:
-    label:
-      fontStack: [Noto Sans Regular, Arial Unicode MS Regular]
-      size: 12
-      haloWidth: 1.5
-  lineWidth:
-    thin: 1
-    regular: 2
-    strong: 4
-  opacity:
-    context: 0.55
-    subject: 0.95
-```
-
-### 16.1 颜色语法
-
-颜色值必须被 MapLibre 样式颜色解析器接受。可以使用目标样式包支持的十六进制和函数式 CSS 风格颜色。项目应优先采用一致的表示法。
-
-### 16.2 语义颜色
-
-强语义颜色应当稀少。危险、警告、选中和编辑颜色必须具有不同含义。当保留底层业务状态很重要时，选中应采用附加轮廓、描边、光晕或尺寸变化。
-
-### 16.3 模式
-
-浅色、深色和影像模式应分别设计。不得通过盲目反转每种浅色模式颜色来生成深色模式。影像覆盖层通常需要更强的描边、光晕或局部背景衬底。
-
-### 16.4 Token 命名
-
-Token 键应描述角色而非外观。当该值为语义决策时，应优先使用 `semantic.danger` 而非 `red500`。原始调色板比例尺可以与语义别名共存。
-
-## 17. 比例尺
-
-比例尺将字段或值域映射到视觉范围。
-
-```yaml
-scales:
-  road-status:
-    type: nominal
-    field: operating_status
-    values:
-      active: "{tokens.colors.semantic.normal}"
-      maintenance: "{tokens.colors.semantic.maintenance}"
-      fault: "{tokens.colors.semantic.danger}"
-      unknown: "{tokens.colors.semantic.unknown}"
-    fallback: "{tokens.colors.semantic.unknown}"
-  traffic-width:
-    type: ordinal
-    field: traffic_level
-    values:
-      low: "{tokens.lineWidth.thin}"
-      medium: "{tokens.lineWidth.regular}"
-      high: "{tokens.lineWidth.strong}"
-  traffic-volume:
-    type: quantitative
-    field: traffic_volume
-    stops:
-      - [200, 1]
-      - [1000, 2]
-      - [3000, 5]
-    clamp: true
-    unit: veh/h
-```
-
-### 17.1 类型
-
-- `nominal`：无序类别；
-- `ordinal`：有序类别；
-- `quantitative`：连续或分级数值；
-- `diverging`：围绕有意义中心点的数值；
-- `identity`：已匹配输出域的值。
-
-### 17.2 域覆盖
-
-名义比例尺应覆盖 DATA_PROFILE.json 报告的所有类别，且在值可能未知时必须定义 fallback。生成器不得基于不稳定的类别迭代顺序分配颜色。
-
-### 17.3 分类
-
-定量分类断点应根据已声明的领域知识或可复现的数据画像方法导出。Agent 在无法访问分布时不得虚构“自然断点”，然后将其表述为数据驱动的结果。
-
-## 18. 编码
-
-`encodings` 描述要素族和视觉通道的所有权。
-
-```yaml
-encodings:
-  road-segments:
-    source: road-network
-    geometry: line
-    role: primary
-    layerGroup: subject-line
-    minzoom: 10
-    maxzoom: 24
-    rules:
-      - id: road-status-color
-        field: operating_status
-        channel: line-color
-        scale: road-status
-        critical: true
-        secondaryChannel: line-pattern
-      - id: traffic-level-width
-        field: traffic_level
-        channel: line-width
-        scale: traffic-width
-    labels:
-      field: name
-      fallbacks: [asset_code]
-      minzoom: 16
-      priority: 60
-      allowOverlap: false
-    states:
-      selected:
-        channel: casing
-        token: "{tokens.colors.semantic.selection}"
-```
-
-### 18.1 编码字段
-
-| 字段 | 必填 | 含义 |
-|---|---:|---|
-| `source` | 是 | MapLibre 源标识符。 |
-| `sourceLayer` | 仅矢量 | 矢量切片源图层。 |
-| `geometry` | 是 | `point`、`line`、`polygon`、`raster`、`model` 或 `mixed`。 |
-| `role` | 是 | `background`、`context`、`primary`、`focus` 或 `critical`。 |
-| `layerGroup` | 是 | 来自 `layerOrder` 的标识符。 |
-| `minzoom`, `maxzoom` | 否 | 可见范围。 |
-| `filter` | 否 | 可选数据子集。 |
-| `rules` | 是 | 视觉通道分配。 |
-| `labels` | 否 | 标注源和优先级。 |
-| `states` | 否 | 悬停、选中、警告、编辑或验证状态。 |
-
-### 18.2 编码规则
-
-一条规则必须定义：
-
-- 其编码内唯一的 `id`；
-- 一个 `channel`；
-- `scale` 或 `value` 之一。
-
-其可以定义：
-
-- `field`；
-- `composite`；
-- `critical`；
-- `secondaryChannel`；
-- `priority`。
-
-### 18.3 通道所有权
-
-在一个编码内，一个视觉通道应有一个主要语义所有者。只有在后续规则声明 `composite: true` 且以文字说明该组合时，两条规则才可以共享同一通道。
-
-推荐的网络地图词汇如下：
-
-- 宽度 → 路段重要性或交通等级；
-- 色相 → 运行状态；
-- 虚线／图案 → 生命周期或不确定性；
-- 不透明度 → 置信度或时效性；
-- 描边／光晕 → 选中；
-- 符号形状 → 资产类别；
-- 标注优先级 → 运营重要性。
-
-### 18.4 关键语义
-
-当 `accessibility.requireSecondaryChannelForCriticalSemantics` 为 true 时，标记为 `critical: true` 的规则必须定义 `secondaryChannel`。关键状态不得仅通过颜色传达。
-
-### 18.5 数据验证
-
-使用数据画像时，验证器应验证：
-
-- 源是否存在；
-- 源图层是否存在；
-- 几何兼容性；
-- 字段是否存在；
-- 类别域覆盖；
-- 源 zoom 可用性；
-- 用于 feature-state 的稳定标识符。
-
-## 19. 图层顺序
-
-`layerOrder` 是从底到顶的规范图层组堆叠。
-
-```yaml
-layerOrder:
-  - id: background
-    order: 0
-  - id: context-fill
-    order: 10
-  - id: context-line
-    order: 20
-  - id: subject-casing
-    order: 50
-  - id: subject-line
-    order: 60
-  - id: subject-point
-    order: 70
-  - id: subject-label
-    order: 80
-  - id: interaction
-    order: 100
-```
-
-图层组标识符必须唯一。顺序值必须在文档顺序中严格递增。每个编码必须引用一个已声明的图层组。
-
-生成的 `style.layers` 数组应按这些图层组单调排序。图层组内的图层可以使用项目特定优先级排序。
-
-## 20. 标注
-
-`labels` 可扩展。它应定义不由每个编码重复的全局标注行为。
-
-```yaml
-labels:
-  language:
-    primary: zh-Hans
-    fallbacks: [name:zh, name, name:en]
-  collision:
-    defaultAllowOverlap: false
-    preserveCriticalLabels: true
-  typography:
-    minimumSize: 11
-    maximumSize: 18
-    defaultHaloWidth: 1.5
-  lineLabels:
-    minimumScreenLengthPx: 80
-    repeatDistancePx: 300
+    ink: "#24303A"
+    label: "{tokens.colors.ink}"
 ```
 
 规则：
 
-- 标注优先级必须遵循语义重要性，而非源顺序。
-- 碰撞通常应通过隐藏较低优先级的标注解决。
-- Agent 应在将文本缩小到声明的可读最小值之前降低标注密度。
-- 中文标注不应自动转换为大写，也不应采用面向拉丁字母的字间距。
-- 必须在每个声明的平台上审查字体和字形行为。
-- 允许重叠的关键标注应当很少，并明确说明理由。
+1. 每个引用 MUST 在同一 front matter 内解析。
+2. YAML 中的引用 MUST 占据整个字符串。
+3. Markdown 散文 MAY 在句子中嵌入引用。
+4. `[0]` 等数组索引会规范化为路径段。
+5. 断链引用和引用循环是错误。
+6. consumer MUST NOT 为未解析引用静默替换 fallback。
 
-## 21. 交互状态
+## 无障碍
 
-`states` 描述悬停、选中、编辑、警告、禁用和验证状态的全局行为。
-
-```yaml
-states:
-  selected:
-    strategy: additive-casing
-    color: "{tokens.colors.semantic.selection}"
-    preserveBusinessColor: true
-  hover:
-    strategy: width-and-opacity
-  invalid:
-    strategy: color-plus-pattern
-```
-
-当底层业务颜色具有意义时，选中应保留该颜色。悬停不应看起来像选中或警报。编辑控制柄和拓扑错误应使用专用符号或图案。
-
-使用 feature-state 时：
-
-- 源要素必须具有稳定标识符；
-- 应记录 `promoteId` 或要素 `id` 的行为；
-- 若 `maplibre.featureStatePaintOnly` 为 true，则 feature-state 不得出现在布局表达式中；
-- 应测试状态清理和源刷新行为。
-
-## 22. 无障碍
+`accessibility.contrastPairs` 声明核心 validator 可以计算的精确颜色关系。
 
 ```yaml
 accessibility:
-  textContrast:
-    normal: 4.5
-    large: 3
-  nonTextGraphicContrast: 3
-  requireSecondaryChannelForCriticalSemantics: true
   contrastPairs:
-    - id: primary-label-on-canvas
-      foreground: "{tokens.colors.light.text}"
-      background: "{tokens.colors.light.canvas}"
+    - id: label-on-canvas
+      foreground: "{tokens.colors.ink}"
+      background: "{tokens.colors.canvas}"
       minimum: 4.5
       kind: text
 ```
 
-声明的对比度对是确定性的 token 检查。它们不能替代在影像、栅格数据、抗锯齿、不透明度、混合或可变几何上的实际渲染检查。
+每个 contrast pair 具有以下形状：
 
-符合要求的工作流还应审查：
+| 字段 | 必填 | 类型 | 含义 |
+|---|---:|---|---|
+| `id` | 是 | 非空字符串 | 所声明关系的稳定标识符。 |
+| `foreground` | 是 | 非空字符串 | CSS color 或解析到颜色的精确引用。 |
+| `background` | 是 | 非空字符串 | CSS color 或解析到颜色的精确引用。 |
+| `minimum` | 是 | 有限正数 | 最低 WCAG 2.1 对比度。 |
+| `kind` | 否 | `text`、`large-text` 或 `graphic` | 该关系的信息性分类。 |
 
-- 常见色觉缺陷；
-- 灰度可区分性；
-- 小屏幕可读性；
-- 高密度标注碰撞；
-- 不依赖颜色的关键符号；
-- 适用时，周边 UI 的键盘和屏幕阅读器行为。
+该对象是开放对象，因此会保留额外的项目键。
 
-## 23. 安全与隐私
+Contrast-pair 检查通过只证明已声明且完全不透明的颜色值达到已声明的数值下限。它不证明所有构图、背景、比例尺、状态、设备或使用场景都已实现无障碍。Markdown `Accessibility` 章节 MUST 承载更广泛的设计判断。
 
-`security` 可扩展，并且可以描述：
+## Markdown 章节
 
-- 受限图层；
-- 最小聚合级别；
-- 脱敏规则；
-- 客户端／服务器端强制边界；
-- 禁止的标注或元数据；
-- 导出限制。
-
-需要时，必须在数据和服务层级强制执行安全规则。隐藏 MapLibre 图层不是授权机制。不得仅因为敏感要素默认不可见，就将其交付给未获授权的客户端。
-
-## 24. 性能
-
-`performance` 可以定义如下预算：
-
-```yaml
-performance:
-  maximumStyleLayers: 120
-  maximumSymbolLayers: 30
-  maximumExpressionDepth: 16
-  preferSharedSources: true
-  avoidUnboundedAllowOverlap: true
-```
-
-预算应被视为审查阈值，而非普遍真理。性能取决于切片密度、源数量、表达式复杂度、符号布局、设备能力、俯仰角、地形和运行时 SDK。
-
-Agent 应优先考虑清晰度和正确性，而非过早的微优化，但当一个表达式可在不损害可维护性的情况下表达相同设计时，必须避免生成冗余图层。
-
-## 25. MapLibre 契约
-
-```yaml
-maplibre:
-  rootMetadataPrefix: "cartography"
-  layerIdPattern: "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
-  layerMetadata:
-    required:
-      - "cartography:group"
-      - "cartography:role"
-      - "cartography:owner"
-      - "cartography:sourceRule"
-    optional:
-      - "cartography:tokenRefs"
-      - "cartography:ruleIds"
-  featureStatePaintOnly: true
-  stableFeatureIdRequired: true
-  runtimeOptions:
-    localIdeographFontFamily: "Noto Sans CJK SC"
-```
-
-### 25.1 样式版本
-
-为版本 0.1.0 生成的 MapLibre 样式必须使用样式版本 `8`，除非目标渲染器明确支持另一已声明版本。
-
-### 25.2 源和源图层
-
-- 每个非背景图层必须引用一个现有源。
-- 使用矢量源的图层必须标识有效的 `source-layer`。
-- GeoJSON 编码应省略 `sourceLayer`，并使用数据画像键 `default`。
-- 提供数据画像时，源和源图层名称必须与之匹配。
-
-### 25.3 图层元数据
-
-MapLibre 元数据不影响渲染，用于溯源。
-
-```json
-{
-  "metadata": {
-    "cartography:group": "subject-line",
-    "cartography:role": "primary",
-    "cartography:owner": "agent",
-    "cartography:sourceRule": "road-segments",
-    "cartography:ruleIds": ["road-status-color", "traffic-level-width"],
-    "cartography:tokenRefs": [
-      "{tokens.colors.semantic.normal}",
-      "{tokens.lineWidth.regular}"
-    ]
-  }
-}
-```
-
-生成器应保留未更改图层上的元数据。不得使用溯源元数据代替实际样式验证。
-
-### 25.4 过滤器
-
-生成的样式应优先使用表达式过滤器语法。生成器应避免在同一过滤器中混用旧式属性过滤器操作数和表达式操作数。
-
-### 25.5 表达式
-
-- 连续变化在插值有意义时应使用 `interpolate`。
-- 离散类别或阈值变化应使用 `match` 或 `step`。
-- 表达式应包含显式 fallback。
-- 深度重复的表达式应在生成器层级进行提取，或予以记录。
-- 生成器必须根据数据契约区分 `null`、未知和零。
-### 25.6 协议可移植性
-
-在 `portable` 或 `strict` 模式下，除非已声明的运行时适配器能够解析 `mapbox://` URL，否则它们均为错误。公共或自托管的字形、sprite、tile 和资源 URL SHOULD 明确声明。
-
-## 26. 验证契约
-
-```yaml
-validation:
-  checks:
-    - document
-    - token-references
-    - data-profile
-    - maplibre-style-spec
-    - style-contract
-    - accessibility
-    - render-fixtures
-  fixtures:
-    - id: dense-urban
-      required: true
-    - id: sparse-suburban
-      required: true
-    - id: null-and-unknown
-      required: true
-    - id: light-mode
-      required: true
-    - id: dark-mode
-      required: true
-    - id: mobile
-      required: true
-    - id: desktop
-      required: true
-  report:
-    format: json
-    includeResolvedContract: true
-```
-
-### 26.1 验证层级
-
-完整工作流包含五个层级：
-
-1. **文档验证** — front matter、schema、章节、引用、顺序。
-2. **数据验证** — source、源图层、字段、domain、单位、ID。
-3. **样式验证** — 官方 MapLibre Style Specification 验证。
-4. **契约验证** — 样式溯源、图层组、编码、语义、可移植性。
-5. **渲染验证** — 截图、碰撞行为、密度、模式、状态及任务审查。
-
-本仓库提供的 CLI 实现了确定性的第 1–4 层，并检查是否已声明渲染场景 fixture。它不声称能在版本 0.1.0 中自动评判截图。
-
-### 26.2 推荐的渲染场景 fixture
-
-至少，生产地图 SHOULD 包含以下渲染场景 fixture：
-
-- 密集城市数据；
-- 稀疏郊区或农村数据；
-- null 和未知类别；
-- 浅色模式；
-- 已声明时的深色模式；
-- 已声明时的影像模式；
-- 移动端视口；
-- 桌面端视口；
-- 存在这些状态时的默认、悬停、选中、关键和无效状态；
-- 文本和符号敏感时的 1× 和 2× 设备像素比。
-
-### 26.3 任务审查
-
-地图 SHOULD 分别就以下方面进行审查：
-
-- 任务契合度；
-- 视觉层级；
-- 易读性；
-- 一致性；
-- 数据诚实性；
-- 无障碍；
-- 技术正确性。
-
-单一的平均“美观评分”MUST NOT 允许数据诚实性或安全性失败通过。
-
-## 27. 输出
-
-`outputs` MAY 声明预期生成的工件。
-
-```yaml
-outputs:
-  style: ./dist/style.json
-  report: ./dist/cartography-report.json
-  screenshots: ./dist/screenshots
-```
-
-除非明确请求，生成器 SHOULD 避免写入未声明的文件。报告 SHOULD 包含工具版本、契约版本、发现项以及检查过哪些配套工件。
-
-## 28. Markdown 正文
-
-### 28.1 规范章节顺序
-
-Markdown 正文使用 `##` 标题。规范章节按顺序如下：
+Markdown 正文按以下顺序使用规范 `##` 章节：
 
 1. `Overview`
 2. `Intent & Audience`
-3. `Data Semantics`
-4. `Visual Hierarchy`
-5. `Color`
-6. `Typography & Labels`
-7. `Geometry & Symbols`
-8. `Zoom & Generalization`
-9. `Layer Order`
-10. `Interaction States`
-11. `Accessibility`
-12. `MapLibre Implementation`
-13. `Validation`
-14. `Do's and Don'ts`
+3. `Visual Hierarchy`
+4. `Color`
+5. `Typography & Labels`
+6. `Geometry & Symbols`
+7. `Scale & Generalization`
+8. `Layering & Composition`
+9. `Interaction States`
+10. `Accessibility`
+11. `Review Principles`
+12. `Do's and Don'ts`
 
-工具 MAY 识别 `概述`、`意图与受众`、`数据语义`、`视觉层级`、`色彩`、`字体与标注`、`几何与符号`、`缩放与制图综合`、`图层顺序`、`交互状态`、`无障碍`、`MapLibre 实现`、`验证` 和 `正反例` 等中文别名。
+各章节职责如下：
 
-未知章节 MUST 被保留。重复的规范章节为错误。已存在的规范章节 SHOULD 保持顺序。
+| 章节 | 职责 |
+|---|---|
+| `Overview` | 建立具体、可辨识的视觉世界，而不是罗列通用形容词。 |
+| `Intent & Audience` | 描述设计系统长期服务的场景和人群，而不是单次请求。 |
+| `Visual Hierarchy` | 定义背景、上下文、主体、焦点和关键状态之间的稳定显著性关系。 |
+| `Color` | 解释 palette 角色、强调稀缺性，以及明度和饱和度取舍。 |
+| `Typography & Labels` | 定义字体性格、标注层级、密度、冲突处理和可读性。 |
+| `Geometry & Symbols` | 定义点、线、面、纹理、图案和符号的家族语言，但不绑定特定数据。 |
+| `Scale & Generalization` | 描述与输出技术无关的渐进披露和制图综合阶段，不使用数字视图级别。 |
+| `Layering & Composition` | 解释层叠、留白、密度、平衡和焦点构图，不使用具体标识符或顺序值。 |
+| `Interaction States` | 定义 hover、selection、alert、invalid 等状态之间的视觉关系，同时保留底层语义。 |
+| `Accessibility` | 涵盖冗余通道、色觉、对比度、小屏标注和关键状态可读性。 |
+| `Review Principles` | 声明长期适用的专业评审维度和问题。 |
+| `Do's and Don'ts` | 用强约束的正反例保护视觉家族。 |
 
-### 28.2 省略的章节
+英文标题和已识别的中文别名会规范化为相同名称。未知 `##` 章节会被保留。同一规范章节 MUST NOT 出现多次。已出现的规范章节 SHOULD 遵循上述顺序。空白规范章节会产生 warning。缺失章节会产生 finding，除非在 `omitted` 中声明。
 
-章节 MAY 被有意省略：
+## 省略章节与扩展
+
+省略条目可以是非空的规范章节名，也可以是包含 `section` 和可选 `reason` 字段的开放对象。
 
 ```yaml
 omitted:
   - section: Interaction States
-    reason: Static export only; no interactive states exist.
+    reason: The design system has no interactive use context.
 ```
 
-不得使用省略声明来掩盖相关的未解决决策。
+省略是一项显式设计决策。当缺失原因可能含糊时，文档 SHOULD 提供理由。省略 MUST NOT 用于隐藏影响设计系统但尚未解决的决策。
 
-### 28.3 文本质量
+`extensions` 对象和未知 token 组会被保留，但核心不解释它们。扩展 MUST NOT 以不兼容含义重新定义规范字段。未知 Markdown 章节同样会被保留，并且 MUST NOT 通过别名重复规范章节。
 
-文本 SHOULD 说明：
+## 优先级
 
-- 决策为何存在；
-- 哪些情况属于例外；
-- 如何解决冲突；
-- Agent 必须保留什么；
-- 必须在渲染输出中验证什么。
+指令冲突时，consumer SHOULD 按以下顺序应用：
 
-文本 SHOULD NOT 仅重复 YAML 中已有的 token 值。
+1. 适用的安全、法律和组织要求；
+2. 当前操作的显式人工约束；
+3. front matter 中的精确值；
+4. Markdown 正文中的规范性陈述；
+5. consumer 默认值。
 
-## 29. 优先级与冲突解决
+当前操作约束不会自动成为持久的设计系统内容。consumer MUST NOT 仅为解决操作时需要而把任务特定事实写入 CARTOGRAPHY.md。
 
-当指令冲突时，消费者 MUST 按以下顺序应用：
+当 front matter 精确值与散文冲突时，精确值优先。工具在可以确定性判断时 MAY 报告矛盾，但 MUST NOT 假装能够理解所有自然语言冲突。
 
-1. 安全和隐私约束；
-2. 为当前操作提供的明确人工指令；
-3. 规范性 YAML 值；
-4. Markdown 正文中的规范性声明；
-5. DATA_PROFILE.json 事实；
-6. 现有样式溯源和受保护的所有权；
-7. 生成器默认值。
+## Agent 使用
 
-如果 YAML 与文本冲突，YAML 值优先，但验证器 SHOULD 在能够确定性检测时报告该不一致。
+使用 CARTOGRAPHY.md 的 Agent SHOULD：
 
-Agent MUST NOT 通过编造业务含义来静默解决高影响歧义。它 SHOULD 保留当前样式并报告该歧义。
+1. 查找并完整阅读文档；
+2. 运行核心 linter 并检查每个 finding；
+3. 应用值之前解析精确 token 引用；
+4. 从散文理解设计家族、受众、层级和已声明例外；
+5. 将稳定指南与当前任务及操作时提供的事实结合；
+6. 对请求的交付物做最小且连贯的变更；
+7. 保留人工拥有的工作和尚未解决的含义；
+8. 报告仍需专业评审或缺少事实的部分。
 
-## 30. Agent 行为
+Agent MUST NOT：
 
-符合要求的 Agent SHOULD：
+- 编造数据事实或业务含义；
+- 把单次任务转换成持久 front matter；
+- 把无法理解的散文当成确定性规则；
+- 声称 lint 成功证明了文档内部有效性之外的任何事项；
+- 用临时交互状态覆盖稳定语义角色。
 
-1. 在编辑样式图层前阅读完整契约；
-2. 在需要时加载 DATA_PROFILE.json；
-3. 识别主要任务和视觉焦点；
-4. 将真实字段映射至已声明的语义；
-5. 确定性地解析 token 引用；
-6. 保留人工拥有或受保护的图层；
-7. 做出最小且一致的样式变更；
-8. 记录溯源元数据；
-9. 运行 CLI 和官方 MapLibre 验证；
-10. 检查已声明的渲染场景 fixture；
-11. 报告未解决的数据、兼容性和美观风险。
+## Validator 模型
 
-符合要求的 Agent MUST NOT：
-
-- 在需要画像时编造源图层或字段名称；
-- 基于不稳定的迭代顺序分配名义颜色；
-- 在被禁止时将零视为 null；
-- 在需要辅助通道时，使用颜色作为关键语义的唯一信号；
-- 在要求保留时用选中颜色覆盖业务状态颜色；
-- 通过客户端样式暴露受限 feature；
-- 声称语法验证能够证明美观质量。
-
-## 31. 验证器模型
-
-参考 API 返回：
+参考 linter 接受一个源码字符串或一个文件，并返回结构化报告：
 
 ```ts
 interface LintReport {
   valid: boolean;
   strict: boolean;
-  document: {
-    name?: string;
-    version?: string;
-    path?: string;
-  };
-  summary: {
-    errors: number;
-    warnings: number;
-    infos: number;
-  };
   findings: Finding[];
+  summary: FindingSummary;
   cartography?: CartographyConfig;
   resolved?: unknown;
   sections: string[];
-  artifacts: {
-    dataProfileChecked: boolean;
-    styleChecked: boolean;
-    officialMapLibreValidation: boolean;
+  document: {
+    path?: string;
+    name?: string;
+    version?: string;
   };
 }
 ```
 
-一个发现项包含：
+Finding 具有以下形状：
 
 ```ts
 interface Finding {
@@ -1124,176 +302,148 @@ interface Finding {
 }
 ```
 
-### 31.1 严重性
+普通模式在报告没有 error 时有效。严格模式在既没有 error 也没有 warning 时有效。Info finding 永不阻断有效性。
 
-- `error`：确定性无效、不安全行为、破损的契约或缺失的必要证据；
-- `warning`：可能存在的质量、可移植性、完整性或可维护性问题；
-- `info`：非阻塞观察项。
+普通文档无效会作为 finding 返回。文件访问、命令用法和意外的内部失败属于操作错误。
 
-当没有错误时，普通模式有效。只有既无错误也无警告时，严格模式才有效。
-
-### 31.2 退出代码
+命令行退出码如下：
 
 | 代码 | 含义 |
 |---:|---|
-| `0` | 验证在所选严格级别下通过。 |
-| `1` | 验证已完成，但发现项具有阻塞性。 |
-| `2` | CLI 使用、文件访问、JSON 解析或内部执行失败。 |
+| `0` | 操作完成，并且校验在所选严格度下通过。 |
+| `1` | 校验完成但存在阻断 finding，或 diff 增加了 error 或 warning。 |
+| `2` | 命令用法、文件访问或内部执行失败。 |
 
-## 32. 核心规则目录
+Lint 只证明 CARTOGRAPHY.md 满足其 schema 和可确定的内部关系。它不证明外部事实正确、任何生成交付物有效、当前任务已满足，或专业制图与无障碍评审已经完成。
 
-参考实现包含以下确定性规则：
+## 规则目录
 
-- front matter 存在性和 YAML 语法；
-- 被禁止的别名和自定义标签；
-- schema 一致性；
-- 重复、缺失和顺序错误的 Markdown 章节；
-- 断裂和循环的 token 引用；
-- 有效的 MapLibre 颜色 token；
-- zoom 区间的排序和重叠；
-- 图层组的唯一性和顺序；
-- 编码规则标识和通道所有权；
-- 关键辅助通道；
-- 已声明的对比度配对；
-- 数据画像 schema；
-- source、source-layer、geometry 和字段契约；
-- 名义 domain 覆盖范围；
-- 稳定的 feature 标识符；
-- 官方 MapLibre Style Specification 验证；
-- 图层溯源元数据和组顺序；
-- 可移植的资源协议；
-- 已弃用的 filter 语法；
-- 已声明的渲染场景 fixture 覆盖范围。
+每个内置规则的 scope 都是 `document`。
 
-项目 MAY 通过 TypeScript API 添加规则。自定义规则 SHOULD 具有确定性、无副作用且不依赖网络。
+| Rule ID | 严重级别 | 用途 |
+|---|---|---|
+| `frontmatter-required` | error | 要求文件开头存在 YAML front-matter fence。 |
+| `frontmatter-unclosed` | error | 检测缺失的 front-matter 结束 fence。 |
+| `yaml-syntax` | error | 报告 YAML 语法错误和重复键。 |
+| `yaml-alias-prohibited` | error | 拒绝 anchor 和 alias。 |
+| `yaml-custom-tag-prohibited` | error | 拒绝自定义 YAML tag。 |
+| `yaml-merge-key-prohibited` | error | 拒绝 merge key。 |
+| `yaml-block-scalar-prohibited` | error | 将长篇理由保留在 Markdown。 |
+| `yaml-tab-indentation-prohibited` | error | 拒绝 YAML 中的 tab 缩进。 |
+| `schema` | error | 校验版本 0.2.0 front-matter schema。 |
+| `duplicate-section` | error | 拒绝重复的规范 Markdown 章节。 |
+| `document-size` | warning | 报告超过配置字节限制的文档。 |
+| `required-sections` | warning 或 info | 报告既未出现也未省略的规范章节。 |
+| `empty-section` | warning | 报告空白叙述章节。 |
+| `section-order` | warning | 检查规范章节顺序。 |
+| `unknown-root-key` | warning | 保留自定义根键，同时识别可能的错误。 |
+| `token-reference` | error | 检查精确引用、嵌入式 YAML 引用、断链路径和循环。 |
+| `color-token` | error | 将已知 color token 校验为通用 CSS color。 |
+| `contrast-pairs` | error | 计算已声明的 WCAG 2.1 对比度下限。 |
+| `contract-summary` | info | 汇总 token 叶子、token 组和散文章节。 |
+| `rule-execution` | error | 将意外的自定义规则失败包含为 finding。 |
 
-## 33. 一致性类别
+自定义规则 MAY 替换 ID 相同的内置规则。它们 SHOULD 具有确定性、无副作用、不依赖网络，并且 scope 为 `document`。
 
-工具 MAY 声明一个或多个类别：
+## 版本管理
 
-- **解析器一致** — 解析确定性的 YAML profile 和 Markdown 章节。
-- **文档验证器一致** — 验证 schema、引用和规范结构。
-- **数据契约一致** — 验证 DATA_PROFILE.json 和编码语义。
-- **MapLibre 契约一致** — 运行官方样式验证和契约检查。
-- **渲染工作流一致** — 生成并审查所有必需的渲染场景 fixture。
-- **Agent 一致** — 遵循本规范中的行为和优先级规则。
+本格式采用语义化版本。
 
-工具 MUST 声明它实现了哪些类别。
+- Patch 版本澄清措辞或进行向后兼容修正。
+- Minor 版本可以新增可选字段、token 语义、章节或 finding。
+- Major 版本可以改变必需结构或已有含义。
 
-## 34. 扩展模型
+Consumer SHOULD 拒绝不支持的版本，而不是静默重新解释。该规范的参考 schema 接受精确字面量 `"0.2.0"`。
 
-未知 YAML 键和 Markdown 章节 SHOULD 被保留。扩展 SHOULD 使用命名空间键：
+## 最小示例
 
-```yaml
-acme:qualityGates:
-  maximumUnknownStatusPercent: 0.5
-```
-
-扩展 MUST NOT 以不兼容的含义重新定义规范性键。验证器 MAY 对无法评估的扩展发出警告，但 MUST NOT 删除它。
-
-## 35. 版本控制
-
-该格式采用语义化版本控制。
-
-- 补丁版本澄清措辞或增加向后兼容的验证。
-- 次要版本增加可选字段、规则或一致性行为。
-- 主要版本可能更改必需结构或语义。
-
-消费者 SHOULD 拒绝不受支持的未来主要版本，或者仅在明确的尽力而为模式下继续。
-
-## 36. 最小一致性示例
+以下完整文档使用所有规范章节，并且在普通模式下通过文档内部校验。
 
 ```md
 ---
-version: "0.1.0"
-name: Minimal operational network map
-target:
-  renderer: maplibre
-  styleSpecVersion: 8
-  platforms: [web]
-  modes: [light]
-  compatibility: portable
-intent:
-  mapType: operational
-  primaryTask: locate abnormal network segments
-  audience: [operator]
-data:
-  profile: ./DATA_PROFILE.json
-  profileRequired: true
-  bindings:
-    id: asset_id
-    label: name
-    status: operating_status
-zoom:
-  bands:
-    city: [8, 12]
-    street: [12, 16]
-    site: [16, 24]
+version: "0.2.0"
+name: Quiet civic atlas
+description: A warm, restrained visual system for public-interest maps.
+locale: en
 tokens:
   colors:
-    canvas: "#F5F7FA"
-    active: "#2F7D5B"
-    fault: "#C63D45"
-    unknown: "#8A94A3"
-scales:
-  status:
-    type: nominal
-    field: operating_status
-    values:
-      active: "{tokens.colors.active}"
-      fault: "{tokens.colors.fault}"
-    fallback: "{tokens.colors.unknown}"
-encodings:
-  road-segments:
-    source: road-network
-    geometry: line
-    role: primary
-    layerGroup: subject-line
-    rules:
-      - id: status-color
-        field: operating_status
-        channel: line-color
-        scale: status
-layerOrder:
-  - id: background
-    order: 0
-  - id: subject-line
-    order: 50
+    canvas: "#F7F5EF"
+    ink: "#1F2933"
+    context: "#8A938B"
+    accent: "#A33A2B"
+  typography:
+    label:
+      fontFamily: ["Source Sans 3", "sans-serif"]
+      fontSize: 12px
+      fontWeight: 500
+      lineHeight: 1.35
+  widths:
+    hairline: 0.75px
+    emphasis: 2px
+  sizes:
+    compact-symbol: 6px
+  opacities:
+    context: 0.58
+accessibility:
+  contrastPairs:
+    - id: label-on-canvas
+      foreground: "{tokens.colors.ink}"
+      background: "{tokens.colors.canvas}"
+      minimum: 4.5
+      kind: text
+extensions:
+  acme:reviewCycle: annual
 ---
 
 ## Overview
 
-A calm operational map in which abnormal segments dominate neutral context.
+A quiet civic atlas: warm paper, precise dark ink, soft context, and a scarce brick accent.
 
 ## Intent & Audience
 
-Operators must identify faults quickly without mistaking selection for status.
-
-## Data Semantics
-
-`operating_status` is nominal. Unknown values use the neutral fallback.
+The system serves broad public audiences who need calm orientation before detailed comparison.
 
 ## Visual Hierarchy
 
-Background is subordinate; network segments are primary; faults are critical.
+Canvas recedes, context supports, the subject leads, and the accent is reserved for decisive focus.
 
-## Zoom & Generalization
+## Color
 
-The full network appears at street zoom. Labels are introduced only at site zoom.
+Lightness establishes order before hue. The brick accent never becomes a general category palette.
 
-## Layer Order
+## Typography & Labels
 
-Context remains below subject lines and interaction overlays.
+Labels are plainspoken and compact, with density reduced before type becomes too small to read.
 
-## MapLibre Implementation
+## Geometry & Symbols
 
-Generated layers carry `cartography:*` provenance metadata.
+Lines use restrained weight changes; symbols share simple silhouettes and avoid decorative detail.
 
-## Validation
+## Scale & Generalization
 
-Validate the contract, profile, style specification, and representative screenshots.
+The system moves from broad structure to local detail in deliberate stages, preserving identity as detail changes.
+
+## Layering & Composition
+
+Whitespace and soft context frame one primary subject; focus marks sit above but do not erase its meaning.
+
+## Interaction States
+
+Hover is subtle, selection is additive, and critical states retain a redundant cue beyond color.
+
+## Accessibility
+
+Important differences use shape, weight, text, or pattern as well as color and remain legible on small screens.
+
+## Review Principles
+
+Review hierarchy, label collisions, semantic consistency, density, contrast, and honest treatment of uncertainty.
+
+## Do's and Don'ts
+
+Do preserve warm restraint and scarce emphasis. Don't introduce unrelated saturated accents or ornamental symbols.
 ```
 
-## 37. 最终原则
+## 最终原则
 
-CARTOGRAPHY.md 的存在，是为了使制图意图持久且可执行。token 提供精确值；数据绑定提供真实性；文本提供判断；验证提供证据。成功的实现会让这四者始终相互连接。
+> CARTOGRAPHY.md 保存可迁移的制图身份和持久设计判断。核心工具只校验文档自身；操作时任务和事实位于格式之外。

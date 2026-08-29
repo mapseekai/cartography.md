@@ -1,6 +1,4 @@
 import type {Finding, LintRule} from '../../model/types.js';
-import type {CartographyConfig} from '../../schema/cartography.js';
-import type {DataProfile} from '../../schema/data-profile.js';
 import {CANONICAL_SECTIONS, SECTION_SEVERITY} from '../../parser/sections.js';
 import {exactTokenReference, extractTokenReferences, getAtPath, walkObject} from '../../utils/object.js';
 import {omittedSectionNames} from './helpers.js';
@@ -10,24 +8,8 @@ const RECOGNIZED_ROOT_KEYS = new Set([
   'name',
   'description',
   'locale',
-  'target',
-  'intent',
-  'data',
-  'agent',
-  'zoom',
-  'hierarchy',
   'tokens',
-  'scales',
-  'encodings',
-  'layerOrder',
-  'labels',
-  'states',
   'accessibility',
-  'security',
-  'performance',
-  'maplibre',
-  'validation',
-  'outputs',
   'extensions',
   'omitted',
 ]);
@@ -62,7 +44,7 @@ function closestRootKey(key: string): string | undefined {
   return score <= 3 ? closest : undefined;
 }
 
-export const documentSizeRule: LintRule<CartographyConfig, DataProfile> = {
+export const documentSizeRule: LintRule = {
   id: 'document-size',
   severity: 'warning',
   scope: 'document',
@@ -80,7 +62,7 @@ export const documentSizeRule: LintRule<CartographyConfig, DataProfile> = {
   },
 };
 
-export const requiredSectionsRule: LintRule<CartographyConfig, DataProfile> = {
+export const requiredSectionsRule: LintRule = {
   id: 'required-sections',
   severity: 'warning',
   scope: 'document',
@@ -115,7 +97,7 @@ export const requiredSectionsRule: LintRule<CartographyConfig, DataProfile> = {
   },
 };
 
-export const sectionOrderRule: LintRule<CartographyConfig, DataProfile> = {
+export const sectionOrderRule: LintRule = {
   id: 'section-order',
   severity: 'warning',
   scope: 'document',
@@ -144,7 +126,7 @@ export const sectionOrderRule: LintRule<CartographyConfig, DataProfile> = {
   },
 };
 
-export const unknownRootKeyRule: LintRule<CartographyConfig, DataProfile> = {
+export const unknownRootKeyRule: LintRule = {
   id: 'unknown-root-key',
   severity: 'warning',
   scope: 'document',
@@ -167,7 +149,7 @@ export const unknownRootKeyRule: LintRule<CartographyConfig, DataProfile> = {
   },
 };
 
-export const tokenReferenceRule: LintRule<CartographyConfig, DataProfile> = {
+export const tokenReferenceRule: LintRule = {
   id: 'token-reference',
   severity: 'error',
   scope: 'document',
@@ -186,7 +168,7 @@ export const tokenReferenceRule: LintRule<CartographyConfig, DataProfile> = {
           ruleId: this.id,
           severity: 'error',
           path: entry.path,
-          message: 'Version 0.1 only permits a token reference when it occupies the entire string.',
+          message: 'A YAML token reference must occupy the entire string.',
           suggestion: 'Move surrounding syntax into a structured value or define a complete token value.',
         });
         continue;
@@ -224,7 +206,7 @@ export const tokenReferenceRule: LintRule<CartographyConfig, DataProfile> = {
   },
 };
 
-export const DOCUMENT_RULES: LintRule<CartographyConfig, DataProfile>[] = [
+export const DOCUMENT_RULES: LintRule[] = [
   documentSizeRule,
   requiredSectionsRule,
   sectionOrderRule,

@@ -25,16 +25,6 @@ export async function readInput(file: string): Promise<string> {
   }
 }
 
-export async function readJson(file: string): Promise<unknown> {
-  const content = await readInput(file);
-  try {
-    return JSON.parse(content) as unknown;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new FileReadError(file, `Unable to parse JSON from ${file}: ${message}`);
-  }
-}
-
 function formatFinding(finding: Finding): string {
   const location = [finding.path, finding.line ? `line ${finding.line}` : undefined].filter(Boolean).join(' · ');
   const prefix = `${finding.severity.toUpperCase()} ${finding.ruleId}`;

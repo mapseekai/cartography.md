@@ -1,8 +1,7 @@
 import type {CartographyConfig} from '../schema/cartography.js';
-import type {DataProfile} from '../schema/data-profile.js';
 
 export type Severity = 'error' | 'warning' | 'info';
-export type RuleScope = 'document' | 'profile' | 'style';
+export type RuleScope = 'document';
 
 export interface Finding {
   ruleId: string;
@@ -37,66 +36,43 @@ export interface ParsedCartography<TConfig = CartographyConfig> {
   findings: Finding[];
 }
 
-export interface LintContext<
-  TConfig = CartographyConfig,
-  TProfile = DataProfile,
-> {
+export interface LintContext {
   source: string;
-  parsed: ParsedCartography<TConfig>;
-  cartography?: TConfig;
-  dataProfile?: TProfile;
-  style?: unknown;
+  parsed: ParsedCartography;
+  cartography?: CartographyConfig;
   sourcePath?: string;
   maxDocumentBytes: number;
 }
 
-export interface LintRule<
-  TConfig = CartographyConfig,
-  TProfile = DataProfile,
-> {
+export interface LintRule {
   id: string;
   severity: Severity;
   scope: RuleScope;
   description: string;
-  run(context: LintContext<TConfig, TProfile>): Finding[];
+  run(context: LintContext): Finding[];
 }
 
 export interface LintOptions {
-  style?: unknown;
-  dataProfile?: unknown;
   sourcePath?: string;
   strict?: boolean;
   rules?: LintRule[];
   maxDocumentBytes?: number;
 }
 
-export interface LintFileOptions {
-  style?: unknown;
-  dataProfile?: unknown;
-  stylePath?: string;
-  dataProfilePath?: string;
-  strict?: boolean;
-  rules?: LintRule[];
-  maxDocumentBytes?: number;
-}
+export type LintFileOptions = Omit<LintOptions, 'sourcePath'>;
 
-export interface LintReport<TConfig = CartographyConfig> {
+export interface LintReport {
   valid: boolean;
   strict: boolean;
   findings: Finding[];
   summary: FindingSummary;
-  cartography?: TConfig;
+  cartography?: CartographyConfig;
   resolved?: unknown;
   sections: string[];
   document: {
     path?: string;
     name?: string;
     version?: string;
-  };
-  artifacts: {
-    dataProfileChecked: boolean;
-    styleChecked: boolean;
-    officialMapLibreValidation: boolean;
   };
 }
 

@@ -1,12 +1,11 @@
 export {parseCartography} from './parser/index.js';
-export {cartographySchema, dataProfileSchema} from './schema/index.js';
+export {cartographySchema} from './schema/index.js';
 export {
   DEFAULT_RULES,
   lint,
   lintCartography,
   lintFile,
   resolveReferences,
-  validateMapLibreStyle,
 } from './linter/index.js';
 export {diffCartography} from './linter/diff.js';
 export {getRuleCatalog, getSpecification} from './spec.js';

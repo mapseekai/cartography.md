@@ -1,47 +1,41 @@
-# openfreemap-bright example
+# OpenFreeMap bright Skill fixture
 
 English | [中文](README.zh-CN.md)
 
-This example adopts the public [OpenFreeMap "bright"](https://tiles.openfreemap.org/styles/bright)
-style — a production OpenMapTiles basemap — and governs a representative subset
-of it with a `CARTOGRAPHY.md` contract:
+This directory contains non-normative test data for the `data-profile` Skill. It
+is not a core cartography.md example, a `CARTOGRAPHY.md` contract, or a profile
+that has passed core validation.
 
-| Governed layers | Encoding | Decision |
-|---|---|---|
-| `water`, `waterway-river`, `building` | `water-area`, `waterway-line`, `building-fill` | Fills lifted verbatim into tokens |
-| `highway-primary` | `road-primary` | Nominal `roadClass` scale over the `class` field |
-| `label_city` | `place-label` | `#000` text on `#fff` halo, 4.5:1 against paper |
+The fixture uses the public [OpenFreeMap "bright"](https://tiles.openfreemap.org/styles/bright)
+style, a production OpenMapTiles basemap. The integration test reads the local
+style only: it does not fetch TileJSON, vector tiles, fonts, or sprites, and it
+does not require live network access.
 
-Five layers carry `cartography:*` governance metadata (group, role, priority,
-owner, token refs, source rule, and token bindings). All other bright layers
-remain untouched and ungoverned — adopting them later is one metadata block and
-one encoding each.
+## Deterministic profile
 
-## Validate
+`DATA_PROFILE.json` is the fixed-timestamp output of style discovery:
 
 ```bash
-pnpm install
-pnpm lint:example
+pnpm --filter @cartographymd/data-profile-skill profile -- \
+  --style fixtures/openfreemap-bright/style.json \
+  --observed-at 2026-08-29T00:00:00Z \
+  --output fixtures/openfreemap-bright/DATA_PROFILE.json
 ```
 
-Or directly:
-
-```bash
-pnpm dlx --package=@mapseekai/cartography.md cartographymd lint \
-  CARTOGRAPHY.md \
-  --profile DATA_PROFILE.json \
-  --style style.json \
-  --format text
-```
+Run the command from `.agents/skills/data-profile`. Because the run observes
+only the style, its evidence is `style-inferred`; field domains and actual tile
+contents remain explicit unresolved items. The committed output is an expected
+test fixture, not an assertion that it completely describes OpenMapTiles data.
 
 ## Files
 
-- `CARTOGRAPHY.md` — the governing contract (English, canonical section order);
-- `DATA_PROFILE.json` — OpenMapTiles source-layer and field facts for the governed subset;
-- `style.json` — the bright style as served, plus governance metadata and a `cartography:spec` root pointer.
+- `style.json` — the locally retained OpenFreeMap bright style used as discovery input;
+- `DATA_PROFILE.json` — deterministic expected output used by `tests/openfreemap.test.ts`;
+- `THIRD_PARTY_LICENSES.md` and `THIRD_PARTY_LICENSES.zh-CN.md` — colocated license and attribution notices for the retained style.
 
-Tile access is public; rendering the style requires network access to
-`tiles.openfreemap.org` (fonts, sprites, and vector tiles).
+Rendering the style itself still requires network access to
+`tiles.openfreemap.org` for tiles, fonts, and sprites; the fixture test never
+renders it.
 
 ## Licenses
 

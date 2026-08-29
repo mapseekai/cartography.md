@@ -1,139 +1,1804 @@
 {
-  "version": "0.1.0",
-  "name": "OpenFreeMap planet (OpenMapTiles schema), governed subset",
-  "generatedAt": "2026-08-28",
-  "source": {
-    "tileJson": "https://tiles.openfreemap.org/planet",
-    "tileMaxZoom": 14,
-    "note": "Layer zoom ranges and field lists are taken from the TileJSON vector_layers declaration of the served source. Field value categories marked \"inferred\": true come from the published OpenMapTiles schema documentation and were not sampled from tile features."
-  },
+  "format": "cartography-data-profile/1",
+  "generatedAt": "2026-08-29T00:00:00Z",
+  "inputs": [
+    "fixtures/openfreemap-bright/style.json"
+  ],
   "sources": {
+    "ne2_shaded": {
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/sources/ne2_shaded"
+        }
+      ],
+      "layers": {},
+      "tileTemplates": [
+        "https://tiles.openfreemap.org/natural_earth/ne2sr/{z}/{x}/{y}.png"
+      ],
+      "type": "raster"
+    },
     "openmaptiles": {
-      "type": "vector",
-      "url": "https://tiles.openfreemap.org/planet",
-      "sourceLayers": {
-        "water": {
-          "geometry": "polygon",
-          "minzoom": 0,
-          "maxzoom": 14,
-          "fields": {
-            "intermittent": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 1,
-              "inferred": true,
-              "description": "1 marks intermittent water; absence means perennial."
-            },
-            "brunnel": {
-              "type": "string",
-              "nullable": true,
-              "inferred": true,
-              "description": "bridge, tunnel, or ford classification; absent on surface features."
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/sources/openmaptiles"
+        }
+      ],
+      "layers": {
+        "aerodrome_label": {
+          "evidence": [
+            {
+              "input": "fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/109"
             }
-          }
-        },
-        "waterway": {
-          "geometry": "line",
-          "minzoom": 3,
-          "maxzoom": 14,
+          ],
           "fields": {
-            "class": {
-              "type": "string",
-              "categories": ["river", "canal", "stream", "ditch", "drain"],
-              "inferred": true,
-              "description": "Waterway class consumed by the governed river encoding."
+            "iata": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/109"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
             },
-            "brunnel": {
-              "type": "string",
-              "nullable": true,
-              "inferred": true
-            }
-          }
-        },
-        "building": {
-          "geometry": "polygon",
-          "minzoom": 13,
-          "maxzoom": 14,
-          "fields": {
-            "colour": {
-              "type": "string",
-              "nullable": true
-            },
-            "hide_3d": {
-              "type": "boolean"
-            },
-            "render_height": {
-              "type": "number"
-            },
-            "render_min_height": {
-              "type": "number"
-            }
-          }
-        },
-        "transportation": {
-          "geometry": "line",
-          "minzoom": 4,
-          "maxzoom": 14,
-          "fields": {
-            "class": {
-              "type": "string",
-              "categories": ["motorway", "trunk", "primary", "secondary", "tertiary", "minor"],
-              "inferred": true,
-              "description": "Road classes consumed by the roadClass scale."
-            },
-            "brunnel": {
-              "type": "string",
-              "nullable": true,
-              "inferred": true
-            },
-            "ramp": {
-              "type": "integer",
-              "nullable": true,
-              "inferred": true,
-              "description": "1 marks highway ramps; the governed encoding excludes them."
-            }
-          }
-        },
-        "place": {
-          "geometry": "point",
-          "minzoom": 0,
-          "maxzoom": 14,
-          "fields": {
             "name": {
-              "type": "string",
-              "description": "Local display name used by city labels. Not guaranteed unique; not a feature identifier."
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/109"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
             },
             "name:latin": {
-              "type": "string",
-              "nullable": true
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/109"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
             },
             "name:nonlatin": {
-              "type": "string",
-              "nullable": true
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/109"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
             },
             "name_en": {
-              "type": "string",
-              "nullable": true
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/109"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            }
+          },
+          "geometries": [
+            "unknown"
+          ],
+          "minzoom": 10,
+          "stableIdObserved": false
+        },
+        "aeroway": {
+          "evidence": [
+            {
+              "input": "fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/44"
+            }
+          ],
+          "fields": {
+            "class": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/44"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            }
+          },
+          "geometries": [
+            "unknown"
+          ],
+          "minzoom": 4,
+          "stableIdObserved": false
+        },
+        "boundary": {
+          "evidence": [
+            {
+              "input": "fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/91"
+            }
+          ],
+          "fields": {
+            "admin_level": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/91"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "claimed_by": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/91"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "disputed": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/91"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "maritime": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/91"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            }
+          },
+          "geometries": [
+            "unknown"
+          ],
+          "minzoom": 5,
+          "stableIdObserved": false
+        },
+        "building": {
+          "evidence": [
+            {
+              "input": "fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/25"
+            }
+          ],
+          "fields": {},
+          "geometries": [
+            "unknown"
+          ],
+          "stableIdObserved": false
+        },
+        "landcover": {
+          "evidence": [
+            {
+              "input": "fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/1"
+            }
+          ],
+          "fields": {
+            "class": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/11"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "subclass": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/1"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            }
+          },
+          "geometries": [
+            "unknown"
+          ],
+          "stableIdObserved": false
+        },
+        "landuse": {
+          "evidence": [
+            {
+              "input": "fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/2"
+            }
+          ],
+          "fields": {
+            "class": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/2"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            }
+          },
+          "geometries": [
+            "unknown"
+          ],
+          "maxzoom": 10,
+          "stableIdObserved": false
+        },
+        "park": {
+          "evidence": [
+            {
+              "input": "fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/10"
+            }
+          ],
+          "fields": {
+            "class": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/13"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            }
+          },
+          "geometries": [
+            "unknown"
+          ],
+          "stableIdObserved": false
+        },
+        "place": {
+          "evidence": [
+            {
+              "input": "fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/110"
+            }
+          ],
+          "fields": {
+            "capital": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/114"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
             },
             "class": {
-              "type": "string",
-              "categories": ["city", "town", "village", "suburb", "neighbourhood", "state", "country"],
-              "inferred": true
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/110"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/110"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name:latin": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/110"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name:nonlatin": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/110"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name_en": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/110"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
             },
             "rank": {
-              "type": "integer",
-              "nullable": true,
-              "inferred": true
-            },
-            "capital": {
-              "type": "integer",
-              "nullable": true,
-              "inferred": true,
-              "description": "2 marks country capitals; the governed encoding excludes them."
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/116"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
             }
-          }
+          },
+          "geometries": [
+            "unknown"
+          ],
+          "maxzoom": 9,
+          "minzoom": 2,
+          "stableIdObserved": false
+        },
+        "poi": {
+          "evidence": [
+            {
+              "input": "fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/99"
+            }
+          ],
+          "fields": {
+            "class": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/99"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/99"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name:latin": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/99"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name:nonlatin": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/99"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name_en": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/99"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "rank": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/99"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "subclass": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/99"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            }
+          },
+          "geometries": [
+            "unknown"
+          ],
+          "minzoom": 15,
+          "stableIdObserved": false
+        },
+        "transportation": {
+          "evidence": [
+            {
+              "input": "fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/27"
+            }
+          ],
+          "fields": {
+            "brunnel": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/27"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "class": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/27"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "oneway": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/94"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "ramp": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/28"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "service": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/69"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "subclass": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/89"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            }
+          },
+          "geometries": [
+            "unknown"
+          ],
+          "minzoom": 4,
+          "stableIdObserved": false
+        },
+        "transportation_name": {
+          "evidence": [
+            {
+              "input": "fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/103"
+            }
+          ],
+          "fields": {
+            "class": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/103"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/103"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name:latin": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/103"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name:nonlatin": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/103"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name_en": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/103"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "network": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/106"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "ref": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/106"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "ref_length": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/106"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            }
+          },
+          "geometries": [
+            "unknown"
+          ],
+          "minzoom": 7,
+          "stableIdObserved": false
+        },
+        "water": {
+          "evidence": [
+            {
+              "input": "fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/21"
+            }
+          ],
+          "fields": {
+            "brunnel": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/21"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "intermittent": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/21"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            }
+          },
+          "geometries": [
+            "unknown"
+          ],
+          "stableIdObserved": false
+        },
+        "water_name": {
+          "evidence": [
+            {
+              "input": "fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/97"
+            }
+          ],
+          "fields": {
+            "name": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/97"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name:latin": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/97"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name:nonlatin": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/97"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name_en": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/97"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            }
+          },
+          "geometries": [
+            "unknown"
+          ],
+          "stableIdObserved": false
+        },
+        "waterway": {
+          "evidence": [
+            {
+              "input": "fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/14"
+            }
+          ],
+          "fields": {
+            "brunnel": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/14"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "class": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/14"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "intermittent": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/15"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/96"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name:latin": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/96"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name:nonlatin": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/96"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            },
+            "name_en": {
+              "categories": [],
+              "evidence": [
+                {
+                  "input": "fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/96"
+                }
+              ],
+              "missingObserved": false,
+              "nullObserved": false,
+              "types": [
+                "unknown"
+              ]
+            }
+          },
+          "geometries": [
+            "unknown"
+          ],
+          "minzoom": 10,
+          "stableIdObserved": false
         }
-      }
+      },
+      "tileTemplates": [
+        "https://tiles.openfreemap.org/planet"
+      ],
+      "type": "vector"
     }
-  }
+  },
+  "unresolved": [
+    {
+      "code": "dynamic-field-reference",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/109"
+        }
+      ],
+      "location": "#/layers/109",
+      "message": "A get or has expression uses a dynamic field position that cannot be profiled."
+    },
+    {
+      "code": "dynamic-field-reference",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/69"
+        }
+      ],
+      "location": "#/layers/69",
+      "message": "A get or has expression uses a dynamic field position that cannot be profiled."
+    },
+    {
+      "code": "dynamic-field-reference",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/70"
+        }
+      ],
+      "location": "#/layers/70",
+      "message": "A get or has expression uses a dynamic field position that cannot be profiled."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/109"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/aerodrome_label/fields/iata",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/109"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/aerodrome_label/fields/name",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/109"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/aerodrome_label/fields/name:latin",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/109"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/aerodrome_label/fields/name:nonlatin",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/109"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/aerodrome_label/fields/name_en",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/44"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/aeroway/fields/class",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/91"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/boundary/fields/admin_level",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/91"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/boundary/fields/claimed_by",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/91"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/boundary/fields/disputed",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/91"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/boundary/fields/maritime",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/11"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/landcover/fields/class",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/1"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/landcover/fields/subclass",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/2"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/landuse/fields/class",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/13"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/park/fields/class",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/114"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/place/fields/capital",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/110"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/place/fields/class",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/110"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/place/fields/name",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/110"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/place/fields/name:latin",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/110"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/place/fields/name:nonlatin",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/110"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/place/fields/name_en",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/116"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/place/fields/rank",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/99"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/poi/fields/class",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/99"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/poi/fields/name",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/99"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/poi/fields/name:latin",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/99"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/poi/fields/name:nonlatin",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/99"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/poi/fields/name_en",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/99"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/poi/fields/rank",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/99"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/poi/fields/subclass",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/27"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/transportation/fields/brunnel",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/27"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/transportation/fields/class",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/94"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/transportation/fields/oneway",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/28"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/transportation/fields/ramp",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/69"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/transportation/fields/service",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/89"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/transportation/fields/subclass",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/103"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/transportation_name/fields/class",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/103"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/transportation_name/fields/name",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/103"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/transportation_name/fields/name:latin",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/103"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/transportation_name/fields/name:nonlatin",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/103"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/transportation_name/fields/name_en",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/106"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/transportation_name/fields/network",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/106"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/transportation_name/fields/ref",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/106"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/transportation_name/fields/ref_length",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/21"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/water/fields/brunnel",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/21"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/water/fields/intermittent",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/97"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/water_name/fields/name",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/97"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/water_name/fields/name:latin",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/97"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/water_name/fields/name:nonlatin",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/97"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/water_name/fields/name_en",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/14"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/waterway/fields/brunnel",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/14"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/waterway/fields/class",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/15"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/waterway/fields/intermittent",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/96"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/waterway/fields/name",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/96"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/waterway/fields/name:latin",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/96"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/waterway/fields/name:nonlatin",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "field-domain-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/96"
+        }
+      ],
+      "location": "#/sources/openmaptiles/layers/waterway/fields/name_en",
+      "message": "No sampled values were observed for this field, so its data domain remains unresolved."
+    },
+    {
+      "code": "tile-contents-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/sources/ne2_shaded"
+        }
+      ],
+      "location": "#/sources/ne2_shaded",
+      "message": "No actual tile contents were observed for this source."
+    },
+    {
+      "code": "tile-contents-unobserved",
+      "evidence": [
+        {
+          "input": "fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/sources/openmaptiles"
+        }
+      ],
+      "location": "#/sources/openmaptiles",
+      "message": "No actual tile contents were observed for this source."
+    }
+  ]
 }

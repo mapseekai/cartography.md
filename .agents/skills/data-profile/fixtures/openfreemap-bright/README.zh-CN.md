@@ -1,44 +1,37 @@
-# openfreemap-bright 示例
+# OpenFreeMap bright Skill fixture
 
 [English](README.md) | 中文
 
-本示例在公开的 [OpenFreeMap bright](https://tiles.openfreemap.org/styles/bright) 生产样式（OpenMapTiles 底图）之上，用一个 `CARTOGRAPHY.md` 契约治理其中具有代表性的子集：
+本目录存放 `data-profile` Skill 的非规范测试数据。它不是 cartography.md
+核心示例，不是 `CARTOGRAPHY.md` 契约，也不表示其中的 profile 已通过核心验证。
 
-| 治理图层 | 编码 | 决策 |
-|---|---|---|
-| `water`、`waterway-river`、`building` | `water-area`、`waterway-line`、`building-fill` | 填充色逐字提升为 token |
-| `highway-primary` | `road-primary` | 在 `class` 字段上施加名义比例尺 `roadClass` |
-| `label_city` | `place-label` | 黑字白晕圈，对纸面保持 4.5:1 对比度 |
+fixture 使用公开的 [OpenFreeMap bright](https://tiles.openfreemap.org/styles/bright)
+生产样式（OpenMapTiles 底图）。集成测试只读取本地样式，不获取 TileJSON、
+矢量瓦片、字体或 sprite，也不需要实时网络访问。
 
-五个图层带有 `cartography:*` 溯源 metadata（group、role、priority、owner、
-tokenRefs、sourceRule 以及 tokenBindings）。bright 的其余图层保持原样、不受
-治理——后续采纳它们只需各加一段 metadata 和一条编码。
+## 确定性 profile
 
-## 验证
+`DATA_PROFILE.json` 是固定时间戳的样式发现输出：
 
 ```bash
-pnpm install
-pnpm lint:example
+pnpm --filter @cartographymd/data-profile-skill profile -- \
+  --style fixtures/openfreemap-bright/style.json \
+  --observed-at 2026-08-29T00:00:00Z \
+  --output fixtures/openfreemap-bright/DATA_PROFILE.json
 ```
 
-或直接运行：
-
-```bash
-pnpm dlx --package=@mapseekai/cartography.md cartographymd lint \
-  CARTOGRAPHY.md \
-  --profile DATA_PROFILE.json \
-  --style style.json \
-  --format text
-```
+请从 `.agents/skills/data-profile` 运行该命令。由于此次运行只观察样式，证据均为
+`style-inferred`；字段域与实际瓦片内容仍作为明确的 unresolved 项保留。提交的
+输出是测试所用的预期 fixture，并不声称完整描述了 OpenMapTiles 数据。
 
 ## 文件
 
-- `CARTOGRAPHY.md` —— 治理契约（英文，规范章节顺序）；
-- `DATA_PROFILE.json` —— 受治理子集的 OpenMapTiles 源图层与字段事实；
-- `style.json` —— bright 原始样式，附加治理 metadata 与 `cartography:spec` 根指针。
+- `style.json` —— 作为发现输入保留在本地的 OpenFreeMap bright 样式；
+- `DATA_PROFILE.json` —— `tests/openfreemap.test.ts` 使用的确定性预期输出；
+- `THIRD_PARTY_LICENSES.md` 与 `THIRD_PARTY_LICENSES.zh-CN.md` —— 与样式放在一起的许可及署名说明。
 
-瓦片服务为公开访问；渲染该样式需访问 `tiles.openfreemap.org`（字体、sprite
-与矢量瓦片）。
+实际渲染该样式仍需访问 `tiles.openfreemap.org` 获取瓦片、字体与 sprite；
+fixture 测试不会渲染样式。
 
 ## 许可
 

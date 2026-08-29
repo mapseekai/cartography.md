@@ -1,0 +1,236 @@
+import {gzipSync} from 'node:zlib';
+
+import {create} from '@mapbox/mvt-fixtures';
+import {PbfWriter} from 'pbf';
+import {describe, expect, it} from 'vitest';
+
+import {decodeMvt, observeValue, TileDecodeError} from '../src/mvt.js';
+import type {Evidence} from '../src/types.js';
+
+const evidence: Evidence = {
+  kind: 'tile-sampled',
+  input: 'https://tiles.example/{z}/{x}/{y}.pbf',
+  location: '#/tiles/0/0/0',
+};
+
+function point(geometry = [9, 50, 34]): number[] {
+  return geometry;
+}
+
+function makeTile(layers: unknown[]): Uint8Array {
+  return create({layers}).buffer;
+}
+
+function makeZeroIntegerTile(): Uint8Array {
+  const pbf = new PbfWriter();
+  pbf.writeMessage(
+    3,
+    (_, layer) => {
+      layer.writeStringField(1, 'zeroes');
+      layer.writeMessage(
+        2,
+        (_, feature) => {
+          feature.writePackedVarint(2, [0, 0]);
+          feature.writeVarintField(3, 1);
+          feature.writePackedVarint(4, point());
+        },
+        undefined,
+      );
+      layer.writeStringField(3, 'score');
+      layer.writeMessage(
+        4,
+        (_, value) => value.writeVarintField(4, 0),
+        undefined,
+      );
+      layer.writeVarintField(5, 4096);
+      layer.writeVarintField(15, 2);
+    },
+    undefined,
+  );
+  return pbf.finish();
+}
+
+describe('decodeMvt', () => {
+  it('observes point-layer field values, missing values, and stable IDs', () => {
+    const buffer = makeTile([
+      {
+        version: 2,
+        name: 'habitat',
+        keys: ['name', 'score', 'protected'],
+        values: [
+          {string_value: 'woodland'},
+          {int_value: 1},
+          {bool_value: true},
+          {string_value: 'wetland'},
+          {int_value: 80},
+          {bool_value: true},
+        ],
+        extent: 4096,
+        features: [
+          {id: 1, tags: [0, 0, 1, 1, 2, 2], type: 1, geometry: point()},
+          {id: 2, tags: [0, 3, 1, 4, 2, 5], type: 1, geometry: point()},
+          {id: 3, tags: [0, 0, 2, 2], type: 1, geometry: point()},
+        ],
+      },
+    ]);
+
+    const observation = decodeMvt(buffer, evidence);
+
+    expect(observation.layers.habitat.geometries).toEqual(['point']);
+    expect(observation.layers.habitat.featureCount).toBe(3);
+    expect(observation.layers.habitat.fields.name).toMatchObject({
+      types: ['string'],
+      categories: ['woodland', 'wetland'],
+      presentCount: 3,
+      missingCount: 0,
+      missingObserved: false,
+      nullObserved: false,
+    });
+    expect(observation.layers.habitat.fields.score).toMatchObject({
+      types: ['integer'],
+      minimum: 1,
+      maximum: 80,
+      categories: [1, 80],
+      presentCount: 2,
+      missingCount: 1,
+      missingObserved: true,
+      nullObserved: false,
+    });
+    expect(observation.layers.habitat.fields.protected).toMatchObject({
+      types: ['boolean'],
+      categories: [true],
+    });
+    expect(observation.layers.habitat.stableIdObserved).toBe(true);
+  });
+
+  it('decodes gzip-compressed MVT bytes', () => {
+    const buffer = makeTile([
+      {
+        version: 2,
+        name: 'places',
+        keys: ['name'],
+        values: [{string_value: 'Harbor'}],
+        extent: 4096,
+        features: [{id: 4, tags: [0, 0], type: 1, geometry: point()}],
+      },
+    ]);
+
+    expect(decodeMvt(gzipSync(buffer), evidence).layers.places.fields.name.categories).toEqual([
+      'Harbor',
+    ]);
+  });
+
+  it('observes the valid integer value zero', () => {
+    expect(decodeMvt(makeZeroIntegerTile(), evidence).layers.zeroes.fields.score).toMatchObject({
+      types: ['integer'],
+      categories: [0],
+      minimum: 0,
+      maximum: 0,
+    });
+  });
+
+  it('retains mixed MVT scalar types rather than coercing them', () => {
+    const buffer = makeTile([
+      {
+        version: 2,
+        name: 'mixed',
+        keys: ['value'],
+        values: [{string_value: '7'}, {int_value: 7}, {bool_value: true}],
+        extent: 4096,
+        features: [
+          {tags: [0, 0], type: 1, geometry: point()},
+          {tags: [0, 1], type: 1, geometry: point()},
+          {tags: [0, 2], type: 1, geometry: point()},
+        ],
+      },
+    ]);
+
+    expect(decodeMvt(buffer, evidence).layers.mixed.fields.value).toMatchObject({
+      types: ['string', 'integer', 'boolean'],
+      categories: ['7', 7, true],
+      presentCount: 3,
+      missingCount: 0,
+    });
+  });
+
+  it('caps distinct scalar categories and reports that the observation was truncated', () => {
+    const values = Array.from({length: 257}, (_, index) => ({int_value: index + 1}));
+    const buffer = makeTile([
+      {
+        version: 2,
+        name: 'many-values',
+        keys: ['value'],
+        values,
+        extent: 4096,
+        features: values.map((_, index) => ({
+          tags: [0, index],
+          type: 1,
+          geometry: point(),
+        })),
+      },
+    ]);
+
+    const field = decodeMvt(buffer, evidence).layers['many-values'].fields.value;
+    expect(field.categories).toHaveLength(256);
+    expect(field.categories.at(-1)).toBe(256);
+    expect(field.categoriesTruncated).toBe(true);
+  });
+
+  it('retains prototype-like MVT layer and property names as own facts', () => {
+    const buffer = makeTile([
+      {
+        version: 2,
+        name: '__proto__',
+        keys: ['__proto__', 'constructor', 'toString'],
+        values: [{string_value: 'first'}, {string_value: 'second'}, {string_value: 'third'}],
+        extent: 4096,
+        features: [{tags: [0, 0, 1, 1, 2, 2], type: 1, geometry: point()}],
+      },
+    ]);
+
+    const observation = decodeMvt(buffer, evidence);
+    const layer = observation.layers.__proto__;
+    expect(Object.getPrototypeOf(observation.layers)).toBeNull();
+    expect(Object.prototype.propertyIsEnumerable.call(observation.layers, '__proto__')).toBe(true);
+    expect(Object.getPrototypeOf(layer.fields)).toBeNull();
+    expect(Object.keys(layer.fields)).toEqual(['__proto__', 'constructor', 'toString']);
+  });
+
+  it('uses typed decode errors for damaged PBF bytes', () => {
+    expect(() => decodeMvt(new Uint8Array([0xff]), evidence)).toThrow(TileDecodeError);
+  });
+
+  it('rejects a PBF message whose declared layer length is truncated', () => {
+    expect(() => decodeMvt(new Uint8Array([0x1a, 0x03, 0x0a, 0x0a]), evidence)).toThrow(
+      TileDecodeError,
+    );
+  });
+
+  it('uses typed decode errors for corrupt gzip bytes', () => {
+    expect(() => decodeMvt(new Uint8Array([0x1f, 0x8b, 0x08]), evidence)).toThrow(TileDecodeError);
+  });
+});
+
+describe('observeValue', () => {
+  it('keeps explicit null distinct from an absent MVT property', () => {
+    expect(observeValue(null)).toEqual({
+      types: ['null'],
+      categories: [null],
+      presentCount: 1,
+      missingCount: 0,
+      missingObserved: false,
+      nullObserved: true,
+    });
+  });
+
+  it('does not treat object values as scalar categories', () => {
+    expect(observeValue({status: 'not-a-mvt-scalar'})).toEqual({
+      types: ['json'],
+      categories: [],
+      presentCount: 1,
+      missingCount: 0,
+      missingObserved: false,
+      nullObserved: false,
+    });
+  });
+});

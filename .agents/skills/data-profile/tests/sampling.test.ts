@@ -1,9 +1,21 @@
+import {EventEmitter} from 'node:events';
 import {mkdtemp, rm, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {Readable} from 'node:stream';
 
 import {create} from '@mapbox/mvt-fixtures';
-import {describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+
+const transportMocks = vi.hoisted(() => ({
+  lookup: vi.fn(),
+  httpRequest: vi.fn(),
+  httpsRequest: vi.fn(),
+}));
+
+vi.mock('node:dns/promises', () => ({lookup: transportMocks.lookup}));
+vi.mock('node:http', () => ({request: transportMocks.httpRequest}));
+vi.mock('node:https', () => ({request: transportMocks.httpsRequest}));
 
 import {
   sampleTiles,
@@ -45,6 +57,107 @@ function pointTile(layerName = 'places'): Uint8Array {
   }).buffer;
 }
 
+interface FakeResponse {
+  stream: Readable & {statusCode: number; headers: Record<string, string>};
+  destroySpy: ReturnType<typeof vi.fn>;
+}
+
+function fakeResponse(
+  statusCode: number,
+  headers: Record<string, string> = {},
+  body = new Uint8Array(),
+): FakeResponse {
+  let sent = false;
+  const stream = new Readable({
+    read() {
+      if (sent) return;
+      sent = true;
+      if (body.byteLength > 0) this.push(body);
+      this.push(null);
+    },
+  }) as FakeResponse['stream'];
+  stream.statusCode = statusCode;
+  stream.headers = headers;
+  const originalDestroy = stream.destroy.bind(stream);
+  const destroySpy = vi.fn((error?: Error) => originalDestroy(error));
+  stream.destroy = destroySpy as typeof stream.destroy;
+  return {stream, destroySpy};
+}
+
+function installHttpResponses(responses: FakeResponse[]): {
+  pinnedAddresses: string[];
+  requestedHosts: string[];
+  servernames: Array<string | undefined>;
+} {
+  const queue = [...responses];
+  const pinnedAddresses: string[] = [];
+  const requestedHosts: string[] = [];
+  const servernames: Array<string | undefined> = [];
+  const request = vi.fn(
+    (
+      input: URL,
+      requestOptions: Record<string, unknown>,
+      callback: (response: FakeResponse['stream']) => void,
+    ) => {
+      const response = queue.shift();
+      if (!response) throw new Error('Unexpected outbound request.');
+      requestedHosts.push(input.hostname);
+      servernames.push(
+        typeof requestOptions.servername === 'string' ? requestOptions.servername : undefined,
+      );
+      const requestEmitter = new EventEmitter() as EventEmitter & {
+        end(): void;
+        destroy(error?: Error): void;
+      };
+      requestEmitter.destroy = (error?: Error) => {
+        if (error) requestEmitter.emit('error', error);
+      };
+      requestEmitter.end = () => {
+        const pinnedLookup = requestOptions.lookup as
+          | ((
+              hostname: string,
+              options: Record<string, unknown>,
+              callback: (error: Error | null, address: string, family: number) => void,
+            ) => void)
+          | undefined;
+        if (!pinnedLookup) {
+          queueMicrotask(() => callback(response.stream));
+          return;
+        }
+        pinnedLookup(input.hostname, {}, (error, address) => {
+          if (error) {
+            requestEmitter.emit('error', error);
+            return;
+          }
+          pinnedAddresses.push(address);
+          callback(response.stream);
+        });
+      };
+      return requestEmitter;
+    },
+  );
+  transportMocks.httpRequest.mockImplementation(request);
+  transportMocks.httpsRequest.mockImplementation(request);
+  return {pinnedAddresses, requestedHosts, servernames};
+}
+
+beforeEach(() => {
+  transportMocks.lookup.mockReset();
+  transportMocks.httpRequest.mockReset();
+  transportMocks.httpsRequest.mockReset();
+  transportMocks.lookup.mockResolvedValue([{address: '93.184.216.34', family: 4}]);
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => {
+      throw new Error('Global fetch must not perform the verified connection.');
+    }),
+  );
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe('tileCandidates', () => {
   it('sorts zooms and coordinates while removing duplicate center, corner, and quarter tiles', () => {
     expect(tileCandidates([-180, -85, 180, 85], [1, 0, 1])).toEqual([
@@ -53,6 +166,20 @@ describe('tileCandidates', () => {
       {z: 1, x: 0, y: 1},
       {z: 1, x: 1, y: 0},
       {z: 1, x: 1, y: 1},
+    ]);
+  });
+
+  it('keeps center, four corners, and four quarter points distinct at high zoom', () => {
+    expect(tileCandidates([-10, 40, 10, 50], [14])).toEqual([
+      {z: 14, x: 7736, y: 5556},
+      {z: 14, x: 7736, y: 6202},
+      {z: 14, x: 7964, y: 5729},
+      {z: 14, x: 7964, y: 6051},
+      {z: 14, x: 8192, y: 5893},
+      {z: 14, x: 8419, y: 5729},
+      {z: 14, x: 8419, y: 6051},
+      {z: 14, x: 8647, y: 5556},
+      {z: 14, x: 8647, y: 6202},
     ]);
   });
 });
@@ -188,7 +315,7 @@ describe('sampleTiles', () => {
       }),
     );
 
-    expect(result.summary).toMatchObject({requested: 1, decoded: 0, failed: 1});
+    expect(result.summary).toMatchObject({requested: 0, decoded: 0, failed: 1});
     expect(result.unresolved.map((item) => item.code)).toEqual([
       'tile-private-network-blocked',
     ]);
@@ -212,52 +339,108 @@ describe('sampleTiles', () => {
     },
   );
 
-  it('permits at most three manual redirects', async () => {
-    const fetchMock = vi.fn(async () =>
-      new Response(null, {status: 302, headers: {location: '/next'}}),
+  it('connects through the exact address returned by policy-checked DNS', async () => {
+    const response = fakeResponse(
+      200,
+      {'content-length': String(pointTile().byteLength)},
+      pointTile(),
     );
-    vi.stubGlobal('fetch', fetchMock);
-    try {
-      const result = await sampleTiles(
+    const transport = installHttpResponses([response]);
+
+    const result = await sampleTiles(
+      options({
+        bounds: [0, 0, 0, 0],
+        zooms: [0],
+        retries: 0,
+      }),
+    );
+
+    expect(transportMocks.lookup).toHaveBeenCalledTimes(1);
+    expect(transport.pinnedAddresses).toEqual(['93.184.216.34']);
+    expect(transport.requestedHosts).toEqual(['tiles.example']);
+    expect(transport.servernames).toEqual(['tiles.example']);
+    expect(result.summary).toMatchObject({requested: 1, decoded: 1, failed: 0});
+  });
+
+  it('cancels bodies before rejecting invalid lengths, oversized lengths, and non-OK status', async () => {
+    const cases = [
+      fakeResponse(200, {'content-length': 'invalid'}, pointTile()),
+      fakeResponse(200, {'content-length': '999'}, pointTile()),
+      fakeResponse(400, {}, pointTile()),
+    ];
+
+    for (const response of cases) {
+      transportMocks.httpRequest.mockClear();
+      installHttpResponses([response]);
+      await sampleTiles(
         options({
-          template: 'http://127.0.0.1/{z}/{x}/{y}.pbf',
           bounds: [0, 0, 0, 0],
           zooms: [0],
           retries: 0,
+          maxResponseBytes: 100,
           allowPrivateNetwork: true,
         }),
       );
-
-      expect(fetchMock).toHaveBeenCalledTimes(4);
-      expect(result.unresolved.map((item) => item.code)).toEqual(['tile-redirect-limit']);
-    } finally {
-      vi.unstubAllGlobals();
+      expect(response.destroySpy).toHaveBeenCalledTimes(1);
     }
   });
 
-  it('revalidates the protocol of every manual redirect target', async () => {
-    const fetchMock = vi.fn(async () =>
-      new Response(null, {status: 302, headers: {location: 'file:///private/tile.pbf'}}),
+  it('permits at most three manual redirects', async () => {
+    const responses = Array.from({length: 4}, () => fakeResponse(302, {location: '/next'}));
+    installHttpResponses(responses);
+    const result = await sampleTiles(
+      options({
+        template: 'http://127.0.0.1/{z}/{x}/{y}.pbf',
+        bounds: [0, 0, 0, 0],
+        zooms: [0],
+        retries: 0,
+        allowPrivateNetwork: true,
+      }),
     );
-    vi.stubGlobal('fetch', fetchMock);
-    try {
-      const result = await sampleTiles(
-        options({
-          template: 'http://127.0.0.1/{z}/{x}/{y}.pbf',
-          bounds: [0, 0, 0, 0],
-          zooms: [0],
-          retries: 0,
-          allowPrivateNetwork: true,
-        }),
-      );
 
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(result.unresolved.map((item) => item.code)).toEqual([
-        'tile-template-not-inspectable',
-      ]);
-    } finally {
-      vi.unstubAllGlobals();
-    }
+    expect(transportMocks.httpRequest).toHaveBeenCalledTimes(4);
+    expect(responses.every((response) => response.destroySpy.mock.calls.length === 1)).toBe(true);
+    expect(result.unresolved.map((item) => item.code)).toEqual(['tile-redirect-limit']);
+  });
+
+  it('revalidates the protocol of every manual redirect target', async () => {
+    const response = fakeResponse(302, {location: 'file:///private/tile.pbf'});
+    installHttpResponses([response]);
+    const result = await sampleTiles(
+      options({
+        template: 'http://127.0.0.1/{z}/{x}/{y}.pbf',
+        bounds: [0, 0, 0, 0],
+        zooms: [0],
+        retries: 0,
+        allowPrivateNetwork: true,
+      }),
+    );
+
+    expect(transportMocks.httpRequest).toHaveBeenCalledTimes(1);
+    expect(response.destroySpy).toHaveBeenCalledTimes(1);
+    expect(result.unresolved.map((item) => item.code)).toEqual([
+      'tile-template-not-inspectable',
+    ]);
+  });
+
+  it('shares the 40-request budget across candidate attempts and redirect hops', async () => {
+    const responses = Array.from({length: 40}, () =>
+      fakeResponse(302, {location: '/next'}),
+    );
+    installHttpResponses(responses);
+
+    const result = await sampleTiles(
+      options({
+        template: 'http://tiles.example/{z}/{x}/{y}.pbf',
+        maxRequests: 40,
+        retries: 0,
+        allowPrivateNetwork: true,
+      }),
+    );
+
+    expect(transportMocks.httpRequest).toHaveBeenCalledTimes(40);
+    expect(result.summary.requested).toBe(40);
+    expect(result.summary.stopReason).toBe('budget-exhausted');
   });
 
   it('enforces response and total-byte caps for injected fetchers', async () => {

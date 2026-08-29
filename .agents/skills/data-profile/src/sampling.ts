@@ -1,6 +1,8 @@
 import {lookup} from 'node:dns/promises';
 import {createReadStream} from 'node:fs';
-import {isIP} from 'node:net';
+import {request as requestHttp, type IncomingMessage} from 'node:http';
+import {request as requestHttps} from 'node:https';
+import {isIP, type LookupFunction} from 'node:net';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -78,6 +80,13 @@ interface AttemptResult {
   bytes?: Uint8Array;
   error?: unknown;
 }
+
+interface PinnedAddress {
+  address: string;
+  family: 4 | 6;
+}
+
+type TakeRequest = (coordinate: TileCoordinate) => boolean;
 
 function finiteInteger(value: number, fallback: number, minimum: number): number {
   return Number.isFinite(value) ? Math.max(minimum, Math.floor(value)) : fallback;
@@ -279,36 +288,51 @@ function blockedIp(address: string): boolean {
   return value === 0n || value === 1n || value >> 121n === 126n || value >> 118n === 1018n;
 }
 
-async function validateRemoteTarget(url: URL, allowPrivateNetwork: boolean): Promise<void> {
+async function resolveRemoteTarget(
+  url: URL,
+  allowPrivateNetwork: boolean,
+  signal: AbortSignal,
+): Promise<PinnedAddress> {
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     throw new SamplingError('tile-template-not-inspectable');
   }
   if (url.username !== '' || url.password !== '') {
     throw new SamplingError('tile-template-credentials-rejected');
   }
-  if (allowPrivateNetwork) return;
-
   const hostname = url.hostname.replace(/^\[|\]$/g, '');
-  if (isIP(hostname) !== 0) {
-    if (blockedIp(hostname)) throw new SamplingError('tile-private-network-blocked');
-    return;
+  const literalFamily = isIP(hostname);
+  if (literalFamily !== 0) {
+    if (!allowPrivateNetwork && blockedIp(hostname)) {
+      throw new SamplingError('tile-private-network-blocked');
+    }
+    return {address: hostname, family: literalFamily as 4 | 6};
   }
 
   let addresses: Array<{address: string; family: number}>;
   try {
-    addresses = await lookup(hostname, {all: true, verbatim: true});
+    addresses = await abortable(lookup(hostname, {all: true, verbatim: true}), signal);
   } catch {
-    throw new SamplingError('tile-host-unresolved', true);
+    throw new SamplingError(signal.aborted ? 'tile-fetch-timeout' : 'tile-host-unresolved', true);
   }
   if (addresses.length === 0) throw new SamplingError('tile-host-unresolved', true);
-  if (addresses.some(({address}) => blockedIp(address))) {
+  if (!allowPrivateNetwork && addresses.some(({address}) => blockedIp(address))) {
     throw new SamplingError('tile-private-network-blocked');
   }
+  const pinned = [...addresses]
+    .filter((address): address is PinnedAddress => address.family === 4 || address.family === 6)
+    .sort((left, right) => left.family - right.family || left.address.localeCompare(right.address))[0];
+  if (!pinned) throw new SamplingError('tile-host-unresolved', true);
+  return pinned;
 }
 
-function contentLength(response: Response): number | undefined {
-  const raw = response.headers.get('content-length');
-  if (raw === null) return undefined;
+function discardResponse(response: IncomingMessage): void {
+  response.destroy();
+}
+
+function contentLength(response: IncomingMessage): number | undefined {
+  const raw = response.headers['content-length'];
+  if (raw === undefined) return undefined;
+  if (Array.isArray(raw)) throw new SamplingError('tile-content-length-invalid');
   const length = Number(raw);
   if (!Number.isSafeInteger(length) || length < 0) {
     throw new SamplingError('tile-content-length-invalid');
@@ -317,23 +341,27 @@ function contentLength(response: Response): number | undefined {
 }
 
 async function readResponse(
-  response: Response,
+  response: IncomingMessage,
   maxResponseBytes: number,
   claimBytes: (length: number) => boolean,
 ): Promise<Uint8Array> {
-  const declaredLength = contentLength(response);
+  let declaredLength: number | undefined;
+  try {
+    declaredLength = contentLength(response);
+  } catch (error) {
+    discardResponse(response);
+    throw error;
+  }
   if (declaredLength !== undefined && declaredLength > maxResponseBytes) {
+    discardResponse(response);
     throw new SamplingError('tile-response-too-large');
   }
-  if (!response.body) return new Uint8Array();
 
   const chunks: Uint8Array[] = [];
   let responseBytes = 0;
-  const reader = response.body.getReader();
   try {
-    while (true) {
-      const {done, value} = await reader.read();
-      if (done) break;
+    for await (const chunk of response) {
+      const value = typeof chunk === 'string' ? Buffer.from(chunk) : (chunk as Uint8Array);
       responseBytes += value.byteLength;
       if (responseBytes > maxResponseBytes) {
         throw new SamplingError('tile-response-too-large');
@@ -344,10 +372,8 @@ async function readResponse(
       chunks.push(value);
     }
   } catch (error) {
-    await reader.cancel().catch(() => undefined);
+    discardResponse(response);
     throw error;
-  } finally {
-    reader.releaseLock();
   }
 
   const bytes = new Uint8Array(responseBytes);
@@ -359,25 +385,66 @@ async function readResponse(
   return bytes;
 }
 
+function pinnedLookup(address: PinnedAddress): LookupFunction {
+  return ((_hostname, _options, callback) => {
+    const done = callback as (
+      error: NodeJS.ErrnoException | null,
+      address: string,
+      family: number,
+    ) => void;
+    done(null, address.address, address.family);
+  }) as LookupFunction;
+}
+
+function requestPinned(
+  url: URL,
+  address: PinnedAddress,
+  signal: AbortSignal,
+): Promise<IncomingMessage> {
+  return new Promise((resolveResponse, rejectRequest) => {
+    const request = url.protocol === 'https:' ? requestHttps : requestHttp;
+    const hostname = url.hostname.replace(/^\[|\]$/g, '');
+    const outgoing = request(
+      url,
+      {
+        method: 'GET',
+        signal,
+        lookup: pinnedLookup(address),
+        ...(url.protocol === 'https:' && isIP(hostname) === 0 ? {servername: hostname} : {}),
+      },
+      resolveResponse,
+    );
+    outgoing.once('error', rejectRequest);
+    outgoing.end();
+  });
+}
+
 async function fetchRemote(
   initialUrl: URL,
   options: SamplerOptions,
   signal: AbortSignal,
   claimBytes: (length: number) => boolean,
+  takeRequest: TakeRequest,
+  coordinate: TileCoordinate,
 ): Promise<Uint8Array> {
   let url = initialUrl;
   for (let redirectCount = 0; ; redirectCount += 1) {
-    await validateRemoteTarget(url, options.allowPrivateNetwork);
-    let response: Response;
+    const address = await resolveRemoteTarget(url, options.allowPrivateNetwork, signal);
+    if (!takeRequest(coordinate)) {
+      throw new SamplingError('sampling-budget-exhausted', false, true);
+    }
+    let response: IncomingMessage;
     try {
-      response = await fetch(url, {redirect: 'manual', signal});
+      response = await requestPinned(url, address, signal);
     } catch {
       throw new SamplingError(signal.aborted ? 'tile-fetch-timeout' : 'tile-fetch-failed', true);
     }
 
-    if (response.status >= 300 && response.status < 400) {
-      const location = response.headers.get('location');
-      await response.body?.cancel().catch(() => undefined);
+    const status = response.statusCode ?? 0;
+    if (status >= 300 && status < 400) {
+      const locationHeader = response.headers.location;
+      const location = Array.isArray(locationHeader) ? undefined : locationHeader;
+      discardResponse(response);
       if (!location) throw new SamplingError('tile-redirect-location-missing');
       if (redirectCount >= MAX_REDIRECTS) throw new SamplingError('tile-redirect-limit');
       try {
@@ -387,8 +454,9 @@ async function fetchRemote(
       }
       continue;
     }
-    if (!response.ok) {
-      const retryable = response.status === 408 || response.status === 429 || response.status >= 500;
+    if (status < 200 || status >= 300) {
+      discardResponse(response);
+      const retryable = status === 408 || status === 429 || status >= 500;
       throw new SamplingError('tile-http-error', retryable);
     }
     return readResponse(response, options.maxResponseBytes, claimBytes);
@@ -437,16 +505,21 @@ async function readLocal(
 function defaultFetcher(
   options: SamplerOptions,
   claimBytes: (length: number) => boolean,
+  takeRequest: TakeRequest,
 ): TileFetcher {
   if (explicitLocalTemplate(options.template)) {
-    return (coordinate, signal) =>
-      readLocal(
+    return (coordinate, signal) => {
+      if (!takeRequest(coordinate)) {
+        throw new SamplingError('sampling-budget-exhausted', false, true);
+      }
+      return readLocal(
         options.template,
         coordinate,
         signal,
         options.maxResponseBytes,
         claimBytes,
       );
+    };
   }
   if (/^https?:\/\//i.test(options.template)) {
     return (coordinate, signal) => {
@@ -456,7 +529,7 @@ function defaultFetcher(
       } catch {
         throw new SamplingError('tile-template-not-inspectable');
       }
-      return fetchRemote(url, options, signal, claimBytes);
+      return fetchRemote(url, options, signal, claimBytes, takeRequest, coordinate);
     };
   }
   throw new SamplingError('tile-template-not-inspectable');
@@ -532,6 +605,7 @@ export async function sampleTiles(
   let nonEmpty = 0;
   let stableCount = 0;
   const knownStructure = new Set<string>();
+  const requestedCoordinates = new Set<string>();
   let fetcher: TileFetcher;
 
   const claimBytes = (length: number): boolean => {
@@ -543,8 +617,22 @@ export async function sampleTiles(
     return true;
   };
 
+  const takeRequest: TakeRequest = (coordinate) => {
+    if (summary.requested >= options.maxRequests) {
+      budgetExhausted = true;
+      return false;
+    }
+    summary.requested += 1;
+    const key = coordinateKey(coordinate);
+    if (!requestedCoordinates.has(key)) {
+      requestedCoordinates.add(key);
+      summary.coordinates.push(coordinate);
+    }
+    return true;
+  };
+
   try {
-    fetcher = injectedFetcher ?? defaultFetcher(options, claimBytes);
+    fetcher = injectedFetcher ?? defaultFetcher(options, claimBytes, takeRequest);
   } catch (error) {
     const details = errorDetails(error);
     unresolved.push(
@@ -575,9 +663,7 @@ export async function sampleTiles(
           ? {coordinate: candidates[candidateIndex++]!, attempts: 0}
           : undefined);
       if (!state) break;
-      if (state.attempts === 0) summary.coordinates.push(state.coordinate);
       state.attempts += 1;
-      summary.requested += 1;
       batch.push(state);
     }
     if (batch.length === 0) break;
@@ -586,6 +672,9 @@ export async function sampleTiles(
       batch.map(async (state): Promise<AttemptResult> => {
         const signal = AbortSignal.timeout(options.timeoutMs);
         try {
+          if (injectedFetcher && !takeRequest(state.coordinate)) {
+            throw new SamplingError('sampling-budget-exhausted', false, true);
+          }
           const bytes = await abortable(fetcher(state.coordinate, signal), signal);
           return {state, bytes};
         } catch (error) {

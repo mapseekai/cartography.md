@@ -1,8 +1,9 @@
 import * as z from 'zod';
+import {REFERENCE_PATH_SOURCE} from '../utils/object.js';
 
 const nonEmptyString = z.string().regex(/\S/, 'String must contain at least one non-whitespace character.');
 
-export const tokenReferenceSchema = z.string().regex(/^\{[A-Za-z0-9_.\-\[\]]+\}$/);
+export const tokenReferenceSchema = z.string().regex(new RegExp(`^\\{${REFERENCE_PATH_SOURCE}\\}$`));
 
 export const dimensionSchema = z.union([
   z.number().finite().nonnegative(),

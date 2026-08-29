@@ -169,7 +169,9 @@ const resolved = resolveReferences({
 });
 ```
 
-Arrays and objects are copied recursively. Missing references and cycles remain as their unresolved strings; call `lint` when those conditions must be reported as findings.
+Arrays and objects are copied recursively. Array traversal uses own numeric properties, so inherited sparse indices are neither resolved nor materialized. Reference paths require non-empty dot-separated name segments and optional numeric `[n]` indices. Missing, malformed, and cyclic references remain unresolved; call `lint` when those conditions must be reported as findings.
+
+During `lint`, known `colors`, `widths`, `sizes`, `opacities`, and `typography` tokens are validated after resolution. Cross-group references are accepted when the resolved value matches the destination type. Broken and cyclic references remain the sole responsibility of `token-reference`. Declared contrast pairs require two fully opaque resolved colors; semitransparent pairs require target-render compositing instead of an alpha-ignoring ratio.
 
 ## `diffCartography(beforeSource, afterSource, options?)`
 

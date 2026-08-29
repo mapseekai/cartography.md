@@ -599,8 +599,9 @@ export async function sampleTiles(
   const requestedCoordinates = new Set<string>();
   let fetcher: TileFetcher;
 
-  const claimBytes = (length: number): boolean => {
+  const claimBytes = (length: number, includeRejectedChunk = false): boolean => {
     if (length > options.maxTotalBytes - summary.bytes) {
+      if (includeRejectedChunk) summary.bytes += length;
       budgetExhausted = true;
       return false;
     }
@@ -623,7 +624,11 @@ export async function sampleTiles(
   };
 
   try {
-    fetcher = injectedFetcher ?? defaultFetcher(options, claimBytes, takeRequest);
+    fetcher = injectedFetcher ?? defaultFetcher(
+      options,
+      (length) => claimBytes(length, true),
+      takeRequest,
+    );
   } catch (error) {
     const details = errorDetails(error);
     unresolved.push(
@@ -645,10 +650,11 @@ export async function sampleTiles(
   let retryQueue: CandidateState[] = [];
   let stopped = false;
   let requestBudgetPreventedWork = false;
+  const batchLimit = injectedFetcher ? options.concurrency : 1;
 
   while (!stopped && !budgetExhausted && summary.requested < options.maxRequests) {
     const batch: CandidateState[] = [];
-    while (batch.length < options.concurrency && summary.requested < options.maxRequests) {
+    while (batch.length < batchLimit && summary.requested < options.maxRequests) {
       const state = retryQueue.shift() ??
         (candidateIndex < candidates.length
           ? {coordinate: candidates[candidateIndex++]!, attempts: 0}
@@ -748,15 +754,16 @@ export async function sampleTiles(
         }
       } catch (error) {
         summary.failed += 1;
-        const decodeTooLarge =
-          error instanceof TileDecodeError && error.code === 'tile-decoded-too-large';
+        const decodeCode = error instanceof TileDecodeError ? error.code : 'tile-decode-failed';
         unresolved.push(
           unresolvedItem(
             retainedTemplate,
-            decodeTooLarge ? 'tile-decoded-too-large' : 'tile-decode-failed',
-            decodeTooLarge
+            decodeCode,
+            decodeCode === 'tile-decoded-too-large'
               ? 'Decoded tile output exceeded the configured per-response byte budget.'
-              : 'Fetched bytes could not be decoded as an MVT tile.',
+              : decodeCode === 'tile-unsafe-64-bit-value'
+                ? 'A tile integer value exceeded the JavaScript safe integer range and the tile was not observed.'
+                : 'Fetched bytes could not be decoded as an MVT tile.',
             result.state.coordinate,
           ),
         );

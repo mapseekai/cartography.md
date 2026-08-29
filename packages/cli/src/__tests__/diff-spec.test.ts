@@ -34,5 +34,8 @@ describe('diff and bundled metadata', () => {
       id: 'omitted-sections',
       severity: 'error',
     }));
+    for (const rule of getRuleCatalog()) {
+      expect(getSpecification()).toContain(`| \`${rule.id}\` |`);
+    }
   });
 });

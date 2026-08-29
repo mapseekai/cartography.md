@@ -8,6 +8,7 @@ const cases = [
   {input: {version: '0.2.0', name: 'Tokens', tokens: {colors: {ink: '#111'}}}, valid: true},
   {input: {version: '0.1.0', name: 'Old'}, valid: false},
   {input: {version: '0.2.0', name: 'Bad opacity', tokens: {opacities: {muted: 2}}}, valid: false},
+  {input: {version: '0.2.0', name: 'Bad reference', tokens: {widths: {line: '{tokens..widths.line}'}}}, valid: false},
   {input: {version: '0.2.0', name: '   '}, valid: false},
   {input: {version: '0.2.0', name: 'Valid', locale: '\t '}, valid: false},
   {input: {version: '0.2.0', name: 'Valid', omitted: ['   ']}, valid: false},

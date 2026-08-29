@@ -9,6 +9,33 @@ type Category = string | number | boolean | null;
 
 const MAX_CATEGORIES = 256;
 export const DEFAULT_DECODED_BYTE_LIMIT = 5 * 1024 * 1024;
+const SENSITIVE_FIELD_WORDS = new Set([
+  'authorization',
+  'authorizations',
+  'auth',
+  'cookie',
+  'cookies',
+  'credential',
+  'credentials',
+  'password',
+  'passwords',
+  'passwd',
+  'passwds',
+  'passphrase',
+  'passphrases',
+  'pwd',
+  'pwds',
+  'secret',
+  'secrets',
+  'session',
+  'sessions',
+  'token',
+  'tokens',
+  'apikey',
+  'apikeys',
+  'apitoken',
+  'apitokens',
+]);
 
 export interface FieldObservation {
   types: FieldType[];
@@ -36,7 +63,10 @@ export interface TileObservation {
 }
 
 export class TileDecodeError extends Error {
-  readonly code: 'tile-decode-failed' | 'tile-decoded-too-large';
+  readonly code:
+    | 'tile-decode-failed'
+    | 'tile-decoded-too-large'
+    | 'tile-unsafe-64-bit-value';
   readonly evidence: Evidence;
   readonly cause: unknown;
 
@@ -44,7 +74,10 @@ export class TileDecodeError extends Error {
     message: string,
     evidence: Evidence,
     cause: unknown,
-    code: 'tile-decode-failed' | 'tile-decoded-too-large' = 'tile-decode-failed',
+    code:
+      | 'tile-decode-failed'
+      | 'tile-decoded-too-large'
+      | 'tile-unsafe-64-bit-value' = 'tile-decode-failed',
   ) {
     super(message);
     this.name = 'TileDecodeError';
@@ -58,6 +91,13 @@ class DecodedTileTooLargeError extends Error {
   constructor() {
     super('Decoded tile output exceeded its configured byte limit.');
     this.name = 'DecodedTileTooLargeError';
+  }
+}
+
+class Unsafe64BitValueError extends Error {
+  constructor() {
+    super('An MVT integer value cannot be represented safely as a JavaScript number.');
+    this.name = 'Unsafe64BitValueError';
   }
 }
 
@@ -80,12 +120,16 @@ function category(value: unknown): Category | undefined {
 }
 
 function sensitiveFieldName(fieldName: string): boolean {
-  const normalized = fieldName
+  const words = fieldName
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
     .replace(/([a-z\d])([A-Z])/g, '$1_$2')
     .toLowerCase()
-    .replace(/[^a-z\d]+/g, '_');
-  return /(?:^|_)(?:api_?key|authorization|auth|cookie|credential|password|passwd|passphrase|pwd|secret|session(?:_?id|_?key|_?token)?|token)(?:_|$)/.test(
-    normalized,
+    .split(/[^a-z\d]+/)
+    .filter(Boolean);
+  if (words.some((word) => SENSITIVE_FIELD_WORDS.has(word))) return true;
+  return words.some(
+    (word, index) =>
+      word === 'api' && /^(?:keys?|tokens?)$/.test(words[index + 1] ?? ''),
   );
 }
 
@@ -308,9 +352,34 @@ function validateFeature(bytes: Uint8Array): ValidatedFeature {
   return {tags, type, geometry};
 }
 
-function validateValue(bytes: Uint8Array): void {
+interface ValidatedValue {
+  exactInteger?: number;
+}
+
+const UINT64_LIMIT = 1n << 64n;
+const INT64_SIGN = 1n << 63n;
+const MAX_SAFE_BIGINT = BigInt(Number.MAX_SAFE_INTEGER);
+const MIN_SAFE_BIGINT = BigInt(Number.MIN_SAFE_INTEGER);
+
+function safeInteger(value: bigint): number {
+  if (value < MIN_SAFE_BIGINT || value > MAX_SAFE_BIGINT) {
+    throw new Unsafe64BitValueError();
+  }
+  return Number(value);
+}
+
+function signedInt64(raw: bigint): bigint {
+  return raw >= INT64_SIGN ? raw - UINT64_LIMIT : raw;
+}
+
+function signedZigZag64(raw: bigint): bigint {
+  return raw % 2n === 0n ? raw / 2n : -(raw + 1n) / 2n;
+}
+
+function validateValue(bytes: Uint8Array): ValidatedValue {
   let variants = 0;
-  validateMessage(bytes, (field, wireType) => {
+  let exactInteger: number | undefined;
+  validateMessage(bytes, (field, wireType, _payload, scalar) => {
     if (field === 1) {
       requireWireType(wireType, 2);
       variants += 1;
@@ -323,9 +392,13 @@ function validateValue(bytes: Uint8Array): void {
     } else if (field >= 4 && field <= 7) {
       requireWireType(wireType, 0);
       variants += 1;
+      if (field === 4) exactInteger = safeInteger(signedInt64(requireScalar(scalar)));
+      else if (field === 5) exactInteger = safeInteger(requireScalar(scalar));
+      else if (field === 6) exactInteger = safeInteger(signedZigZag64(requireScalar(scalar)));
     }
   });
   if (variants !== 1) invalidPbf();
+  return exactInteger === undefined ? {} : {exactInteger};
 }
 
 function zigZag(value: number): number {
@@ -360,7 +433,6 @@ function geometryParameters(
   for (let index = 0; index < count; index += 1) {
     const encodedX = geometry[state.offset++]!;
     const encodedY = geometry[state.offset++]!;
-    if (encodedX === 0xffff_ffff || encodedY === 0xffff_ffff) invalidPbf();
     const deltaX = zigZag(encodedX);
     const deltaY = zigZag(encodedY);
     if (rejectZeroDelta && deltaX === 0 && deltaY === 0) invalidPbf();
@@ -397,14 +469,19 @@ function validateGeometry(type: number, geometry: number[]): void {
   }
 }
 
-function validateLayer(bytes: Uint8Array): string {
+interface ValidatedLayer {
+  integerProperties: Array<Record<string, number>>;
+  name: string;
+}
+
+function validateLayer(bytes: Uint8Array): ValidatedLayer {
   const features: ValidatedFeature[] = [];
   let name: string | undefined;
   let version: number | undefined;
   let extent = 4096;
   let extentSeen = false;
-  let keyCount = 0;
-  let valueCount = 0;
+  const keys: string[] = [];
+  const values: ValidatedValue[] = [];
 
   validateMessage(bytes, (field, wireType, payload, scalar) => {
     if (field === 1) {
@@ -420,14 +497,12 @@ function validateLayer(bytes: Uint8Array): string {
     }
     if (field === 3) {
       requireWireType(wireType, 2);
-      requiredString(requirePayload(payload));
-      keyCount += 1;
+      keys.push(requiredString(requirePayload(payload)));
       return;
     }
     if (field === 4) {
       requireWireType(wireType, 2);
-      validateValue(requirePayload(payload));
-      valueCount += 1;
+      values.push(validateValue(requirePayload(payload)));
       return;
     }
     if (field === 5) {
@@ -451,25 +526,37 @@ function validateLayer(bytes: Uint8Array): string {
 
   for (const feature of features) {
     for (let index = 0; index < feature.tags.length; index += 2) {
-      if (feature.tags[index]! >= keyCount || feature.tags[index + 1]! >= valueCount) {
+      if (feature.tags[index]! >= keys.length || feature.tags[index + 1]! >= values.length) {
         invalidPbf();
       }
     }
     validateGeometry(feature.type, feature.geometry);
   }
-  return name;
+  const integerProperties = features.map((feature) => {
+    const properties = record<number>();
+    for (let index = 0; index < feature.tags.length; index += 2) {
+      const key = keys[feature.tags[index]!]!;
+      const value = values[feature.tags[index + 1]!]!;
+      if (value.exactInteger !== undefined) properties[key] = value.exactInteger;
+    }
+    return properties;
+  });
+  return {name, integerProperties};
 }
 
-function validateTile(bytes: Uint8Array): void {
+function validateTile(bytes: Uint8Array): Record<string, Array<Record<string, number>>> {
   const layerNames = new Set<string>();
+  const integerProperties = record<Array<Record<string, number>>>();
   validateMessage(bytes, (field, wireType, payload) => {
     if (field === 3) {
       requireWireType(wireType, 2);
-      const name = validateLayer(requirePayload(payload));
-      if (layerNames.has(name)) invalidPbf();
-      layerNames.add(name);
+      const layer = validateLayer(requirePayload(payload));
+      if (layerNames.has(layer.name)) invalidPbf();
+      layerNames.add(layer.name);
+      integerProperties[layer.name] = layer.integerProperties;
     }
   });
+  return integerProperties;
 }
 
 function decodedTileBytes(bytes: Uint8Array, decodedByteLimit: number): Uint8Array {
@@ -495,10 +582,13 @@ function decodedTileBytes(bytes: Uint8Array, decodedByteLimit: number): Uint8Arr
   return bytes;
 }
 
-function parseTile(bytes: Uint8Array, decodedByteLimit: number): VectorTile {
+function parseTile(bytes: Uint8Array, decodedByteLimit: number): {
+  integerProperties: Record<string, Array<Record<string, number>>>;
+  tile: VectorTile;
+} {
   const source = decodedTileBytes(bytes, decodedByteLimit);
-  validateTile(source);
-  return new VectorTile(new PbfReader(source));
+  const integerProperties = validateTile(source);
+  return {integerProperties, tile: new VectorTile(new PbfReader(source))};
 }
 
 /**
@@ -511,7 +601,7 @@ export function decodeMvt(
   decodedByteLimit = DEFAULT_DECODED_BYTE_LIMIT,
 ): TileObservation {
   try {
-    const tile = parseTile(bytes, decodedByteLimit);
+    const {integerProperties, tile} = parseTile(bytes, decodedByteLimit);
     const layers = record<TileObservation['layers'][string]>();
 
     for (const [layerName, layer] of Object.entries(tile.layers)) {
@@ -525,7 +615,11 @@ export function decodeMvt(
         if (!geometries.includes(geometry)) geometries.push(geometry);
         if (feature.id !== undefined) stableIdObserved = true;
 
-        for (const [fieldName, value] of Object.entries(feature.properties)) {
+        for (const [fieldName, decodedValue] of Object.entries(feature.properties)) {
+          const exactValues = integerProperties[layerName]?.[index];
+          const value = exactValues && Object.hasOwn(exactValues, fieldName)
+            ? exactValues[fieldName]
+            : decodedValue;
           const field = fields[fieldName] ?? observeValue(value, fieldName);
           if (fields[fieldName] !== undefined) observeInto(field, value, fieldName);
           fields[fieldName] = field;
@@ -554,6 +648,14 @@ export function decodeMvt(
         evidence,
         error,
         'tile-decoded-too-large',
+      );
+    }
+    if (error instanceof Unsafe64BitValueError) {
+      throw new TileDecodeError(
+        'An MVT integer value exceeded the JavaScript safe integer range.',
+        evidence,
+        error,
+        'tile-unsafe-64-bit-value',
       );
     }
     throw new TileDecodeError('Unable to decode MVT tile bytes.', evidence, error);

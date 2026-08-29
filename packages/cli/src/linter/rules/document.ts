@@ -1,6 +1,13 @@
 import type {Finding, LintRule} from '../../model/types.js';
 import {CANONICAL_SECTIONS, normalizeHeading, SECTION_SEVERITY} from '../../parser/sections.js';
-import {exactTokenReference, extractTokenReferences, resolveTokenReference, walkObject} from '../../utils/object.js';
+import {
+  exactTokenReference,
+  extractInvalidTokenReferences,
+  extractTokenReferenceCandidates,
+  extractTokenReferences,
+  resolveTokenReference,
+  walkObject,
+} from '../../utils/object.js';
 import {omittedSectionNames} from './helpers.js';
 
 const RECOGNIZED_ROOT_KEYS = new Set([
@@ -214,8 +221,19 @@ export const tokenReferenceRule: LintRule = {
     const root = context.cartography;
     for (const entry of walkObject(root)) {
       if (typeof entry.value !== 'string') continue;
-      const references = extractTokenReferences(entry.value);
-      if (references.length === 0) continue;
+      const candidates = extractTokenReferenceCandidates(entry.value);
+      if (candidates.length === 0) continue;
+      const invalid = extractInvalidTokenReferences(entry.value);
+      if (invalid.length > 0) {
+        findings.push(...invalid.map((reference) => ({
+          ruleId: this.id,
+          severity: 'error' as const,
+          path: entry.path,
+          message: `Invalid token reference path {${reference}}.`,
+          suggestion: 'Use dot-separated names with optional numeric bracket indices, such as {tokens.colors.ink} or {tokens.custom.palette[0]}.',
+        })));
+        continue;
+      }
       const exact = exactTokenReference(entry.value);
       if (!exact) {
         findings.push({
@@ -241,6 +259,16 @@ export const tokenReferenceRule: LintRule = {
       }
     }
     for (const section of context.parsed.sections) {
+      for (const reference of extractInvalidTokenReferences(section.body)) {
+        findings.push({
+          ruleId: this.id,
+          severity: 'error',
+          path: `sections.${section.canonicalHeading}`,
+          line: section.line,
+          message: `Invalid token reference path {${reference}}.`,
+          suggestion: 'Use dot-separated names with optional numeric bracket indices, such as {tokens.colors.ink} or {tokens.custom.palette[0]}.',
+        });
+      }
       for (const reference of extractTokenReferences(section.body)) {
         const resolved = resolveTokenReference(root, reference);
         if (resolved.resolved) continue;

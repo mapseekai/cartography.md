@@ -76,19 +76,25 @@ function pointTile(score: string | number, kind: string): Uint8Array {
 }
 
 function sensitivePointTile(): Uint8Array {
+  const matrixFields = ['api_key', 'apiKeys', 'APIToken', 'credentials', 'tokens', 'cookies', 'passwords', 'secrets', 'sessions'];
+  const matrixValues = matrixFields.map((field, index) => `profile-private-${index}-${field}-value`);
   return create({
     layers: [
       {
         version: 2,
         name: 'accounts',
-        keys: ['api_key', 'note', 'score'],
+        keys: [...matrixFields, 'note', 'score'],
         values: [
-          {string_value: 'sk-profile-secret-value-123456789'},
+          ...matrixValues.map((value) => ({string_value: value})),
           {string_value: 'Basic dXNlcjpwYXNzd29yZA=='},
           {int_value: 7},
         ],
         extent: 4096,
-        features: [{tags: [0, 0, 1, 1, 2, 2], type: 1, geometry: [9, 50, 34]}],
+        features: [{
+          tags: [...matrixFields.flatMap((_, index) => [index, index]), matrixFields.length, matrixFields.length, matrixFields.length + 1, matrixFields.length + 1],
+          type: 1,
+          geometry: [9, 50, 34],
+        }],
       },
     ],
   }).buffer;
@@ -404,6 +410,190 @@ describe('generateProfile', () => {
     ).rejects.toThrow('at least one discovery input');
   });
 
+  it('keeps a good sampled tile when the style cannot be parsed', async () => {
+    const secretStyle = 'https://user:password@example.test/style.json?token=top-secret';
+    const profile = await generateProfile(
+      {
+        stylePath: secretStyle,
+        tileTemplate: './tiles/{z}/{x}/{y}.pbf',
+        bounds: [0, 0, 0, 0],
+        zooms: [0],
+        maxRequests: 1,
+        observedAt: '2026-08-29T00:00:00.000Z',
+      },
+      {
+        readText: async () => '{not-json',
+        fetchTile: async () => pointTile(5, 'woodland'),
+        now: () => new Date(0),
+      },
+    );
+
+    expect(profile.sources.default.layers.habitat.fields.score.categories).toEqual([5]);
+    expect(profile.unresolved).toContainEqual(expect.objectContaining({
+      code: 'style-parse-failed',
+      evidence: [expect.objectContaining({
+        kind: 'style-inferred',
+        input: 'https://example.test/style.json',
+      })],
+    }));
+    expect(stableJson(profile)).not.toMatch(/user|password|token|top-secret/);
+  });
+
+  it('keeps a good style when TileJSON cannot be parsed', async () => {
+    const secretTileJson = 'https://user:password@example.test/metadata.json?token=top-secret';
+    const profile = await generateProfile(
+      {
+        stylePath: 'style.json',
+        tileJsonPath: secretTileJson,
+        observedAt: '2026-08-29T00:00:00.000Z',
+      },
+      {
+        readText: async (path) => path === 'style.json'
+          ? JSON.stringify({version: 8, sources: {ecology: {type: 'vector'}}, layers: []})
+          : '{not-json',
+        now: () => new Date(0),
+      },
+    );
+
+    expect(profile.sources).toHaveProperty('ecology');
+    expect(profile.unresolved).toContainEqual(expect.objectContaining({
+      code: 'tilejson-parse-failed',
+      evidence: [expect.objectContaining({
+        kind: 'tilejson-declared',
+        input: 'https://example.test/metadata.json',
+      })],
+    }));
+    expect(stableJson(profile)).not.toMatch(/user|password|token|top-secret/);
+  });
+
+  it('keeps valid TileJSON when another discovery input cannot be read', async () => {
+    const secretStyle = 'https://user:password@example.test/style.json?token=top-secret';
+    const profile = await generateProfile(
+      {
+        stylePath: secretStyle,
+        tileJsonPath: 'metadata.json',
+        sourceId: 'ecology',
+        observedAt: '2026-08-29T00:00:00.000Z',
+      },
+      {
+        readText: async (path) => {
+          if (path === secretStyle) throw new Error(`ENOENT ${path}`);
+          return JSON.stringify({
+            tilejson: '3.0.0',
+            vector_layers: [{id: 'habitat', fields: {name: 'String'}}],
+          });
+        },
+        now: () => new Date(0),
+      },
+    );
+
+    expect(profile.sources.ecology.layers.habitat.fields.name.types).toEqual(['string']);
+    expect(profile.unresolved).toContainEqual(expect.objectContaining({
+      code: 'style-read-failed',
+      evidence: [expect.objectContaining({input: 'https://example.test/style.json'})],
+    }));
+    expect(stableJson(profile)).not.toMatch(/user|password|token|top-secret/);
+  });
+
+  it('rejects only when no supplied input yields usable evidence', async () => {
+    await expect(generateProfile(
+      {
+        stylePath: 'style.json',
+        tileJsonPath: 'metadata.json',
+        observedAt: '2026-08-29T00:00:00.000Z',
+      },
+      {
+        readText: async (path) => path === 'style.json' ? '{not-json' : 'null',
+        now: () => new Date(0),
+      },
+    )).rejects.toThrow('No supplied input yielded usable profile evidence.');
+  });
+
+  it('does not invent default when TileJSON is ambiguous across multiple style sources', async () => {
+    const profile = await generateProfile(
+      {
+        stylePath: 'style.json',
+        tileJsonPath: 'metadata.json',
+        observedAt: '2026-08-29T00:00:00.000Z',
+      },
+      {
+        readText: async (path) => path === 'style.json'
+          ? JSON.stringify({
+              version: 8,
+              sources: {roads: {type: 'vector'}, places: {type: 'vector'}},
+              layers: [],
+            })
+          : JSON.stringify({
+              tilejson: '3.0.0',
+              vector_layers: [{id: 'habitat', fields: {name: 'String'}}],
+            }),
+        now: () => new Date(0),
+      },
+    );
+
+    expect(Object.keys(profile.sources)).toEqual(['places', 'roads']);
+    expect(profile.sources).not.toHaveProperty('default');
+    expect(profile.unresolved).toContainEqual(expect.objectContaining({
+      code: 'source-id-ambiguous',
+      evidence: [expect.objectContaining({
+        kind: 'tilejson-declared',
+        input: 'metadata.json',
+      })],
+    }));
+  });
+
+  it('skips ambiguous sampling without issuing a tile request or creating default', async () => {
+    let fetches = 0;
+    const profile = await generateProfile(
+      {
+        stylePath: 'style.json',
+        tileTemplate: './tiles/{z}/{x}/{y}.pbf',
+        bounds: [0, 0, 0, 0],
+        zooms: [0],
+        maxRequests: 1,
+        observedAt: '2026-08-29T00:00:00.000Z',
+      },
+      {
+        readText: async () => JSON.stringify({
+          version: 8,
+          sources: {roads: {type: 'vector'}, places: {type: 'vector'}},
+          layers: [],
+        }),
+        fetchTile: async () => {
+          fetches += 1;
+          return pointTile(1, 'woodland');
+        },
+        now: () => new Date(0),
+      },
+    );
+
+    expect(fetches).toBe(0);
+    expect(profile.sources).not.toHaveProperty('default');
+    expect(profile.unresolved).toContainEqual(expect.objectContaining({
+      code: 'source-id-ambiguous',
+      evidence: [expect.objectContaining({kind: 'tile-sampled'})],
+    }));
+  });
+
+  it('allows synthetic default only when no candidate source exists', async () => {
+    const profile = await generateProfile(
+      {
+        tileJsonPath: 'metadata.json',
+        observedAt: '2026-08-29T00:00:00.000Z',
+      },
+      {
+        readText: async () => JSON.stringify({
+          tilejson: '3.0.0',
+          vector_layers: [{id: 'habitat', fields: {name: 'String'}}],
+        }),
+        now: () => new Date(0),
+      },
+    );
+
+    expect(profile.sources.default.layers.habitat.fields.name.types).toEqual(['string']);
+    expect(profile.unresolved.map((item) => item.code)).not.toContain('source-id-ambiguous');
+  });
+
   it('redacts credentials from a remote style input before retaining evidence', async () => {
     const secretInput =
       'https://user:password@example.test/style.json?token=top-secret#private';
@@ -534,6 +724,12 @@ describe('generateProfile', () => {
       types: ['string'],
       categories: [],
     });
+    for (const field of ['apiKeys', 'APIToken', 'credentials', 'tokens', 'cookies', 'passwords', 'secrets', 'sessions']) {
+      expect(profile.sources.default.layers.accounts.fields[field]).toMatchObject({
+        types: ['string'],
+        categories: [],
+      });
+    }
     expect(profile.sources.default.layers.accounts.fields.note).toMatchObject({
       types: ['string'],
       categories: [],
@@ -555,7 +751,7 @@ describe('generateProfile', () => {
         }),
       ]),
     );
-    expect(serialized).not.toMatch(/sk-profile-secret-value|dXNlcjpwYXNzd29yZA/);
+    expect(serialized).not.toMatch(/profile-private-\d+-(?:api_key|apiKeys|APIToken|credentials|tokens|cookies|passwords|secrets|sessions)-value|dXNlcjpwYXNzd29yZA/);
   });
 
   it('propagates a single-tile category truncation into profile unresolved evidence', async () => {
@@ -591,6 +787,38 @@ describe('generateProfile', () => {
 });
 
 describe('generate-profile CLI', () => {
+  it('writes ambiguity evidence without a default source when --source-id is omitted', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'cartography-profile-cli-'));
+    temporaryDirectories.push(directory);
+    await writeFile(join(directory, 'style.json'), JSON.stringify({
+      version: 8,
+      sources: {roads: {type: 'vector'}, places: {type: 'vector'}},
+      layers: [],
+    }));
+    await writeFile(join(directory, 'metadata.json'), JSON.stringify({
+      tilejson: '3.0.0',
+      vector_layers: [{id: 'habitat', fields: {name: 'String'}}],
+    }));
+
+    const result = await runCli([
+      '--style',
+      'style.json',
+      '--tilejson',
+      'metadata.json',
+      '--observed-at',
+      '2026-08-29T00:00:00.000Z',
+      '--output',
+      'profile.json',
+    ], directory);
+
+    expect(result).toMatchObject({code: 0, stderr: ''});
+    const profile = JSON.parse(await readFile(join(directory, 'profile.json'), 'utf8'));
+    expect(profile.sources).not.toHaveProperty('default');
+    expect(profile.unresolved).toContainEqual(expect.objectContaining({
+      code: 'source-id-ambiguous',
+    }));
+  });
+
   it('executes the documented repo-root command and writes the default output in caller cwd', async () => {
     const callerOutput = join(repositoryDirectory, 'DATA_PROFILE.json');
     const packageOutput = join(packageDirectory, 'DATA_PROFILE.json');

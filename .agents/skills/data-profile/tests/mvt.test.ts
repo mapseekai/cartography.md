@@ -1,6 +1,6 @@
 import {gzipSync} from 'node:zlib';
 
-import {create} from '@mapbox/mvt-fixtures';
+import {create, get} from '@mapbox/mvt-fixtures';
 import {PbfWriter} from 'pbf';
 import {describe, expect, it} from 'vitest';
 
@@ -62,6 +62,48 @@ function makeMetadataTile(options: {
       if (options.name !== undefined) layer.writeStringField(1, options.name);
       if (options.extent !== undefined) layer.writeVarintField(5, options.extent);
       if (options.version !== undefined) layer.writeVarintField(15, options.version);
+    },
+    undefined,
+  );
+  return pbf.finish();
+}
+
+function unsignedVarint(value: bigint): Uint8Array {
+  const bytes: number[] = [];
+  let remaining = value;
+  do {
+    const low = Number(remaining & 0x7fn);
+    remaining >>= 7n;
+    bytes.push(remaining === 0n ? low : low | 0x80);
+  } while (remaining !== 0n);
+  return new Uint8Array(bytes);
+}
+
+function exactIntegerValue(field: 4 | 5 | 6, raw: bigint): Uint8Array {
+  return new Uint8Array([field << 3, ...unsignedVarint(raw)]);
+}
+
+function makeExactIntegerTile(
+  values: Array<{name: string; field: 4 | 5 | 6; raw: bigint}>,
+): Uint8Array {
+  const pbf = new PbfWriter();
+  pbf.writeMessage(
+    3,
+    (_, layer) => {
+      layer.writeStringField(1, 'exact-integers');
+      layer.writeMessage(
+        2,
+        (_, feature) => {
+          feature.writePackedVarint(2, values.flatMap((__, index) => [index, index]));
+          feature.writeVarintField(3, 1);
+          feature.writePackedVarint(4, point());
+        },
+        undefined,
+      );
+      for (const value of values) layer.writeStringField(3, value.name);
+      for (const value of values) layer.writeBytesField(4, exactIntegerValue(value.field, value.raw));
+      layer.writeVarintField(5, 4096);
+      layer.writeVarintField(15, 2);
     },
     undefined,
   );
@@ -172,6 +214,55 @@ describe('decodeMvt', () => {
     });
   });
 
+  it('accepts official valid MVT fixture 050 and the ZigZag int32 boundary', () => {
+    const observation = decodeMvt(get('050').buffer, evidence);
+
+    expect(observation.layers.hello).toMatchObject({
+      geometries: ['line'],
+      featureCount: 1,
+    });
+  });
+
+  it('retains exact signed, unsigned, and ZigZag values at Number safe boundaries', () => {
+    const safe = BigInt(Number.MAX_SAFE_INTEGER);
+    const two64 = 1n << 64n;
+    const observation = decodeMvt(
+      makeExactIntegerTile([
+        {name: 'int-max', field: 4, raw: safe},
+        {name: 'int-min', field: 4, raw: two64 - safe},
+        {name: 'uint-max', field: 5, raw: safe},
+        {name: 'sint-max', field: 6, raw: safe * 2n},
+        {name: 'sint-min', field: 6, raw: safe * 2n - 1n},
+      ]),
+      evidence,
+    );
+    const fields = observation.layers['exact-integers'].fields;
+
+    expect(fields['int-max'].categories).toEqual([Number.MAX_SAFE_INTEGER]);
+    expect(fields['int-min'].categories).toEqual([-Number.MAX_SAFE_INTEGER]);
+    expect(fields['uint-max'].categories).toEqual([Number.MAX_SAFE_INTEGER]);
+    expect(fields['sint-max'].categories).toEqual([Number.MAX_SAFE_INTEGER]);
+    expect(fields['sint-min'].categories).toEqual([-Number.MAX_SAFE_INTEGER]);
+  });
+
+  it.each([
+    ['positive int64', 4 as const, BigInt(Number.MAX_SAFE_INTEGER) + 1n],
+    ['negative int64', 4 as const, (1n << 64n) - BigInt(Number.MAX_SAFE_INTEGER) - 1n],
+    ['uint64', 5 as const, BigInt(Number.MAX_SAFE_INTEGER) + 1n],
+    ['positive sint64', 6 as const, (BigInt(Number.MAX_SAFE_INTEGER) + 1n) * 2n],
+    ['negative sint64', 6 as const, (BigInt(Number.MAX_SAFE_INTEGER) + 1n) * 2n - 1n],
+  ])('rejects exact %s beyond Number safe range without exposing a rounded fact', (_name, field, raw) => {
+    try {
+      decodeMvt(makeExactIntegerTile([{name: 'unsafe', field, raw}]), evidence);
+      expect.unreachable('unsafe 64-bit values must not be decoded into rounded numbers');
+    } catch (error) {
+      expect(error).toBeInstanceOf(TileDecodeError);
+      expect((error as TileDecodeError).code).toBe('tile-unsafe-64-bit-value');
+      expect((error as TileDecodeError).evidence).toEqual(evidence);
+      expect(String(error)).not.toContain(String(Number(raw)));
+    }
+  });
+
   it('deduplicates and orders line and polygon geometries within one layer', () => {
     const buffer = makeTile([
       {
@@ -279,6 +370,64 @@ describe('decodeMvt', () => {
     expect(JSON.stringify(fields)).not.toMatch(
       /correct-horse-battery-staple|header\.payload\.signature-secret/,
     );
+  });
+
+  it('redacts singular, plural, acronym, camel, snake, kebab, and dotted sensitive fields', () => {
+    const sensitiveFields = [
+      'credential',
+      'credentials',
+      'token',
+      'tokens',
+      'cookie',
+      'cookies',
+      'password',
+      'passwords',
+      'secret',
+      'secrets',
+      'session',
+      'sessions',
+      'apiKey',
+      'apiKeys',
+      'APIKey',
+      'APIKeys',
+      'APIToken',
+      'apiTokens',
+      'api_key',
+      'api-keys',
+      'api.token',
+    ];
+    const rawValues = sensitiveFields.map((field, index) => `private-${index}-${field}-value`);
+    const buffer = makeTile([
+      {
+        version: 2,
+        name: 'sensitive-matrix',
+        keys: sensitiveFields,
+        values: rawValues.map((value, index) =>
+          sensitiveFields[index] === 'apiKeys' ? {int_value: 424_242} : {string_value: value}
+        ),
+        extent: 4096,
+        features: [
+          {
+            tags: sensitiveFields.flatMap((_, index) => [index, index]),
+            type: 1,
+            geometry: point(),
+          },
+        ],
+      },
+    ]);
+
+    const fields = decodeMvt(buffer, evidence).layers['sensitive-matrix'].fields;
+    for (const fieldName of sensitiveFields) {
+      expect(fields[fieldName]).toMatchObject({
+        categories: [],
+        sensitiveValuesRedacted: true,
+      });
+      expect(fields[fieldName]).not.toHaveProperty('minimum');
+      expect(fields[fieldName]).not.toHaveProperty('maximum');
+    }
+    const serialized = JSON.stringify(fields);
+    for (const rawValue of rawValues) expect(serialized).not.toContain(rawValue);
+    expect(serialized).not.toContain('424242');
   });
 
   it('caps distinct scalar categories and reports that the observation was truncated', () => {
@@ -413,10 +562,6 @@ describe('decodeMvt', () => {
     [
       'a geometry parameter outside uint32 bounds',
       {keys: [], values: [], tags: [], type: 1, geometry: [9, 2 ** 32, 0]},
-    ],
-    [
-      'the unsupported negative-int32 geometry parameter',
-      {keys: [], values: [], tags: [], type: 1, geometry: [9, 0xffff_ffff, 0]},
     ],
   ])('rejects semantic-invalid feature data: %s', (_caseName, definition) => {
     const buffer = makeTile([

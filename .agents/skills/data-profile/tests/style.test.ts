@@ -55,6 +55,48 @@ describe('discoverStyle', () => {
     );
   });
 
+  it('retains evidence from every style layer contributing extrema or field support', () => {
+    const fragment = discoverStyle(
+      {
+        version: 8,
+        sources: {roads: {type: 'vector'}},
+        layers: [
+          {
+            id: 'first',
+            source: 'roads',
+            'source-layer': 'transportation',
+            minzoom: 8,
+            maxzoom: 12,
+            paint: {
+              'line-width': ['get', 'shared'],
+              'line-opacity': ['get', 'firstOnly'],
+            },
+          },
+          {
+            id: 'second',
+            source: 'roads',
+            'source-layer': 'transportation',
+            minzoom: 4,
+            maxzoom: 16,
+            filter: ['has', 'shared'],
+            paint: {'line-width': ['get', 'secondOnly']},
+          },
+        ],
+      },
+      'style.json',
+    );
+    const layer = fragment.sources.roads.layers.transportation;
+
+    expect(layer).toMatchObject({minzoom: 4, maxzoom: 16});
+    expect(layer.evidence.map((item) => item.location)).toEqual(['#/layers/0', '#/layers/1']);
+    expect(layer.fields.shared.evidence.map((item) => item.location)).toEqual([
+      '#/layers/0',
+      '#/layers/1',
+    ]);
+    expect(layer.fields.firstOnly.evidence.map((item) => item.location)).toEqual(['#/layers/0']);
+    expect(layer.fields.secondOnly.evidence.map((item) => item.location)).toEqual(['#/layers/1']);
+  });
+
   it('reports unresolved style facts instead of guessing a layer or dynamic field', () => {
     const fragment = discoverStyle(
       {

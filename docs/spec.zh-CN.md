@@ -119,6 +119,8 @@ front matter 具有以下根字段。该表是版本 0.2.0 完整的规范性根
 | `sizes` | `DimensionToken` 映射 | 每个值是非负数字、受支持的尺寸字符串或精确引用。 |
 | `opacities` | 数字或引用映射 | 每个数字 MUST 位于闭区间 0–1。 |
 
+这些要求在精确引用解析后适用。已知组 token MAY 引用另一个组，但解析值必须匹配目标组类型。断链和循环引用仅由 `token-reference` 报告，不再产生第二个类型 finding。
+
 尺寸字符串是非负十进制数，后接 `px`、`pt`、`mm`、`cm`、`in`、`em`、`rem` 或 `%`。
 
 字体对象是开放对象，MAY 包含：
@@ -135,7 +137,7 @@ Token 名称 SHOULD 描述语义角色，而不是偶然的外观。强语义颜
 
 ## Token 引用
 
-Token 引用使用 `{path.to.value}` 形式。路径包含字母、数字、`_`、`-`、`.`，以及写成 `[n]` 的数组索引。
+Token 引用使用 `{path.to.value}` 形式。每个由点分隔的名称段都必须非空，且只包含字母、数字、`_` 或 `-`；数字数组索引紧接名称并写成 `[n]`。前导、尾随或连续的点、空或非数字 bracket，以及索引后直接拼接名称都无效。
 
 ```yaml
 tokens:
@@ -149,7 +151,7 @@ tokens:
 1. 每个引用 MUST 在同一 front matter 内解析。
 2. YAML 中的引用 MUST 占据整个字符串。
 3. Markdown 散文 MAY 在句子中嵌入引用。
-4. `[0]` 等数组索引会规范化为路径段。
+4. `[0]` 等数组索引只解析数组自身的数字属性；继承的稀疏索引会被忽略。
 5. 断链引用和引用循环是错误。
 6. consumer MUST NOT 为未解析引用静默替换 fallback。
 
@@ -179,7 +181,7 @@ accessibility:
 
 该对象是开放对象，因此会保留额外的项目键。
 
-Contrast-pair 检查通过只证明已声明且完全不透明的颜色值达到已声明的数值下限。它不证明所有构图、背景、比例尺、状态、设备或使用场景都已实现无障碍。Markdown `Accessibility` 章节 MUST 承载更广泛的设计判断。
+Contrast pair MUST 解析到两个完全不透明的颜色。透明或半透明值属于 error，因为 WCAG 2.1 对比度需要实际渲染后的合成结果。Contrast-pair 检查通过只证明已声明的不透明颜色值达到已声明的数值下限。它不证明所有构图、背景、比例尺、状态、设备或使用场景都已实现无障碍。Markdown `Accessibility` 章节 MUST 承载更广泛的设计判断。
 
 ## Markdown 章节
 
@@ -343,7 +345,8 @@ Lint 只证明 CARTOGRAPHY.md 满足其 schema 和可确定的内部关系。它
 | `unknown-root-key` | warning | 保留自定义根键，同时识别可能的错误。 |
 | `token-reference` | error | 检查精确引用、嵌入式 YAML 引用、断链路径和循环。 |
 | `color-token` | error | 将已知 color token 校验为通用 CSS color。 |
-| `contrast-pairs` | error | 计算已声明的 WCAG 2.1 对比度下限。 |
+| `known-token-type` | error | 校验解析后的 width、size、opacity 和 typography token 值。 |
+| `contrast-pairs` | error | 要求不透明颜色并计算已声明的 WCAG 2.1 对比度下限。 |
 | `contract-summary` | info | 汇总 token 叶子、token 组和散文章节。 |
 | `rule-execution` | error | 将意外的自定义规则失败包含为 finding。 |
 

@@ -125,6 +125,26 @@
               "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/44"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/45"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/46"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/47"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/48"
             }
           ],
           "fields": {
@@ -135,6 +155,26 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/44"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/45"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/46"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/47"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/48"
                 }
               ],
               "missingObserved": false,
@@ -156,6 +196,16 @@
               "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/91"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/92"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/93"
             }
           ],
           "fields": {
@@ -166,6 +216,11 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/91"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/92"
                 }
               ],
               "missingObserved": false,
@@ -181,6 +236,11 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/91"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/92"
                 }
               ],
               "missingObserved": false,
@@ -196,6 +256,16 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/91"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/92"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/93"
                 }
               ],
               "missingObserved": false,
@@ -211,6 +281,16 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/91"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/92"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/93"
                 }
               ],
               "missingObserved": false,
@@ -246,6 +326,26 @@
               "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/1"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/11"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/12"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/23"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/24"
             }
           ],
           "fields": {
@@ -256,6 +356,16 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/11"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/12"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/24"
                 }
               ],
               "missingObserved": false,
@@ -271,6 +381,11 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/1"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/23"
                 }
               ],
               "missingObserved": false,
@@ -291,6 +406,41 @@
               "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/2"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/3"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/4"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/5"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/6"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/7"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/8"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/9"
             }
           ],
           "fields": {
@@ -301,6 +451,41 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/2"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/3"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/4"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/5"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/6"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/7"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/8"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/9"
                 }
               ],
               "missingObserved": false,
@@ -322,6 +507,11 @@
               "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/10"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/13"
             }
           ],
           "fields": {
@@ -352,6 +542,46 @@
               "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/110"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/111"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/112"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/113"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/114"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/115"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/116"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/117"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/118"
             }
           ],
           "fields": {
@@ -362,6 +592,11 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/114"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/115"
                 }
               ],
               "missingObserved": false,
@@ -377,6 +612,46 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/110"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/111"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/112"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/113"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/114"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/115"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/116"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/117"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/118"
                 }
               ],
               "missingObserved": false,
@@ -392,6 +667,46 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/110"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/111"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/112"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/113"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/114"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/115"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/116"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/117"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/118"
                 }
               ],
               "missingObserved": false,
@@ -407,6 +722,46 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/110"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/111"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/112"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/113"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/114"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/115"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/116"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/117"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/118"
                 }
               ],
               "missingObserved": false,
@@ -422,6 +777,46 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/110"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/111"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/112"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/113"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/114"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/115"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/116"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/117"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/118"
                 }
               ],
               "missingObserved": false,
@@ -437,6 +832,46 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/110"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/111"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/112"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/113"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/114"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/115"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/116"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/117"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/118"
                 }
               ],
               "missingObserved": false,
@@ -452,6 +887,16 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/116"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/117"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/118"
                 }
               ],
               "missingObserved": false,
@@ -473,6 +918,21 @@
             {
               "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
+              "location": "#/layers/100"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/101"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/102"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
               "location": "#/layers/99"
             }
           ],
@@ -480,6 +940,21 @@
             "class": {
               "categories": [],
               "evidence": [
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/100"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/101"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/102"
+                },
                 {
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
@@ -498,6 +973,21 @@
                 {
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
+                  "location": "#/layers/100"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/101"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/102"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
                   "location": "#/layers/99"
                 }
               ],
@@ -510,6 +1000,21 @@
             "name:latin": {
               "categories": [],
               "evidence": [
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/100"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/101"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/102"
+                },
                 {
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
@@ -528,6 +1033,21 @@
                 {
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
+                  "location": "#/layers/100"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/101"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/102"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
                   "location": "#/layers/99"
                 }
               ],
@@ -540,6 +1060,21 @@
             "name_en": {
               "categories": [],
               "evidence": [
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/100"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/101"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/102"
+                },
                 {
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
@@ -558,6 +1093,16 @@
                 {
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
+                  "location": "#/layers/100"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/101"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
                   "location": "#/layers/99"
                 }
               ],
@@ -570,6 +1115,16 @@
             "subclass": {
               "categories": [],
               "evidence": [
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/100"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/101"
+                },
                 {
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
@@ -595,6 +1150,306 @@
               "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/27"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/28"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/29"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/30"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/31"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/32"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/33"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/34"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/35"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/36"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/37"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/38"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/39"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/40"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/41"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/42"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/43"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/49"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/50"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/51"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/52"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/53"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/54"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/55"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/56"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/57"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/58"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/59"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/60"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/61"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/62"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/63"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/64"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/65"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/66"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/67"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/68"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/69"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/70"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/71"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/72"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/73"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/74"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/75"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/76"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/77"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/78"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/79"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/80"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/81"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/82"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/83"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/84"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/85"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/86"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/87"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/88"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/89"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/90"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/94"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/95"
             }
           ],
           "fields": {
@@ -605,6 +1460,256 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/27"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/28"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/29"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/30"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/31"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/32"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/33"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/34"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/35"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/36"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/37"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/38"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/39"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/40"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/41"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/42"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/52"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/53"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/54"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/55"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/56"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/57"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/58"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/59"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/60"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/61"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/62"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/63"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/64"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/65"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/66"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/67"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/68"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/71"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/72"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/73"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/74"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/75"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/76"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/77"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/78"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/79"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/80"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/81"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/82"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/83"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/84"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/85"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/86"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/87"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/88"
                 }
               ],
               "missingObserved": false,
@@ -620,6 +1725,296 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/27"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/28"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/29"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/30"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/31"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/32"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/33"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/34"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/35"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/36"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/37"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/38"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/39"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/40"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/41"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/42"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/43"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/49"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/50"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/51"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/52"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/53"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/54"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/55"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/56"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/57"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/58"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/59"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/60"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/61"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/62"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/63"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/64"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/65"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/66"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/67"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/68"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/69"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/70"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/71"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/72"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/73"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/74"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/75"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/76"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/77"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/78"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/79"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/80"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/81"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/82"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/83"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/84"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/85"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/86"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/87"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/88"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/94"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/95"
                 }
               ],
               "missingObserved": false,
@@ -635,6 +2030,11 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/94"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/95"
                 }
               ],
               "missingObserved": false,
@@ -650,6 +2050,161 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/28"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/30"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/31"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/32"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/33"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/35"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/37"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/39"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/40"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/41"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/52"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/53"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/55"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/56"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/57"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/58"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/60"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/61"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/63"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/64"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/65"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/66"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/73"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/74"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/75"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/76"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/77"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/81"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/82"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/84"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/85"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/86"
                 }
               ],
               "missingObserved": false,
@@ -665,6 +2220,21 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/69"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/70"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/71"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/72"
                 }
               ],
               "missingObserved": false,
@@ -680,6 +2250,11 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/89"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/90"
                 }
               ],
               "missingObserved": false,
@@ -701,6 +2276,31 @@
               "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/103"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/104"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/105"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/106"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/107"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/108"
             }
           ],
           "fields": {
@@ -711,6 +2311,16 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/103"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/104"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/105"
                 }
               ],
               "missingObserved": false,
@@ -726,6 +2336,16 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/103"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/104"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/105"
                 }
               ],
               "missingObserved": false,
@@ -741,6 +2361,16 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/103"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/104"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/105"
                 }
               ],
               "missingObserved": false,
@@ -756,6 +2386,16 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/103"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/104"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/105"
                 }
               ],
               "missingObserved": false,
@@ -771,6 +2411,16 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/103"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/104"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/105"
                 }
               ],
               "missingObserved": false,
@@ -786,6 +2436,16 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/106"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/107"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/108"
                 }
               ],
               "missingObserved": false,
@@ -801,6 +2461,16 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/106"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/107"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/108"
                 }
               ],
               "missingObserved": false,
@@ -816,6 +2486,16 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/106"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/107"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/108"
                 }
               ],
               "missingObserved": false,
@@ -837,6 +2517,11 @@
               "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/21"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/22"
             }
           ],
           "fields": {
@@ -862,6 +2547,11 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/21"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/22"
                 }
               ],
               "missingObserved": false,
@@ -882,6 +2572,11 @@
               "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/97"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/98"
             }
           ],
           "fields": {
@@ -892,6 +2587,11 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/97"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/98"
                 }
               ],
               "missingObserved": false,
@@ -907,6 +2607,11 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/97"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/98"
                 }
               ],
               "missingObserved": false,
@@ -922,6 +2627,11 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/97"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/98"
                 }
               ],
               "missingObserved": false,
@@ -937,6 +2647,11 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/97"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/98"
                 }
               ],
               "missingObserved": false,
@@ -957,6 +2672,41 @@
               "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/14"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/15"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/16"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/17"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/18"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/19"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/20"
+            },
+            {
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+              "kind": "style-inferred",
+              "location": "#/layers/96"
             }
           ],
           "fields": {
@@ -967,6 +2717,26 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/14"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/17"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/18"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/19"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/20"
                 }
               ],
               "missingObserved": false,
@@ -982,6 +2752,36 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/14"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/15"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/16"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/17"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/18"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/19"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/20"
                 }
               ],
               "missingObserved": false,
@@ -997,6 +2797,31 @@
                   "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/15"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/16"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/17"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/18"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/19"
+                },
+                {
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+                  "kind": "style-inferred",
+                  "location": "#/layers/20"
                 }
               ],
               "missingObserved": false,
@@ -1183,6 +3008,26 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/44"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/45"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/46"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/47"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/48"
         }
       ],
       "location": "#/sources/openmaptiles/layers/aeroway/fields/class",
@@ -1195,6 +3040,11 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/91"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/92"
         }
       ],
       "location": "#/sources/openmaptiles/layers/boundary/fields/admin_level",
@@ -1207,6 +3057,11 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/91"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/92"
         }
       ],
       "location": "#/sources/openmaptiles/layers/boundary/fields/claimed_by",
@@ -1219,6 +3074,16 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/91"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/92"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/93"
         }
       ],
       "location": "#/sources/openmaptiles/layers/boundary/fields/disputed",
@@ -1231,6 +3096,16 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/91"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/92"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/93"
         }
       ],
       "location": "#/sources/openmaptiles/layers/boundary/fields/maritime",
@@ -1243,6 +3118,16 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/11"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/12"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/24"
         }
       ],
       "location": "#/sources/openmaptiles/layers/landcover/fields/class",
@@ -1255,6 +3140,11 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/1"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/23"
         }
       ],
       "location": "#/sources/openmaptiles/layers/landcover/fields/subclass",
@@ -1267,6 +3157,41 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/2"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/3"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/4"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/5"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/6"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/7"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/8"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/9"
         }
       ],
       "location": "#/sources/openmaptiles/layers/landuse/fields/class",
@@ -1291,6 +3216,11 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/114"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/115"
         }
       ],
       "location": "#/sources/openmaptiles/layers/place/fields/capital",
@@ -1303,6 +3233,46 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/110"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/111"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/112"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/113"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/114"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/115"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/116"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/117"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/118"
         }
       ],
       "location": "#/sources/openmaptiles/layers/place/fields/class",
@@ -1315,6 +3285,46 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/110"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/111"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/112"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/113"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/114"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/115"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/116"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/117"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/118"
         }
       ],
       "location": "#/sources/openmaptiles/layers/place/fields/name",
@@ -1327,6 +3337,46 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/110"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/111"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/112"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/113"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/114"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/115"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/116"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/117"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/118"
         }
       ],
       "location": "#/sources/openmaptiles/layers/place/fields/name:latin",
@@ -1339,6 +3389,46 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/110"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/111"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/112"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/113"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/114"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/115"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/116"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/117"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/118"
         }
       ],
       "location": "#/sources/openmaptiles/layers/place/fields/name:nonlatin",
@@ -1351,6 +3441,46 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/110"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/111"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/112"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/113"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/114"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/115"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/116"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/117"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/118"
         }
       ],
       "location": "#/sources/openmaptiles/layers/place/fields/name_en",
@@ -1363,6 +3493,16 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/116"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/117"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/118"
         }
       ],
       "location": "#/sources/openmaptiles/layers/place/fields/rank",
@@ -1371,6 +3511,21 @@
     {
       "code": "field-domain-unobserved",
       "evidence": [
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/100"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/101"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/102"
+        },
         {
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
@@ -1386,6 +3541,21 @@
         {
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
+          "location": "#/layers/100"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/101"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/102"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
           "location": "#/layers/99"
         }
       ],
@@ -1395,6 +3565,21 @@
     {
       "code": "field-domain-unobserved",
       "evidence": [
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/100"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/101"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/102"
+        },
         {
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
@@ -1410,6 +3595,21 @@
         {
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
+          "location": "#/layers/100"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/101"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/102"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
           "location": "#/layers/99"
         }
       ],
@@ -1419,6 +3619,21 @@
     {
       "code": "field-domain-unobserved",
       "evidence": [
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/100"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/101"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/102"
+        },
         {
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
@@ -1434,6 +3649,16 @@
         {
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
+          "location": "#/layers/100"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/101"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
           "location": "#/layers/99"
         }
       ],
@@ -1443,6 +3668,16 @@
     {
       "code": "field-domain-unobserved",
       "evidence": [
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/100"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/101"
+        },
         {
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
@@ -1459,6 +3694,256 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/27"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/28"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/29"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/30"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/31"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/32"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/33"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/34"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/35"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/36"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/37"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/38"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/39"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/40"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/41"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/42"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/52"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/53"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/54"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/55"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/56"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/57"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/58"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/59"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/60"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/61"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/62"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/63"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/64"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/65"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/66"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/67"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/68"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/71"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/72"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/73"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/74"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/75"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/76"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/77"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/78"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/79"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/80"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/81"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/82"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/83"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/84"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/85"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/86"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/87"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/88"
         }
       ],
       "location": "#/sources/openmaptiles/layers/transportation/fields/brunnel",
@@ -1471,6 +3956,296 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/27"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/28"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/29"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/30"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/31"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/32"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/33"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/34"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/35"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/36"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/37"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/38"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/39"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/40"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/41"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/42"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/43"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/49"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/50"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/51"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/52"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/53"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/54"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/55"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/56"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/57"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/58"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/59"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/60"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/61"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/62"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/63"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/64"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/65"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/66"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/67"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/68"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/69"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/70"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/71"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/72"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/73"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/74"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/75"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/76"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/77"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/78"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/79"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/80"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/81"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/82"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/83"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/84"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/85"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/86"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/87"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/88"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/94"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/95"
         }
       ],
       "location": "#/sources/openmaptiles/layers/transportation/fields/class",
@@ -1483,6 +4258,11 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/94"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/95"
         }
       ],
       "location": "#/sources/openmaptiles/layers/transportation/fields/oneway",
@@ -1495,6 +4275,161 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/28"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/30"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/31"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/32"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/33"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/35"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/37"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/39"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/40"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/41"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/52"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/53"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/55"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/56"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/57"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/58"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/60"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/61"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/63"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/64"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/65"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/66"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/73"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/74"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/75"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/76"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/77"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/81"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/82"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/84"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/85"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/86"
         }
       ],
       "location": "#/sources/openmaptiles/layers/transportation/fields/ramp",
@@ -1507,6 +4442,21 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/69"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/70"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/71"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/72"
         }
       ],
       "location": "#/sources/openmaptiles/layers/transportation/fields/service",
@@ -1519,6 +4469,11 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/89"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/90"
         }
       ],
       "location": "#/sources/openmaptiles/layers/transportation/fields/subclass",
@@ -1531,6 +4486,16 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/103"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/104"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/105"
         }
       ],
       "location": "#/sources/openmaptiles/layers/transportation_name/fields/class",
@@ -1543,6 +4508,16 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/103"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/104"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/105"
         }
       ],
       "location": "#/sources/openmaptiles/layers/transportation_name/fields/name",
@@ -1555,6 +4530,16 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/103"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/104"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/105"
         }
       ],
       "location": "#/sources/openmaptiles/layers/transportation_name/fields/name:latin",
@@ -1567,6 +4552,16 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/103"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/104"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/105"
         }
       ],
       "location": "#/sources/openmaptiles/layers/transportation_name/fields/name:nonlatin",
@@ -1579,6 +4574,16 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/103"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/104"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/105"
         }
       ],
       "location": "#/sources/openmaptiles/layers/transportation_name/fields/name_en",
@@ -1591,6 +4596,16 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/106"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/107"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/108"
         }
       ],
       "location": "#/sources/openmaptiles/layers/transportation_name/fields/network",
@@ -1603,6 +4618,16 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/106"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/107"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/108"
         }
       ],
       "location": "#/sources/openmaptiles/layers/transportation_name/fields/ref",
@@ -1615,6 +4640,16 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/106"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/107"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/108"
         }
       ],
       "location": "#/sources/openmaptiles/layers/transportation_name/fields/ref_length",
@@ -1639,6 +4674,11 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/21"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/22"
         }
       ],
       "location": "#/sources/openmaptiles/layers/water/fields/intermittent",
@@ -1651,6 +4691,11 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/97"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/98"
         }
       ],
       "location": "#/sources/openmaptiles/layers/water_name/fields/name",
@@ -1663,6 +4708,11 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/97"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/98"
         }
       ],
       "location": "#/sources/openmaptiles/layers/water_name/fields/name:latin",
@@ -1675,6 +4725,11 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/97"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/98"
         }
       ],
       "location": "#/sources/openmaptiles/layers/water_name/fields/name:nonlatin",
@@ -1687,6 +4742,11 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/97"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/98"
         }
       ],
       "location": "#/sources/openmaptiles/layers/water_name/fields/name_en",
@@ -1699,6 +4759,26 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/14"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/17"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/18"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/19"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/20"
         }
       ],
       "location": "#/sources/openmaptiles/layers/waterway/fields/brunnel",
@@ -1711,6 +4791,36 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/14"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/15"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/16"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/17"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/18"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/19"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/20"
         }
       ],
       "location": "#/sources/openmaptiles/layers/waterway/fields/class",
@@ -1723,6 +4833,31 @@
           "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/15"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/16"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/17"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/18"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/19"
+        },
+        {
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
+          "kind": "style-inferred",
+          "location": "#/layers/20"
         }
       ],
       "location": "#/sources/openmaptiles/layers/waterway/fields/intermittent",

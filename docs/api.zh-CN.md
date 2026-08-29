@@ -169,7 +169,9 @@ const resolved = resolveReferences({
 });
 ```
 
-数组和对象会被递归复制。缺失引用和循环仍保留为未解析字符串；需要将这些情况报告为 finding 时，请调用 `lint`。
+数组和对象会被递归复制。数组遍历只使用自身数字属性，因此继承的稀疏索引既不会解析也不会实体化。引用路径要求非空的点分隔名称段和可选的数字 `[n]` 索引。缺失、格式错误和循环引用保持未解析；需要将这些情况报告为 finding 时，请调用 `lint`。
+
+`lint` 会在解析引用之后校验已知的 `colors`、`widths`、`sizes`、`opacities` 和 `typography` token。只要解析值匹配目标类型，就允许跨组引用。断链和循环引用仅由 `token-reference` 负责。已声明的 contrast pair 必须解析到两个完全不透明的颜色；半透明 pair 必须使用目标渲染合成结果，而不能使用忽略 alpha 的比值。
 
 ## `diffCartography(beforeSource, afterSource, options?)`
 

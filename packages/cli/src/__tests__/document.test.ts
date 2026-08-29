@@ -1,6 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import {lint} from '../linter/index.js';
 import {normalizeHeading} from '../parser/sections.js';
+import {getAtPath, resolveReferencesDeep} from '../utils/object.js';
 
 const base = `---
 version: "0.2.0"
@@ -76,6 +77,72 @@ Prototype test.
     }
     const resolved = report.resolved as {tokens: {custom: Record<string, unknown>}};
     expect(Object.values(resolved.tokens.custom).every((value) => typeof value === 'string')).toBe(true);
+  });
+
+  it.each([
+    'tokens..colors.ink',
+    '.tokens.colors.ink',
+    'tokens.colors.ink.',
+    'tokens.colors[ink]',
+    'tokens.colors.ink[]',
+    'tokens.colors.ink[0]tail',
+    'tokens.colors.[0]',
+  ])('rejects malformed token path grammar in YAML and prose: %s', (reference) => {
+    const yaml = lint(base.replace('ink: "#25221D"', `ink: "{${reference}}"`));
+    const prose = lint(base.replace('Quiet.', `Use {${reference}} for labels.`));
+
+    for (const report of [yaml, prose]) {
+      expect(report.findings).toContainEqual(expect.objectContaining({
+        ruleId: 'token-reference',
+        message: `Invalid token reference path {${reference}}.`,
+      }));
+    }
+  });
+
+  it('accepts dotted and hyphenated names with numeric bracket indices', () => {
+    const report = lint(`---
+version: "0.2.0"
+name: Path grammar
+tokens:
+  custom:
+    palette:
+      - "#25221D"
+    hyphen-name: "{tokens.custom.palette[0]}"
+---
+
+## Overview
+
+Use {tokens.custom.palette[0]} consistently.
+`);
+
+    expect(report.findings.some((finding) => finding.ruleId === 'token-reference')).toBe(false);
+    expect((report.resolved as {tokens: {custom: {'hyphen-name': string}}}).tokens.custom['hyphen-name']).toBe('#25221D');
+  });
+
+  it('never resolves or materializes inherited sparse array indices', () => {
+    const inheritedIndex = 19_937;
+    const inheritedValue = 'must-not-resolve';
+    const previous = Object.getOwnPropertyDescriptor(Array.prototype, inheritedIndex);
+    Object.defineProperty(Array.prototype, inheritedIndex, {
+      configurable: true,
+      writable: true,
+      value: inheritedValue,
+    });
+    try {
+      const values = new Array(inheritedIndex + 1);
+      const root = {
+        tokens: {custom: {values}},
+        selected: `{tokens.custom.values[${inheritedIndex}]}`,
+      };
+
+      expect(getAtPath(root, `tokens.custom.values[${inheritedIndex}]`)).toEqual({found: false});
+      const resolved = resolveReferencesDeep(root) as typeof root;
+      expect(resolved.selected).toBe(root.selected);
+      expect(Object.hasOwn(resolved.tokens.custom.values, inheritedIndex)).toBe(false);
+    } finally {
+      if (previous) Object.defineProperty(Array.prototype, inheritedIndex, previous);
+      else delete Array.prototype[inheritedIndex];
+    }
   });
 
   it.each([

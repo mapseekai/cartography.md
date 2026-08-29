@@ -119,6 +119,8 @@ Unknown root keys are preserved. A validator MAY warn about them, especially whe
 | `sizes` | map of `DimensionToken` | Each value is a non-negative number, a supported dimension string, or an exact reference. |
 | `opacities` | map of numbers or references | Each number MUST be in the inclusive range 0–1. |
 
+These requirements apply after exact reference resolution. A known-group token MAY reference another group when the resolved value matches the destination type. Broken and cyclic references are reported by `token-reference` without a second type finding.
+
 A dimension string is a non-negative decimal followed by `px`, `pt`, `mm`, `cm`, `in`, `em`, `rem`, or `%`.
 
 A typography object is open and MAY contain:
@@ -135,7 +137,7 @@ Token names SHOULD describe semantic roles rather than incidental appearance. A 
 
 ## Token references
 
-A token reference uses the form `{path.to.value}`. Paths contain letters, numbers, `_`, `-`, `.`, and array indexes written as `[n]`.
+A token reference uses the form `{path.to.value}`. Each dot-separated name segment is non-empty and contains letters, numbers, `_`, or `-`; numeric array indexes are attached as `[n]`. Leading, trailing, or repeated dots, empty or non-numeric brackets, and a name joined directly after an index are invalid.
 
 ```yaml
 tokens:
@@ -149,7 +151,7 @@ Rules:
 1. Every reference MUST resolve within the same front matter.
 2. A reference in YAML MUST occupy the entire string.
 3. Markdown prose MAY embed references within a sentence.
-4. Array indexes such as `[0]` are normalized to path segments.
+4. Array indexes such as `[0]` resolve only own numeric array properties; inherited sparse indices are ignored.
 5. Broken references and reference cycles are errors.
 6. Consumers MUST NOT silently substitute a fallback for an unresolved reference.
 
@@ -179,7 +181,7 @@ Each contrast pair has this shape:
 
 The object is open, so additional project keys are preserved.
 
-A passing contrast-pair check proves only that the declared, fully opaque color values meet the declared numeric minimum. It does not establish accessibility for every composition, background, scale, state, device, or use context. The Markdown `Accessibility` section MUST carry the broader design judgment.
+A contrast pair MUST resolve to two fully opaque colors. Transparent or semitransparent values are an error because WCAG 2.1 contrast requires the rendered compositing result. A passing contrast-pair check proves only that the declared opaque color values meet the declared numeric minimum. It does not establish accessibility for every composition, background, scale, state, device, or use context. The Markdown `Accessibility` section MUST carry the broader design judgment.
 
 ## Markdown sections
 
@@ -343,7 +345,8 @@ Every built-in rule has document scope.
 | `unknown-root-key` | warning | Preserve custom root keys while identifying likely mistakes. |
 | `token-reference` | error | Check exact references, embedded YAML references, broken paths, and cycles. |
 | `color-token` | error | Validate known color tokens as generic CSS colors. |
-| `contrast-pairs` | error | Calculate declared WCAG 2.1 contrast minimums. |
+| `known-token-type` | error | Validate resolved width, size, opacity, and typography token values. |
+| `contrast-pairs` | error | Require opaque colors and calculate declared WCAG 2.1 contrast minimums. |
 | `contract-summary` | info | Summarize token leaves, token groups, and prose sections. |
 | `rule-execution` | error | Contain an unexpected custom-rule failure as a finding. |
 

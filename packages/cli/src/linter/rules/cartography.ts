@@ -1,6 +1,13 @@
 import type {Finding, LintRule} from '../../model/types.js';
+import {dimensionSchema, typographyTokenSchema} from '../../schema/cartography.js';
 import {contrastRatio, resolveColor} from '../../utils/color.js';
-import {flattenLeaves} from '../../utils/object.js';
+import {
+  containsValue,
+  exactTokenReference,
+  flattenLeaves,
+  resolveReferencesDeep,
+  resolveTokenValue,
+} from '../../utils/object.js';
 
 export const colorTokenRule: LintRule = {
   id: 'color-token',
@@ -11,7 +18,8 @@ export const colorTokenRule: LintRule = {
     if (!context.cartography?.tokens?.colors) return [];
     const findings: Finding[] = [];
     for (const [name, value] of Object.entries(context.cartography.tokens.colors)) {
-      const {color} = resolveColor(context.cartography, value);
+      const {color, resolved} = resolveColor(context.cartography, value);
+      if (!resolved) continue;
       if (color) continue;
       findings.push({
         ruleId: this.id,
@@ -20,6 +28,72 @@ export const colorTokenRule: LintRule = {
         message: `Color token "${name}" must be a valid CSS color.`,
         suggestion: 'Use a CSS Color value, such as #1a2b3c, rgb(26 43 60), or oklch(62% 0.18 250).',
       });
+    }
+    return findings;
+  },
+};
+
+function resolvedKnownToken(root: unknown, value: unknown): {ready: boolean; value?: unknown} {
+  const resolved = resolveTokenValue(root, value);
+  if (!resolved.resolved) return {ready: false};
+  const deep = resolveReferencesDeep(resolved.value, root);
+  if (containsValue(deep, (candidate) => exactTokenReference(candidate) !== undefined)) {
+    return {ready: false};
+  }
+  return {ready: true, value: deep};
+}
+
+export const knownTokenTypeRule: LintRule = {
+  id: 'known-token-type',
+  severity: 'error',
+  scope: 'document',
+  description: 'Validates resolved width, size, opacity, and typography token values.',
+  run(context) {
+    const tokens = context.cartography?.tokens;
+    if (!context.cartography || !tokens) return [];
+    const findings: Finding[] = [];
+    const groups: Array<{
+      name: 'widths' | 'sizes' | 'opacities' | 'typography';
+      expected: string;
+      valid(value: unknown): boolean;
+    }> = [
+      {
+        name: 'widths',
+        expected: 'a finite nonnegative number or dimension string',
+        valid: (value) => dimensionSchema.safeParse(value).success,
+      },
+      {
+        name: 'sizes',
+        expected: 'a finite nonnegative number or dimension string',
+        valid: (value) => dimensionSchema.safeParse(value).success,
+      },
+      {
+        name: 'opacities',
+        expected: 'a finite number from 0 through 1',
+        valid: (value) =>
+          typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1,
+      },
+      {
+        name: 'typography',
+        expected: 'a valid typography object',
+        valid: (value) => typographyTokenSchema.safeParse(value).success,
+      },
+    ];
+
+    for (const group of groups) {
+      const values = tokens[group.name];
+      if (!values) continue;
+      for (const [name, value] of Object.entries(values)) {
+        const resolved = resolvedKnownToken(context.cartography, value);
+        if (!resolved.ready || group.valid(resolved.value)) continue;
+        findings.push({
+          ruleId: this.id,
+          severity: this.severity,
+          path: `tokens.${group.name}.${name}`,
+          message: `Resolved ${group.name} token "${name}" must be ${group.expected}.`,
+          suggestion: 'Point the reference at a value valid for the destination token group.',
+        });
+      }
     }
     return findings;
   },
@@ -38,6 +112,7 @@ export const contrastPairsRule: LintRule = {
       const foreground = resolveColor(context.cartography, pair.foreground);
       const background = resolveColor(context.cartography, pair.background);
       const path = `accessibility.contrastPairs.${index}`;
+      if (!foreground.resolved || !background.resolved) continue;
       if (!foreground.color || !background.color) {
         findings.push({
           ruleId: this.id,
@@ -45,6 +120,16 @@ export const contrastPairsRule: LintRule = {
           path,
           message: `Contrast pair "${pair.id}" must resolve to valid CSS colors.`,
           suggestion: 'Use direct CSS colors or exact references to valid tokens.colors values.',
+        });
+        continue;
+      }
+      if (foreground.color.alpha !== 1 || background.color.alpha !== 1) {
+        findings.push({
+          ruleId: this.id,
+          severity: this.severity,
+          path,
+          message: `Contrast pair "${pair.id}" must resolve to fully opaque colors; rendered compositing is required before semitransparent colors can be evaluated.`,
+          suggestion: 'Declare an opaque foreground/background pair or evaluate the composited render with a target-specific accessibility tool.',
         });
         continue;
       }
@@ -84,6 +169,7 @@ export const contractSummaryRule: LintRule = {
 
 export const CARTOGRAPHY_RULES: LintRule[] = [
   colorTokenRule,
+  knownTokenTypeRule,
   contrastPairsRule,
   contractSummaryRule,
 ];

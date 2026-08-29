@@ -14,11 +14,16 @@ export function contrastRatio(foreground: Color, background: Color): number {
   return foreground.contrastWCAG21(background);
 }
 
-export function resolveColor(root: unknown, value: unknown): {color?: Color; resolvedValue?: unknown} {
+export function resolveColor(root: unknown, value: unknown): {
+  color?: Color;
+  resolved: boolean;
+  resolvedValue?: unknown;
+} {
   const resolved = resolveTokenValue(root, value);
-  if (!resolved.resolved) return {};
+  if (!resolved.resolved) return {resolved: false};
   const color = parseCssColor(resolved.value);
   return {
+    resolved: true,
     ...(color ? {color} : {}),
     ...(resolved.value !== undefined ? {resolvedValue: resolved.value} : {}),
   };

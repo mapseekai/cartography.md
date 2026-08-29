@@ -113,4 +113,52 @@ Test.
   });
 });
 
+describe('exact CLI grammar', () => {
+  it.each([
+    ['lint format followed by an option', ['lint', file, '--format', '--strict'], '"valid"'],
+    ['lint invalid format', ['lint', file, '--format', 'yaml'], '"valid"'],
+    ['lint boolean with a value', ['lint', file, '--strict=true'], '"valid"'],
+    ['lint unknown option', ['lint', file, '--unknown'], '"valid"'],
+    ['parse missing input', ['parse'], '"frontmatter"'],
+    ['parse extra input', ['parse', file, 'extra'], '"frontmatter"'],
+    ['parse option', ['parse', file, '--strict'], '"frontmatter"'],
+    ['diff missing input', ['diff', file], '"regression"'],
+    ['diff extra input after separator', ['diff', file, file, '--', 'extra'], '"regression"'],
+    ['diff option', ['diff', file, file, '--strict'], '"regression"'],
+    ['spec positional', ['spec', 'extra'], '**Status:** Draft 0.2.0'],
+    ['spec output without a value', ['spec', '--output', '--help'], '**Status:** Draft 0.2.0'],
+    ['spec unknown option', ['spec', '--unknown'], '**Status:** Draft 0.2.0'],
+    ['rules positional after separator', ['rules', '--', 'extra'], 'frontmatter-required'],
+    ['rules unknown option', ['rules', '--unknown'], 'frontmatter-required'],
+  ])('rejects %s before command work or output', (_name, args, workOutput) => {
+    const result = runCli(args);
+
+    expect(result.status).toBe(2);
+    expect(result.stdout).not.toContain(workOutput);
+    expect(result.stderr).not.toContain(workOutput);
+  });
+
+  it.each([
+    ['lint', ['lint', '--help']],
+    ['parse', ['parse', '--help']],
+    ['diff', ['diff', '--help']],
+    ['spec', ['spec', '--help']],
+    ['rules', ['rules', '--help']],
+    ['top-level', ['--help']],
+    ['top-level version', ['--version']],
+  ])('preserves %s help or version handling', (_name, args) => {
+    expect(runCli(args).status).toBe(0);
+  });
+
+  it('accepts lint options on either side of the one positional input', () => {
+    const before = runCli(['lint', '--format', 'text', file, '--strict']);
+    const after = runCli(['lint', file, '--strict', '--format=text']);
+
+    expect(before.status).toBe(1);
+    expect(after.status).toBe(1);
+    expect(before.stdout).toContain('CARTOGRAPHY.md validation: FAIL');
+    expect(after.stdout).toContain('CARTOGRAPHY.md validation: FAIL');
+  });
+});
+
 afterAll(() => rmSync(temporaryDirectory, {recursive: true, force: true}));

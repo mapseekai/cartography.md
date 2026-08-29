@@ -25,6 +25,7 @@ import {
   type SamplerOptions,
   type TileFetcher,
 } from '../src/sampling.js';
+import {stableJson} from '../src/stable-json.js';
 
 function options(overrides: Partial<SamplerOptions> = {}): SamplerOptions {
   return {
@@ -54,6 +55,21 @@ function pointTile(layerName = 'places'): Uint8Array {
         values: [{string_value: 'Harbor'}],
         extent: 4096,
         features: [{id: 1, tags: [0, 0], type: 1, geometry: [9, 50, 34]}],
+      },
+    ],
+  }).buffer;
+}
+
+function unsafeIntegerTile(): Uint8Array {
+  return create({
+    layers: [
+      {
+        version: 2,
+        name: 'unsafe',
+        keys: ['value'],
+        values: [{uint_value: Number.MAX_SAFE_INTEGER + 1}],
+        extent: 4096,
+        features: [{tags: [0, 0], type: 1, geometry: [9, 50, 34]}],
       },
     ],
   }).buffer;
@@ -450,6 +466,69 @@ describe('sampleTiles', () => {
     }
   });
 
+  it('arbitrates real HTTP total bytes by candidate order regardless of response delays', async () => {
+    const {createServer} = await vi.importActual<typeof import('node:http')>('node:http');
+    const firstTile = pointTile('alpha');
+    const secondTile = pointTile('bravo');
+    expect(firstTile.byteLength).toBe(secondTile.byteLength);
+    const delays = [
+      {first: 30, second: 0},
+      {first: 0, second: 30},
+    ];
+    let runIndex = 0;
+    const server = createServer((request, response) => {
+      const currentRun = runIndex;
+      const first = request.url?.endsWith('/1/0/0.pbf') === true;
+      const body = first ? firstTile : secondTile;
+      const delay = first ? delays[currentRun]!.first : delays[currentRun]!.second;
+      setTimeout(() => {
+        response.writeHead(200, {'content-length': String(body.byteLength)});
+        response.end(body);
+      }, delay);
+    });
+    await new Promise<void>((resolveListen, rejectListen) => {
+      server.once('error', rejectListen);
+      server.listen(0, '127.0.0.1', resolveListen);
+    });
+
+    try {
+      vi.resetModules();
+      vi.doUnmock('node:dns/promises');
+      vi.doUnmock('node:http');
+      vi.doUnmock('node:https');
+      const realSampling = await import('../src/sampling.js');
+      const port = (server.address() as AddressInfo).port;
+      const results = [];
+      for (runIndex = 0; runIndex < delays.length; runIndex += 1) {
+        results.push(await realSampling.sampleTiles(options({
+          template: `http://127.0.0.1:${port}/{z}/{x}/{y}.pbf`,
+          bounds: [-180, -85, 180, 85],
+          zooms: [1],
+          concurrency: 2,
+          maxRequests: 2,
+          retries: 0,
+          maxResponseBytes: firstTile.byteLength,
+          maxTotalBytes: firstTile.byteLength,
+          allowPrivateNetwork: true,
+        })));
+      }
+
+      expect(stableJson(results[0])).toBe(stableJson(results[1]));
+      expect(results[0]!.observations.map(({coordinate}) => coordinate)).toEqual([
+        {z: 1, x: 0, y: 0},
+      ]);
+      expect(Object.keys(results[0]!.observations[0]!.observation.layers)).toEqual(['alpha']);
+      expect(results[0]!.summary.bytes).toBe(firstTile.byteLength + secondTile.byteLength);
+      expect(results[0]!.unresolved.map((item) => item.code)).toContain(
+        'tile-total-bytes-exceeded',
+      );
+    } finally {
+      server.closeAllConnections();
+      await new Promise<void>((resolveClose) => server.close(() => resolveClose()));
+      vi.resetModules();
+    }
+  });
+
   it('cancels bodies before rejecting invalid lengths, oversized lengths, and non-OK status', async () => {
     const cases = [
       fakeResponse(200, {'content-length': 'invalid'}, pointTile()),
@@ -575,6 +654,21 @@ describe('sampleTiles', () => {
 
     expect(result.summary).toMatchObject({requested: 1, decoded: 0, failed: 1});
     expect(result.unresolved.map((item) => item.code)).toEqual(['tile-decoded-too-large']);
+  });
+
+  it('reports an evidence-bearing unresolved item for unsafe 64-bit tile values', async () => {
+    const result = await sampleTiles(
+      options({bounds: [0, 0, 0, 0], zooms: [0], maxRequests: 1, retries: 0}),
+      async () => unsafeIntegerTile(),
+    );
+
+    expect(result.observations).toEqual([]);
+    expect(result.unresolved).toContainEqual(expect.objectContaining({
+      code: 'tile-unsafe-64-bit-value',
+      location: '#/tiles/0/0/0',
+      evidence: [expect.objectContaining({location: '#/tiles/0/0/0'})],
+    }));
+    expect(JSON.stringify(result)).not.toContain(String(Number.MAX_SAFE_INTEGER + 1));
   });
 
   it('applies injected-fetch byte budgets in candidate order, not completion order', async () => {

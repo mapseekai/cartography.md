@@ -34,24 +34,27 @@ function record<T>(): Record<string, T> {
   return Object.create(null) as Record<string, T>;
 }
 
-function parseDocument(text: string, kind: 'style' | 'TileJSON'): unknown {
-  try {
-    return JSON.parse(text) as unknown;
-  } catch {
-    throw new Error(`Unable to parse the ${kind} input as JSON.`);
-  }
+function discoveryFailure(
+  input: string,
+  kind: 'style-inferred' | 'tilejson-declared',
+  code: string,
+  message: string,
+): ProfileFragment {
+  const sanitized = sanitizeReference(input).value;
+  return {
+    inputs: [sanitized],
+    sources: record<SourceFact>(),
+    unresolved: [{
+      code,
+      location: '#',
+      message,
+      evidence: [{kind, input: sanitized, location: '#'}],
+    }],
+  };
 }
 
-async function readDiscoveryText(
-  dependencies: GenerateDependencies,
-  path: string,
-  kind: 'style' | 'TileJSON',
-): Promise<string> {
-  try {
-    return await dependencies.readText(path);
-  } catch {
-    throw new Error(`Unable to read the ${kind} input.`);
-  }
+function hasUsableEvidence(fragment: ProfileFragment): boolean {
+  return Object.keys(fragment.sources).length > 0 || (fragment.sampling?.decoded ?? 0) > 0;
 }
 
 function sampledFragment(
@@ -142,10 +145,31 @@ function sampledFragment(
   return fragments;
 }
 
-function inferredSourceId(fragments: ProfileFragment[], requested?: string): string {
+function sourceIdForAttachment(
+  fragments: ProfileFragment[],
+  requested?: string,
+): string | undefined {
   if (requested !== undefined) return requested;
   const sourceIds = [...new Set(fragments.flatMap((fragment) => Object.keys(fragment.sources)))];
-  return sourceIds.length === 1 ? sourceIds[0]! : 'default';
+  if (sourceIds.length === 0) return 'default';
+  return sourceIds.length === 1 ? sourceIds[0]! : undefined;
+}
+
+function ambiguousSourceFragment(
+  input: string,
+  kind: 'tilejson-declared' | 'tile-sampled',
+): ProfileFragment {
+  const sanitized = sanitizeReference(input).value;
+  return {
+    inputs: [sanitized],
+    sources: record<SourceFact>(),
+    unresolved: [{
+      code: 'source-id-ambiguous',
+      location: '#/sourceId',
+      message: 'Multiple candidate sources exist; provide an explicit sourceId before attaching this input.',
+      evidence: [{kind, input: sanitized, location: '#/sourceId'}],
+    }],
+  };
 }
 
 function sourceHints(fragments: ProfileFragment[], sourceId: string): SourceFact[] {
@@ -210,54 +234,133 @@ export async function generateProfile(
   }
 
   const fragments: ProfileFragment[] = [];
+  let usableEvidence = false;
   if (options.stylePath !== undefined) {
-    const style = parseDocument(
-      await readDiscoveryText(dependencies, options.stylePath, 'style'),
-      'style',
-    );
     const sanitizedInput = sanitizeReference(options.stylePath);
-    const fragment = discoverStyle(style, sanitizedInput.value);
-    if (sanitizedInput.credentialRedacted) {
-      fragment.unresolved.push({
-        code: 'credential-redacted',
-        location: '#',
-        message: 'Credentials or sensitive URL data was redacted before this input was retained.',
-        evidence: [{kind: 'style-inferred', input: sanitizedInput.value, location: '#'}],
-      });
+    let text: string | undefined;
+    try {
+      text = await dependencies.readText(options.stylePath);
+    } catch {
+      fragments.push(discoveryFailure(
+        options.stylePath,
+        'style-inferred',
+        'style-read-failed',
+        'The style input could not be read.',
+      ));
     }
-    fragments.push(fragment);
+    if (text !== undefined) {
+      let style: unknown;
+      try {
+        style = JSON.parse(text) as unknown;
+      } catch {
+        fragments.push(discoveryFailure(
+          options.stylePath,
+          'style-inferred',
+          'style-parse-failed',
+          'The style input could not be parsed as JSON.',
+        ));
+      }
+      if (style !== undefined) {
+        try {
+          const fragment = discoverStyle(style, sanitizedInput.value);
+          if (sanitizedInput.credentialRedacted) {
+            fragment.unresolved.push({
+              code: 'credential-redacted',
+              location: '#',
+              message: 'Credentials or sensitive URL data was redacted before this input was retained.',
+              evidence: [{kind: 'style-inferred', input: sanitizedInput.value, location: '#'}],
+            });
+          }
+          fragments.push(fragment);
+          usableEvidence ||= hasUsableEvidence(fragment);
+        } catch {
+          fragments.push(discoveryFailure(
+            options.stylePath,
+            'style-inferred',
+            'style-discovery-failed',
+            'The style input could not be inspected safely.',
+          ));
+        }
+      }
+    }
   }
 
   if (options.tileJsonPath !== undefined) {
-    const tileJson = parseDocument(
-      await readDiscoveryText(dependencies, options.tileJsonPath, 'TileJSON'),
-      'TileJSON',
-    );
-    fragments.push(discoverTileJson(tileJson, inferredSourceId(fragments, options.sourceId), options.tileJsonPath));
+    let text: string | undefined;
+    try {
+      text = await dependencies.readText(options.tileJsonPath);
+    } catch {
+      fragments.push(discoveryFailure(
+        options.tileJsonPath,
+        'tilejson-declared',
+        'tilejson-read-failed',
+        'The TileJSON input could not be read.',
+      ));
+    }
+    if (text !== undefined) {
+      let tileJson: unknown;
+      try {
+        tileJson = JSON.parse(text) as unknown;
+      } catch {
+        fragments.push(discoveryFailure(
+          options.tileJsonPath,
+          'tilejson-declared',
+          'tilejson-parse-failed',
+          'The TileJSON input could not be parsed as JSON.',
+        ));
+      }
+      if (tileJson !== undefined) {
+        try {
+          const sourceId = sourceIdForAttachment(fragments, options.sourceId);
+          if (sourceId === undefined) {
+            fragments.push(ambiguousSourceFragment(options.tileJsonPath, 'tilejson-declared'));
+          } else {
+            const fragment = discoverTileJson(tileJson, sourceId, options.tileJsonPath);
+            fragments.push(fragment);
+            usableEvidence ||= hasUsableEvidence(fragment);
+          }
+        } catch {
+          fragments.push(discoveryFailure(
+            options.tileJsonPath,
+            'tilejson-declared',
+            'tilejson-discovery-failed',
+            'The TileJSON input could not be inspected safely.',
+          ));
+        }
+      }
+    }
   }
 
   if (options.tileTemplate !== undefined) {
-    const sourceId = inferredSourceId(fragments, options.sourceId);
-    const hints = sourceHints(fragments, sourceId);
-    const sampling = await sampleTiles(
-      {
-        template: options.tileTemplate,
-        bounds: samplingBounds(options, hints),
-        zooms: samplingZooms(options, hints),
-        concurrency: Math.min(DEFAULT_SAMPLER_OPTIONS.concurrency, options.maxRequests ?? DEFAULT_SAMPLER_OPTIONS.maxRequests),
-        maxRequests: options.maxRequests ?? DEFAULT_SAMPLER_OPTIONS.maxRequests,
-        maxNonEmpty: DEFAULT_SAMPLER_OPTIONS.maxNonEmpty,
-        stableStop: DEFAULT_SAMPLER_OPTIONS.stableStop,
-        timeoutMs: DEFAULT_SAMPLER_OPTIONS.timeoutMs,
-        retries: DEFAULT_SAMPLER_OPTIONS.retries,
-        maxResponseBytes: DEFAULT_SAMPLER_OPTIONS.maxResponseBytes,
-        maxTotalBytes: DEFAULT_SAMPLER_OPTIONS.maxTotalBytes,
-        allowPrivateNetwork: options.allowPrivateNetwork === true,
-      },
-      dependencies.fetchTile,
-    );
-    fragments.push(...sampledFragment(sourceId, options.tileTemplate, options.observedAt, sampling));
+    const sourceId = sourceIdForAttachment(fragments, options.sourceId);
+    if (sourceId === undefined) {
+      fragments.push(ambiguousSourceFragment(options.tileTemplate, 'tile-sampled'));
+    } else {
+      const hints = sourceHints(fragments, sourceId);
+      const sampling = await sampleTiles(
+        {
+          template: options.tileTemplate,
+          bounds: samplingBounds(options, hints),
+          zooms: samplingZooms(options, hints),
+          concurrency: Math.min(DEFAULT_SAMPLER_OPTIONS.concurrency, options.maxRequests ?? DEFAULT_SAMPLER_OPTIONS.maxRequests),
+          maxRequests: options.maxRequests ?? DEFAULT_SAMPLER_OPTIONS.maxRequests,
+          maxNonEmpty: DEFAULT_SAMPLER_OPTIONS.maxNonEmpty,
+          stableStop: DEFAULT_SAMPLER_OPTIONS.stableStop,
+          timeoutMs: DEFAULT_SAMPLER_OPTIONS.timeoutMs,
+          retries: DEFAULT_SAMPLER_OPTIONS.retries,
+          maxResponseBytes: DEFAULT_SAMPLER_OPTIONS.maxResponseBytes,
+          maxTotalBytes: DEFAULT_SAMPLER_OPTIONS.maxTotalBytes,
+          allowPrivateNetwork: options.allowPrivateNetwork === true,
+        },
+        dependencies.fetchTile,
+      );
+      const sampled = sampledFragment(sourceId, options.tileTemplate, options.observedAt, sampling);
+      fragments.push(...sampled);
+      usableEvidence ||= sampling.summary.decoded > 0;
+    }
   }
+
+  if (!usableEvidence) throw new Error('No supplied input yielded usable profile evidence.');
 
   const discovered = mergeFragments(fragments);
   const merged = mergeFragments([

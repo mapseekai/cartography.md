@@ -26,11 +26,12 @@ Follow these steps in order:
 1. Read the user's actual inputs and decide whether an existing profile can be reused.
 2. Prefer explicit TileJSON/metadata, then sample actual MVT when declarations are missing or insufficient.
 3. Use multiple spatial candidates and relevant zooms within the configured budget; never infer a complete domain from one tile.
-4. Keep declared, sampled, and style-inferred evidence separate and retain conflicts.
-5. Never copy credentials or unnecessary raw feature values into DATA_PROFILE.json.
-6. Write partial results with unresolved items when safe completion is impossible.
-7. Treat the output as user/runtime context; do not run or claim cartography.md core validation on it.
-8. Never modify CARTOGRAPHY.md to fit the discovered dataset.
+4. Resolve the destination source before attaching TileJSON or sampled facts. Reuse the only discovered source, or pass `--source-id` explicitly when multiple sources exist. A synthetic `default` is allowed only when no candidate source exists.
+5. Keep declared, sampled, and style-inferred evidence separate and retain conflicts.
+6. Never copy credentials or unnecessary raw feature values into DATA_PROFILE.json.
+7. Write partial results with unresolved items when safe completion is impossible.
+8. Treat the output as user/runtime context; do not run or claim cartography.md core validation on it.
+9. Never modify CARTOGRAPHY.md to fit the discovered dataset.
 
 ## Evidence and reporting
 
@@ -39,6 +40,8 @@ Follow these steps in order:
 - `style-inferred` records source layers and fields referenced by style expressions. It does not establish field types, value domains, geometry, feature IDs, or actual tile contents.
 
 Retain incompatible declarations and observations together and report their conflict through `unresolved`; do not pick a convenient winner. Report the inputs used, evidence strength, sampling bounds/zooms/budget, conflicts, and unresolved facts alongside the output path.
+
+Style and TileJSON read, parse, or discovery failures do not discard usable evidence from another input. Mixed runs retain each failure as sanitized evidence-bearing `unresolved` output and continue safe discovery or sampling. If no supplied input yields usable evidence, generation fails without writing a profile. When multiple existing sources make an attachment ambiguous, the generator skips it with `source-id-ambiguous`; rerun with the intended `--source-id`. It never guesses `default` in that case.
 
 The generator sanitizes retained references, but credentials must not be placed in arguments, URLs, output, or copied feature values. If authorized access cannot be performed without exposing a secret, stop sampling and keep that gap unresolved.
 
@@ -105,5 +108,6 @@ Remote sampling blocks loopback, link-local, and private addresses by default. A
 - Treating style references or one non-empty tile as a complete schema or value domain.
 - Collapsing `tilejson-declared`, `tile-sampled`, and `style-inferred` evidence into one confidence level.
 - Omitting unresolved facts after an empty, failed, blocked, or budget-limited sample.
+- Omitting `--source-id` when a style exposes multiple possible destination sources.
 - Passing credentials in a URL or copying arbitrary feature values that are not needed for profiling.
 - Claiming `cartographymd lint` validates `DATA_PROFILE.json`, or changing `CARTOGRAPHY.md` to match runtime discoveries.

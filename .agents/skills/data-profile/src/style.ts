@@ -163,6 +163,20 @@ function addUnresolved(
   unresolved.push({code, location, message, evidence: [styleEvidence(input, location)]});
 }
 
+function appendEvidence(evidence: Evidence[], candidate: Evidence): void {
+  if (
+    evidence.some((item) =>
+      item.kind === candidate.kind &&
+      item.input === candidate.input &&
+      item.location === candidate.location &&
+      item.observedAt === candidate.observedAt
+    )
+  ) {
+    return;
+  }
+  evidence.push(candidate);
+}
+
 function mergeMinzoom(layer: LayerFact, minzoom: unknown): void {
   if (typeof minzoom !== 'number' || !Number.isFinite(minzoom)) {
     return;
@@ -299,16 +313,26 @@ export function discoverStyle(style: unknown, input: string): ProfileFragment {
       );
     }
 
+    const contributionEvidence = styleEvidence(input, location);
     const layer =
-      ownValue(source.layers, sourceLayer) ?? emptyLayerFact(styleEvidence(input, location));
+      ownValue(source.layers, sourceLayer) ?? emptyLayerFact(contributionEvidence);
     source.layers[sourceLayer] = layer;
+    const references = layerReferences(candidate);
+    if (
+      (typeof candidate.minzoom === 'number' && Number.isFinite(candidate.minzoom)) ||
+      (typeof candidate.maxzoom === 'number' && Number.isFinite(candidate.maxzoom)) ||
+      references.fields.length > 0
+    ) {
+      appendEvidence(layer.evidence, contributionEvidence);
+    }
     mergeMinzoom(layer, candidate.minzoom);
     mergeMaxzoom(layer, candidate.maxzoom);
 
-    const references = layerReferences(candidate);
     for (const field of references.fields) {
       if (!Object.hasOwn(layer.fields, field)) {
-        layer.fields[field] = fieldFact(styleEvidence(input, location));
+        layer.fields[field] = fieldFact(contributionEvidence);
+      } else {
+        appendEvidence(layer.fields[field]!.evidence, contributionEvidence);
       }
     }
     if (references.dynamic) {

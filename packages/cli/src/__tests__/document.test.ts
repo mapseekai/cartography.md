@@ -145,6 +145,36 @@ and {tokens.colors.ink[a/b]} here. -->`));
     expect(report.findings.some((finding) => finding.ruleId === 'token-reference')).toBe(false);
   });
 
+  it('treats an HTML comment opener inside inline code as literal text', () => {
+    const report = lint(base.replace('Quiet.', `<!--
+Ignore {tokens.colors.missing} inside the real comment.
+-->
+
+Render the literal \`<!--\` in inline code.
+
+Visible {tokens.colors.ink[ ]} must still be checked.`));
+    const findings = report.findings.filter((finding) => finding.ruleId === 'token-reference');
+
+    expect(findings).toEqual([
+      expect.objectContaining({message: 'Invalid token reference path {tokens.colors.ink[ ]}.'}),
+    ]);
+  });
+
+  it('treats an HTML comment opener in fence info as literal and resumes after closing', () => {
+    const report = lint(base.replace('Quiet.', `\`\`\`jsx <!-- literal fence metadata
+<Item>{tokens.colors.missing}</Item>
+\`\`\`
+
+Visible {tokens.colors.ink[+1]} must still be checked.
+
+<!-- Ignore {tokens.colors.ink[a/b]} in a real comment. -->`));
+    const findings = report.findings.filter((finding) => finding.ruleId === 'token-reference');
+
+    expect(findings).toEqual([
+      expect.objectContaining({message: 'Invalid token reference path {tokens.colors.ink[+1]}.'}),
+    ]);
+  });
+
   it('accepts dotted and hyphenated names with numeric bracket indices', () => {
     const report = lint(`---
 version: "0.2.0"

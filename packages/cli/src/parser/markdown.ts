@@ -40,65 +40,123 @@ function maskPreservingLines(value: string): string {
   return value.replace(/[^\n]/g, ' ');
 }
 
-function maskInlineCodeSpans(value: string): string {
-  let result = '';
-  let copiedThrough = 0;
-  let cursor = 0;
-  while (cursor < value.length) {
-    if (value[cursor] !== '`') {
-      cursor += 1;
+function closingBacktickEnd(
+  value: string,
+  start: number,
+  delimiterLength: number,
+): number | undefined {
+  let search = start;
+  while (search < value.length) {
+    if (value[search] !== '`') {
+      search += 1;
       continue;
     }
-
-    const openingLength = runLength(value, cursor, '`');
-    let search = cursor + openingLength;
-    let closingEnd: number | undefined;
-    while (search < value.length) {
-      if (value[search] !== '`') {
-        search += 1;
-        continue;
-      }
-      const closingLength = runLength(value, search, '`');
-      if (closingLength === openingLength) {
-        closingEnd = search + closingLength;
-        break;
-      }
-      search += closingLength;
-    }
-
-    if (closingEnd === undefined) {
-      cursor += openingLength;
-      continue;
-    }
-    result += value.slice(copiedThrough, cursor);
-    result += maskPreservingLines(value.slice(cursor, closingEnd));
-    copiedThrough = closingEnd;
-    cursor = closingEnd;
+    const closingLength = runLength(value, search, '`');
+    if (closingLength === delimiterLength) return search + closingLength;
+    search += closingLength;
   }
-  return result + value.slice(copiedThrough);
+  return undefined;
+}
+
+function endOfLine(value: string, start: number): number {
+  const newline = value.indexOf('\n', start);
+  return newline < 0 ? value.length : newline;
 }
 
 export function maskMarkdownReferenceLiterals(markdown: string): string {
-  const lines = markdown.split('\n');
-  const commentState: CommentState = {inComment: false};
+  let visible = '';
+  let cursor = 0;
+  let atLineStart = true;
+  let inComment = false;
   let fence: {marker: '`' | '~'; length: number} | undefined;
-  const visible = lines.map((line) => {
+
+  while (cursor < markdown.length) {
     if (fence) {
+      const lineEnd = endOfLine(markdown, cursor);
+      const line = markdown.slice(cursor, lineEnd);
       const closingPattern = new RegExp(`^ {0,3}${fence.marker}{${fence.length},}[ \\t]*$`);
       if (closingPattern.test(line)) fence = undefined;
-      return ' '.repeat(line.length);
+      visible += ' '.repeat(line.length);
+      if (lineEnd < markdown.length) {
+        visible += '\n';
+        cursor = lineEnd + 1;
+        atLineStart = true;
+      } else {
+        cursor = lineEnd;
+      }
+      continue;
     }
 
-    const withoutComments = maskHtmlComments(line, commentState);
-    const opening = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(withoutComments);
-    if (opening?.[1]) {
-      fence = {
-        marker: opening[1][0] as '`' | '~',
-        length: opening[1].length,
-      };
-      return ' '.repeat(line.length);
+    if (!inComment && atLineStart) {
+      const lineEnd = endOfLine(markdown, cursor);
+      const line = markdown.slice(cursor, lineEnd);
+      const opening = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line);
+      if (opening?.[1]) {
+        fence = {
+          marker: opening[1][0] as '`' | '~',
+          length: opening[1].length,
+        };
+        visible += ' '.repeat(line.length);
+        if (lineEnd < markdown.length) {
+          visible += '\n';
+          cursor = lineEnd + 1;
+          atLineStart = true;
+        } else {
+          cursor = lineEnd;
+        }
+        continue;
+      }
+      atLineStart = false;
     }
-    return withoutComments;
-  });
-  return maskInlineCodeSpans(visible.join('\n'));
+
+    if (inComment) {
+      if (markdown.startsWith('-->', cursor)) {
+        visible += '   ';
+        cursor += 3;
+        inComment = false;
+        atLineStart = false;
+        continue;
+      }
+      if (markdown[cursor] === '\n') {
+        visible += '\n';
+        cursor += 1;
+        atLineStart = true;
+      } else {
+        visible += ' ';
+        cursor += 1;
+        atLineStart = false;
+      }
+      continue;
+    }
+
+    if (markdown[cursor] === '`') {
+      const openingLength = runLength(markdown, cursor, '`');
+      const closingEnd = closingBacktickEnd(
+        markdown,
+        cursor + openingLength,
+        openingLength,
+      );
+      if (closingEnd !== undefined) {
+        visible += maskPreservingLines(markdown.slice(cursor, closingEnd));
+        cursor = closingEnd;
+        atLineStart = false;
+        continue;
+      }
+    }
+
+    if (markdown.startsWith('<!--', cursor)) {
+      visible += '    ';
+      cursor += 4;
+      inComment = true;
+      atLineStart = false;
+      continue;
+    }
+
+    const character = markdown[cursor]!;
+    visible += character;
+    cursor += 1;
+    atLineStart = character === '\n';
+  }
+
+  return visible;
 }

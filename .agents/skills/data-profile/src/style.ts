@@ -8,15 +8,6 @@ import type {
 } from './types.js';
 
 const legacyFieldOperators = new Set(['==', '!=', '>', '>=', '<', '<=', 'in', '!in', '!has']);
-const sensitiveQueryKeys = new Set([
-  'token',
-  'access_token',
-  'api_key',
-  'key',
-  'signature',
-  'sig',
-  'auth',
-]);
 const templateFieldPattern = /\{([^{}]+)\}/g;
 
 interface FieldReferences {
@@ -35,6 +26,8 @@ interface SourceTemplate {
   location: 'url' | `tiles/${number}`;
   value: string;
   credentialRedacted: boolean;
+  validHttpUrl: boolean;
+  explicitLocalTemplate: boolean;
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -165,34 +158,19 @@ function addUnresolved(
   unresolved.push({code, location, message, evidence: [styleEvidence(input, location)]});
 }
 
-function isHttpUrl(value: string): boolean {
+function isExplicitLocalTemplate(value: string): boolean {
+  return !/[?#]/.test(value) && /^(?:\.(?:\.|\/)|\/(?!\/)|file:\/\/)/.test(value);
+}
+
+function hasHttpScheme(value: string): boolean {
   return /^https?:\/\//i.test(value);
 }
 
-function isExplicitLocalTemplate(value: string): boolean {
-  return /^(?:\.(?:\.|\/)|\/(?!\/)|file:\/\/)/.test(value);
-}
-
-function isSensitiveQueryKey(value: string): boolean {
-  try {
-    return sensitiveQueryKeys.has(decodeURIComponent(value.replace(/\+/g, ' ')).toLowerCase());
-  } catch {
-    return sensitiveQueryKeys.has(value.toLowerCase());
-  }
-}
-
-function redactTemplate(value: string): {value: string; credentialRedacted: boolean} {
-  let redacted = false;
-  let withoutHash = value;
-  const hashIndex = withoutHash.indexOf('#');
-  if (hashIndex >= 0) {
-    withoutHash = withoutHash.slice(0, hashIndex);
-    redacted = true;
-  }
-
+function removeOpaqueUrlParts(value: string): {value: string; credentialRedacted: boolean} {
+  const hashIndex = value.indexOf('#');
+  const withoutHash = hashIndex >= 0 ? value.slice(0, hashIndex) : value;
   const queryIndex = withoutHash.indexOf('?');
   const base = queryIndex >= 0 ? withoutHash.slice(0, queryIndex) : withoutHash;
-  const query = queryIndex >= 0 ? withoutHash.slice(queryIndex + 1) : undefined;
   const authorityMatch = base.match(/^((?:[a-z][a-z\d+.-]*:)?\/\/)([^/?#]*)/i);
   const authorityPrefix = authorityMatch?.[1];
   const authority = authorityMatch?.[2];
@@ -203,27 +181,47 @@ function redactTemplate(value: string): {value: string; credentialRedacted: bool
           matchedAuthority.length,
         )}`
       : base;
-  if (sanitizedBase !== base) {
-    redacted = true;
-  }
-
-  if (query === undefined) {
-    return {value: sanitizedBase, credentialRedacted: redacted};
-  }
-
-  const safePairs = query.split('&').filter((pair) => {
-    const separator = pair.indexOf('=');
-    const key = separator >= 0 ? pair.slice(0, separator) : pair;
-    return !isSensitiveQueryKey(key);
-  });
-  if (safePairs.length !== query.split('&').length) {
-    redacted = true;
-  }
 
   return {
-    value: safePairs.length === 0 ? sanitizedBase : `${sanitizedBase}?${safePairs.join('&')}`,
-    credentialRedacted: redacted,
+    value: sanitizedBase,
+    credentialRedacted:
+      hashIndex >= 0 || queryIndex >= 0 || sanitizedBase !== base,
   };
+}
+
+function preserveTemplateBraces(value: string): string {
+  return value.replace(/%7B/gi, '{').replace(/%7D/gi, '}');
+}
+
+function redactHttpTemplate(value: string): Omit<SourceTemplate, 'location' | 'explicitLocalTemplate'> | undefined {
+  try {
+    const url = new URL(value);
+    const credentialRedacted =
+      url.username !== '' || url.password !== '' || value.includes('?') || value.includes('#');
+    url.username = '';
+    url.password = '';
+    url.search = '';
+    url.hash = '';
+
+    return {
+      value: preserveTemplateBraces(url.toString()),
+      credentialRedacted,
+      validHttpUrl: true,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+function redactTemplate(value: string): Omit<SourceTemplate, 'location' | 'explicitLocalTemplate'> {
+  if (hasHttpScheme(value)) {
+    const redactedHttp = redactHttpTemplate(value);
+    if (redactedHttp) {
+      return redactedHttp;
+    }
+  }
+
+  return {...removeOpaqueUrlParts(value), validHttpUrl: false};
 }
 
 function mergeMinzoom(layer: LayerFact, minzoom: unknown): void {
@@ -243,12 +241,20 @@ function mergeMaxzoom(layer: LayerFact, maxzoom: unknown): void {
 function sourceTemplates(source: Record<string, unknown>): SourceTemplate[] {
   const templates: SourceTemplate[] = [];
   if (typeof source.url === 'string') {
-    templates.push({location: 'url', ...redactTemplate(source.url)});
+    templates.push({
+      location: 'url',
+      explicitLocalTemplate: isExplicitLocalTemplate(source.url),
+      ...redactTemplate(source.url),
+    });
   }
   if (Array.isArray(source.tiles)) {
     for (const [index, tile] of source.tiles.entries()) {
       if (typeof tile === 'string') {
-        templates.push({location: `tiles/${index}`, ...redactTemplate(tile)});
+        templates.push({
+          location: `tiles/${index}`,
+          explicitLocalTemplate: isExplicitLocalTemplate(tile),
+          ...redactTemplate(tile),
+        });
       }
     }
   }
@@ -299,7 +305,7 @@ export function discoverStyle(style: unknown, input: string): ProfileFragment {
             'Credentials or sensitive URL data was redacted before this source template was retained.',
           );
         }
-        if (template.location === 'url' && !isHttpUrl(template.value)) {
+        if (template.location === 'url' && !template.validHttpUrl) {
           addUnresolved(
             fragment.unresolved,
             'source-url-not-inspectable',
@@ -310,8 +316,8 @@ export function discoverStyle(style: unknown, input: string): ProfileFragment {
         }
         if (
           template.location.startsWith('tiles/') &&
-          !isHttpUrl(template.value) &&
-          !isExplicitLocalTemplate(template.value)
+          !template.validHttpUrl &&
+          !template.explicitLocalTemplate
         ) {
           addUnresolved(
             fragment.unresolved,

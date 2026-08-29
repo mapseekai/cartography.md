@@ -127,14 +127,14 @@ describe('collectReferencedFields', () => {
 });
 
 describe('style source templates', () => {
-  it('redacts credentials and sensitive query values before retaining source templates', () => {
+  it('drops every HTTP(S) query value before retaining source templates', () => {
     const fragment = discoverStyle(
       {
         sources: {
           roads: {
             type: 'vector',
-            url: 'https://user:password@tiles.example/roads.json?token=top-secret&lang=en#private',
-            tiles: ['https://tiles.example/{z}/{x}/{y}.pbf?access_token=also-secret&locale=en'],
+            url: 'https://user:password@tiles.example/roads.json?password=top-secret&client_secret=hidden&unknown=also-hidden#private',
+            tiles: ['https://tiles.example/{z}/{x}/{y}.pbf?arbitrary=not-safe'],
           },
         },
       },
@@ -142,14 +142,19 @@ describe('style source templates', () => {
     );
 
     expect(fragment.sources.roads.tileTemplates).toEqual([
-      'https://tiles.example/roads.json?lang=en',
-      'https://tiles.example/{z}/{x}/{y}.pbf?locale=en',
+      'https://tiles.example/roads.json',
+      'https://tiles.example/{z}/{x}/{y}.pbf',
     ]);
     expect(fragment.unresolved.map((item) => item.code)).toContain('credential-redacted');
     expect(JSON.stringify(fragment)).not.toContain('user');
     expect(JSON.stringify(fragment)).not.toContain('password');
     expect(JSON.stringify(fragment)).not.toContain('top-secret');
-    expect(JSON.stringify(fragment)).not.toContain('also-secret');
+    expect(JSON.stringify(fragment)).not.toContain('client_secret');
+    expect(JSON.stringify(fragment)).not.toContain('hidden');
+    expect(JSON.stringify(fragment)).not.toContain('unknown');
+    expect(JSON.stringify(fragment)).not.toContain('also-hidden');
+    expect(JSON.stringify(fragment)).not.toContain('arbitrary');
+    expect(JSON.stringify(fragment)).not.toContain('not-safe');
   });
 
   it('reports non-HTTP non-local tile templates as unresolved while retaining safe templates', () => {
@@ -177,5 +182,54 @@ describe('style source templates', () => {
       '/tiles/{z}/{x}/{y}.pbf',
     ]);
     expect(fragment.unresolved.map((item) => item.code)).toContain('tile-template-not-inspectable');
+  });
+
+  it('reports invalid HTTP source URLs and tile templates as unresolved', () => {
+    const fragment = discoverStyle(
+      {
+        sources: {
+          roads: {
+            type: 'vector',
+            url: 'https://',
+            tiles: ['http://', 'https://?unknown=not-retained', './tiles/{z}/{x}/{y}.pbf'],
+          },
+        },
+      },
+      'style.json',
+    );
+
+    expect(fragment.sources.roads.tileTemplates).toEqual([
+      'https://',
+      'http://',
+      'https://',
+      './tiles/{z}/{x}/{y}.pbf',
+    ]);
+    expect(fragment.unresolved.map((item) => item.code)).toEqual(
+      expect.arrayContaining(['source-url-not-inspectable', 'tile-template-not-inspectable']),
+    );
+    expect(JSON.stringify(fragment)).not.toContain('unknown');
+    expect(JSON.stringify(fragment)).not.toContain('not-retained');
+  });
+
+  it('does not interpret a queried URL as an explicit local tile template', () => {
+    const fragment = discoverStyle(
+      {
+        sources: {
+          roads: {
+            type: 'vector',
+            tiles: ['/tiles/{z}/{x}/{y}.pbf?cache=untrusted', './tiles/{z}/{x}/{y}.pbf'],
+          },
+        },
+      },
+      'style.json',
+    );
+
+    expect(fragment.sources.roads.tileTemplates).toEqual([
+      '/tiles/{z}/{x}/{y}.pbf',
+      './tiles/{z}/{x}/{y}.pbf',
+    ]);
+    expect(fragment.unresolved.map((item) => item.code)).toContain('tile-template-not-inspectable');
+    expect(JSON.stringify(fragment)).not.toContain('cache');
+    expect(JSON.stringify(fragment)).not.toContain('untrusted');
   });
 });

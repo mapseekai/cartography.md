@@ -1,6 +1,6 @@
 # Contributing
 
-cartography.md is a draft specification and reference implementation. Contributions may improve the format, deterministic validation rules, documentation, interoperability, or examples.
+cartography.md welcomes contributions to the format, document-scoped validation, documentation, examples, and tooling.
 
 ## Development setup
 
@@ -17,53 +17,55 @@ pnpm lint:example
 
 ## Repository responsibilities
 
-- `docs/spec.md` is normative.
-- `packages/cli/src/schema` is the executable structural model.
-- `packages/cli/src/linter` implements deterministic checks.
-- `schema/*.schema.json` supports editors and non-TypeScript consumers.
-- `examples/*` demonstrate valid, realistic contracts.
+- `docs/spec.md` is the normative format specification.
+- `packages/cli/src/schema` is the executable structural model and source for the generated JSON Schema.
+- `packages/cli/src/linter` contains deterministic document rules.
+- `schema/cartography.schema.json` supports editors and non-TypeScript consumers.
+- `examples/*` demonstrate realistic, independently valid documents.
 
-A change to one representation should update the others in the same pull request.
+Keep these representations synchronized in the same pull request.
 
 ## Specification changes
 
-A specification proposal should explain:
+A proposal should explain:
 
-1. the cartographic or agent problem;
-2. why the existing model cannot express it;
+1. the enduring cartographic or agent problem;
+2. why existing prose, tokens, sections, omissions, or namespaced extensions cannot express it;
 3. the proposed syntax and semantics;
-4. validation behavior and severity;
-5. backward-compatibility impact;
-6. at least one realistic example.
+4. deterministic document validation, if any;
+5. versioning impact;
+6. at least one realistic, self-contained example.
 
-Do not add a field solely because a single style happens to contain a similarly named property. The format describes enduring cartographic intent, not every MapLibre implementation detail.
+Do not add core fields for a single dataset, current user task, target tool, or output. The common format stores portable visual identity and long-lived design judgment.
 
 ## Rule changes
 
-Rules must be deterministic, side-effect free, and network independent. A rule should include:
+Every built-in rule has only `document` scope. It must be deterministic, side-effect free, and network independent. A rule change should include:
 
 - a stable kebab-case ID;
 - one default severity;
-- one scope (`document`, `profile`, or `style`);
-- focused tests for valid and invalid inputs;
-- an update to the rule catalog and documentation.
+- `scope: 'document'`;
+- focused valid and invalid fixtures;
+- updates to the rule catalog and relevant documentation.
 
-Use `error` for deterministic invalidity, unsafe behavior, or a broken required contract. Use `warning` for likely quality, portability, completeness, or maintainability problems. Use `info` for non-blocking observations.
+Use `error` for deterministic document invalidity or unsafe input. Use `warning` for likely misspellings, contradictions, maintainability risks, or strict-mode concerns. Use `info` only for non-blocking document observations.
+
+Rules may inspect only the supplied `CARTOGRAPHY.md` source and explicit document-lint options. They must not fetch resources, inspect companion inputs, infer natural-language quality, or claim facts about runtime production.
 
 ## Tests
 
-Add tests under `packages/cli/src/__tests__`. Prefer small fixtures in test code and keep industry-scale examples under `examples/`.
-
-The reference example must remain valid in normal mode:
+Add tests under `packages/cli/src/__tests__`. Derive expected values independently and use the smallest fixture that demonstrates the contract. Keep the Quiet Atlas example valid in normal mode:
 
 ```bash
 pnpm lint:example
 ```
 
+Schema changes must retain parity between the Zod source and generated JSON Schema. Public product changes must retain the core boundary checks.
+
 ## Documentation style
 
-Use precise language. Normative sections use MUST, MUST NOT, SHOULD, SHOULD NOT, and MAY. Explain why a constraint exists and distinguish automatic validation from render review.
+Use precise language. Normative sections use MUST, MUST NOT, SHOULD, SHOULD NOT, and MAY. Explain why each constraint exists, keep English and Chinese documents semantically aligned, and distinguish document validity from professional or runtime review.
 
 ## Pull requests
 
-Keep changes focused. Include the motivation, affected conformance classes, test evidence, and migration notes. Specification-breaking changes require a versioning discussion before merge.
+Keep changes focused. Include the motivation, affected document behavior, test evidence, bilingual documentation updates where applicable, and versioning notes for breaking format changes.

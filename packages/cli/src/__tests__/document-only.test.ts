@@ -47,7 +47,6 @@ describe('document-only linter core', () => {
 
   it('does not export removed APIs', () => {
     expect(api).not.toHaveProperty('dataProfileSchema');
-    expect(api).not.toHaveProperty('validateMapLibreStyle');
     expect(api).not.toHaveProperty(['validate', 'Map', 'LibreStyle'].join(''));
     expect(Object.keys(api).sort()).toEqual([
       'DEFAULT_RULES',

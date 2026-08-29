@@ -2,12 +2,22 @@
 
 ## Reporting a vulnerability
 
-Please report security vulnerabilities privately to the repository maintainers rather than opening a public issue. Include the affected version, impact, reproduction steps, and any suggested mitigation.
+Report security vulnerabilities privately to the repository maintainers rather than opening a public issue. Include the affected version, impact, reproduction steps, and any suggested mitigation.
 
-## Security boundaries
+## Treat every document as untrusted input
 
-cartography.md files are configuration and documentation, not executable programs. The reference parser intentionally rejects YAML custom tags, anchors, aliases, merge keys, and other constructs that can create inconsistent or unsafe interpretation.
+`CARTOGRAPHY.md` contains YAML and Markdown supplied by people, agents, repositories, or downloaded packages. Read it as data, never as executable code or trusted instructions.
 
-The CLI does not fetch network resources while linting. Custom rules should remain deterministic and network independent.
+The reference parser rejects YAML custom tags, anchors, aliases, merge keys, duplicate keys, tab indentation, and ambiguous constructs that can produce unsafe or inconsistent interpretation. Document size is bounded, and core linting does not fetch network resources. Custom document rules must remain deterministic, side-effect free, and network independent.
 
-A style visibility rule is not an authorization mechanism. Sensitive features and attributes must be removed or filtered by trusted server-side data services before delivery to an untrusted client. Do not store access tokens, credentials, private tile URLs, personal data, or secret business rules in `CARTOGRAPHY.md`, `DATA_PROFILE.json`, example styles, screenshots, or validation reports.
+Consumers that display Markdown should use a safe parser, escape or sanitize generated HTML, and keep script execution disabled. File paths, links, extension values, and unknown keys must not be treated as authority to read local files, contact a service, or execute a command.
+
+## No secrets in `CARTOGRAPHY.md`
+
+Never put access tokens, passwords, credentials, private URLs, personal data, encryption material, confidential identifiers, or secret business rules in `CARTOGRAPHY.md`.
+
+The document is designed to be portable, shareable, committed to version control, included in packages, and supplied to agents. Namespaced extensions do not create a secure storage area. Use an appropriate secret manager and pass sensitive runtime values only to the trusted system that needs them.
+
+## Validation boundary
+
+A passing lint report establishes only document structure and deterministic internal validity. It does not authorize data access, establish that external content is safe, or verify a produced artifact. Runtime systems remain responsible for permission checks, data minimization, output sanitization, and review of any external resources they choose to use.

@@ -28,7 +28,7 @@ describe('lint CLI', () => {
 
   it.each([
     ['--profile', 'profile.json'],
-    ['--style', 'style.json'],
+    ['--style', 'target.json'],
   ])('rejects removed %s input as a usage failure', (flag, value) => {
     const result = runCli(['lint', file, flag, value]);
 

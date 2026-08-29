@@ -1,19 +1,35 @@
 # @mapseekai/cartography.md
 
-CLI and TypeScript API for the [cartography.md](https://github.com/mapseekai/cartography.md) cartographic design contract.
+Agent-first format and validator for persistent cartographic design systems.
+
+The package parses, lints, resolves, and compares one self-contained `CARTOGRAPHY.md`. YAML front matter supplies exact identity and token values; Markdown prose carries the visual intent, hierarchy, scale behavior, states, accessibility guidance, and review principles.
+
+## CLI
 
 ```bash
-pnpm dlx --package=@mapseekai/cartography.md cartographymd lint \
-  CARTOGRAPHY.md --profile DATA_PROFILE.json --style style.json
+pnpm dlx --package=@mapseekai/cartography.md cartographymd lint CARTOGRAPHY.md
+pnpm dlx --package=@mapseekai/cartography.md cartographymd diff before.md after.md
+pnpm dlx --package=@mapseekai/cartography.md cartographymd spec
 ```
+
+`parse` returns structured document output, and `rules` lists the built-in document rules. Add `--strict` to lint when warnings must block success.
+
+## TypeScript
 
 ```ts
-import {lintFile} from '@mapseekai/cartography.md';
+import {diffCartography, lintFile} from '@mapseekai/cartography.md';
 
-const report = await lintFile('CARTOGRAPHY.md', {
-  dataProfilePath: 'DATA_PROFILE.json',
-  stylePath: 'style.json',
-});
+const report = await lintFile('CARTOGRAPHY.md', {strict: true});
+
+if (!report.valid) {
+  for (const finding of report.findings) {
+    console.error(finding.ruleId, finding.message);
+  }
+}
+
+const changes = diffCartography(previousSource, currentSource);
 ```
 
-The package validates document structure, token references, data semantics, the official MapLibre Style Specification, and the cartography.md-to-style contract. See the repository for the full specification and examples.
+Core validation checks only the document and its deterministic internal relationships. Current data, task fitness, target-specific production, output validity, and professional visual review remain outside the package boundary.
+
+See the repository [README](https://github.com/mapseekai/cartography.md#readme), [format specification](https://github.com/mapseekai/cartography.md/blob/main/docs/spec.md), and [API reference](https://github.com/mapseekai/cartography.md/blob/main/docs/api.md) for complete details.

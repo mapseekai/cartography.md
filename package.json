@@ -2,7 +2,7 @@
   "name": "cartography.md",
   "version": "0.2.0",
   "private": true,
-  "description": "An agent-readable cartographic design contract and validator for MapLibre styles.",
+  "description": "Agent-first format and validator for persistent cartographic design systems.",
   "license": "Apache-2.0",
   "packageManager": "pnpm@10.34.5",
   "engines": {

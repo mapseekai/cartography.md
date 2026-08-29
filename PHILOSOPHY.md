@@ -1,94 +1,59 @@
-# cartography.md philosophy
+# Philosophy
+
+cartography.md treats a map design system as persistent visual identity, not as a temporary production recipe. A `CARTOGRAPHY.md` should remain useful when the current task, dataset, toolchain, and output change.
+
 中文版：[PHILOSOPHY.zh-CN.md](PHILOSOPHY.zh-CN.md)
 
-cartography.md exists because a map style is more than a collection of renderer properties. A useful electronic map is a negotiated relationship between purpose, data, scale, perception, interaction, and implementation.
+## Prose carries the design
 
-## A style is execution; the contract is intent
+Professional cartographic judgment cannot be reduced to a property list. The document's Markdown should describe a vivid, recognizable visual world: what feels quiet or urgent, what earns attention, how density is managed, which tradeoffs protect comprehension, and what must never be allowed to erode the family character.
 
-MapLibre Style Specification provides a precise language for sources, layers, filters, expressions, paint, and layout. That precision is necessary, but it is downstream of several decisions that are usually left implicit:
+Generic adjectives are not enough. “Clean and modern” gives an agent almost no direction; “warm paper, pale water, economical ink, and generous label spacing” establishes a world that can guide many decisions.
 
-- what the map helps a person decide;
-- which data is authoritative;
-- which distinctions are nominal, ordered, quantitative, uncertain, or critical;
-- which objects should dominate at each scale;
-- which visual channels carry each meaning;
-- how interaction may change emphasis without changing business truth.
+## Tokens provide exact context
 
-`CARTOGRAPHY.md` makes those decisions persistent. The generated `style.json` remains the executable output.
+Tokens exist where precision and reuse matter: color values, typography, dimensions, and opacity. They let prose refer to one stable vocabulary and prevent small values from drifting across repeated applications.
 
-## Machine-readable values and human judgment belong together
+Tokens are context for design judgment, not instructions for a particular production target. Exact token references must resolve inside the same document. When an exact value and prose disagree in a way a tool can determine, the token is authoritative and the contradiction should be reported.
 
-Tokens alone cannot explain why danger red is scarce, why a label should disappear before a network segment, or why an uncertainty field should reduce opacity only up to a safe floor. Prose alone cannot guarantee that an agent uses the same color or field name twice.
+## Identity survives changing content
 
-The format therefore has two equal parts:
+A durable design system describes relationships rather than current inventory. It says which semantic roles are quiet, contextual, focal, selected, or alarming without recording today's field names or object list. This lets the same visual family meet unfamiliar content without pretending that unknown facts are already understood.
 
-- YAML gives agents exact values and relationships;
-- Markdown gives agents reasons, exceptions, and conflict-resolution guidance.
+Agents must preserve semantic meaning while applying the identity. Emphasis may make a selection easier to find, but it must not turn an ordinary object into a warning or erase the distinction between context and focus.
 
-Neither replaces the other.
+## Hierarchy is the organizing principle
 
-## Data meaning precedes visual treatment
+Every visual choice participates in hierarchy. Background, context, subject, focus, and critical state should remain distinguishable through coordinated contrast, weight, size, spacing, and texture. Attention is finite: if everything is emphasized, nothing is.
 
-An agent must not infer that a field called `level` is ordered, that a larger number is more dangerous, or that an unknown category is normal. The contract binds semantic roles to actual fields, while `DATA_PROFILE.json` records observed facts such as geometry, domain, units, nullability, zoom availability, density, and stable identifiers.
+Composition and layering are therefore described as long-lived relationships, not a list of current objects. The document should explain what yields first when the map becomes dense and which information must retain breathing room.
 
-A cartographic choice is valid only when its data assumptions are valid.
+## Scale is progressive disclosure
 
-## Visual channels need ownership
+Scale behavior should describe recognizable stages of reading without encoding target-specific thresholds. At broad distances the design preserves the large spatial story; closer views reveal local structure in a deliberate rhythm. Simplification, clustering, label density, and symbol detail should change while the visual family remains continuous.
 
-Maps often need to show several attributes at once. Without an explicit ownership model, agents repeatedly overload color and produce attractive but unreadable results.
+The question is not merely what appears or disappears. It is whether each stage still communicates the same hierarchy and identity.
 
-cartography.md treats color, lightness, width, size, opacity, pattern, shape, and casing as limited resources. A channel should have one primary semantic owner. Deliberate combinations must be declared and explained.
+## States preserve underlying meaning
 
-Critical meanings may require a second channel so they remain distinguishable under color-vision differences, poor displays, imagery backgrounds, and fast operational use.
+Hover, selection, alert, invalid, and other temporary states are part of the visual language. They should be distinguishable without destroying the base role of the affected object or masking nearby context.
 
-## Zoom is part of the design, not an afterthought
+State distinctions should use more than hue when meaning is critical. Shape, outline, pattern, weight, placement, and wording can create redundant cues and keep alerts distinct from selection.
 
-An electronic map is not a static poster. The representation may move through hidden, aggregate, simplified, full geometry, label, and editing-detail states as zoom changes. The contract describes these transitions explicitly.
+## Accessibility is a design constraint
 
-Style-level visibility is not the same as geometric generalization. Simplification, merging, displacement, and topology protection usually belong upstream in data or tile production. The format keeps that boundary honest.
+Accessibility belongs in the enduring design judgment, not as an afterthought. Explicit contrast pairs can establish deterministic minimums, while prose should cover color redundancy, small-size label legibility, density, and the treatment of critical states.
 
-## Selection must not rewrite truth
+Passing declared contrast checks is intentionally narrower than completing accessibility review. Real outputs still require evaluation in their actual context.
 
-Interaction is emphasis, not a new business classification. A selected faulty road segment remains faulty. A hovered maintenance asset remains under maintenance. Additive casing, stroke, halo, or controlled width changes are generally safer than replacing the subject color.
+## Preserve what the core does not understand
 
-The same principle applies to quality flags, validation errors, and permissions: independent meanings should not silently overwrite one another.
+The format is open to namespaced extensions and unknown content. Parsers and tools should preserve information they do not interpret. Known likely misspellings can receive warnings, but unfamiliar keys must not be silently discarded merely because the current core has no opinion about them.
 
-## Aesthetics are constrained relationships
+This preservation rule lets specialized communities extend the document without forcing every domain concern into the common schema.
 
-“Beautiful” is not a single score. Cartographic quality emerges from hierarchy, figure-ground separation, rhythm, density, balance, restraint, and task fit. These properties are affected by real data and real viewports.
+## Validate only deterministic internal facts
 
-The reference validator checks deterministic preconditions and declared evidence. It does not pretend that a syntax tree can fully judge a rendered map. Render fixtures and human review remain part of conformance.
+Core validation is intentionally document-scoped. It can check safe YAML, the front-matter schema, sections, references, known token types, omissions, and declared contrast relationships. It cannot infer the quality of prose, the truth of current data, task fitness, or the success of a produced artifact.
 
-## Provenance makes agent editing maintainable
-
-Generated and modified layers should say which semantic group, encoding, and token references produced them. Provenance enables small diffs, drift detection, ownership protection, and future agent revisions.
-
-The goal is not to make every layer verbose. The goal is to make important decisions recoverable.
-
-## Unknown content should survive
-
-Organizations will extend the format for industries, security regimes, renderers, and quality gates. Unknown namespaced keys and Markdown sections should be preserved. Tools should warn when they cannot evaluate an extension, but must not erase it.
-
-## Validation is layered
-
-The project separates:
-
-1. document validity;
-2. data-contract validity;
-3. official MapLibre style validity;
-4. cartography.md-to-style consistency;
-5. render evidence;
-6. task review.
-
-Passing an earlier layer never proves the later layers. A map can be syntactically valid and still be misleading, inaccessible, or visually incoherent.
-
-## The final principle
-
-A durable map style connects four things:
-
-- **tokens** provide exact values;
-- **data bindings** provide truth;
-- **prose** provides judgment;
-- **validation evidence** provides confidence.
-
-cartography.md keeps those four things in one agent-readable contract.
+That boundary keeps findings honest. Automation should be strict where facts are knowable and explicit about where professional review and runtime context begin.

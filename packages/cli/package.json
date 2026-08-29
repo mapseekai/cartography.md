@@ -1,12 +1,13 @@
 {
   "name": "@mapseekai/cartography.md",
   "version": "0.2.0",
-  "description": "Agent-first CLI and TypeScript API for validating CARTOGRAPHY.md and MapLibre styles.",
+  "description": "Agent-first format and validator for persistent cartographic design systems.",
   "keywords": [
     "cartography.md",
     "cartography",
-    "maplibre",
-    "map-style",
+    "cartographic-design",
+    "design-tokens",
+    "visual-identity",
     "design-system",
     "ai-agent",
     "linter"
@@ -67,7 +68,6 @@
     "schema:check": "tsx scripts/generate-schema.ts --check"
   },
   "dependencies": {
-    "@maplibre/maplibre-gl-style-spec": "^26.4.1",
     "citty": "^0.1.6",
     "colorjs.io": "^0.7.1",
     "yaml": "^2.7.1",

@@ -1,280 +1,143 @@
 # cartography.md
 
-A format specification for describing cartographic intent to coding agents.
+**A persistent cartographic visual identity for agents.**
 
-`CARTOGRAPHY.md` gives an agent a persistent, structured understanding of how an electronic map should communicate: its purpose, audience, data semantics, visual hierarchy, zoom behavior, labels, interaction states, accessibility constraints, and MapLibre implementation contract.
+`CARTOGRAPHY.md` is a portable, agent-readable design-system format for maps. It keeps the visual identity and long-lived cartographic judgment of a map family in one self-contained Markdown document, so agents can apply the same character across datasets, tasks, tools, and outputs.
 
-It follows the same core idea as [`DESIGN.md`](https://github.com/google-labs-code/design.md): machine-readable values in YAML front matter, human-readable rationale in Markdown, and deterministic tooling that agents can call from a CLI or TypeScript API.
+The core package parses, lints, compares, and explains that document. It validates only document structure and deterministic internal relationships. Current task inputs, data inspection, target-specific production, and output review happen outside core validation.
 
-> Status: draft `0.1.0`. The current reference implementation targets MapLibre Style Specification v8.
+中文版：[README.zh-CN.md](README.zh-CN.md) · [Specification](docs/spec.md) · [TypeScript API](docs/api.md) · [Philosophy](PHILOSOPHY.md)
 
-[中文说明](README.zh-CN.md) · [Format specification](docs/spec.md) · [API reference](docs/api.md) · [Example](examples/openfreemap-bright/CARTOGRAPHY.md)
+## Why it exists
 
-## Why
+Map-making decisions often disappear into a one-off implementation: which marks deserve attention, how hierarchy changes with scale, how labels feel, how interaction states preserve meaning, and what makes the result recognizably part of one family.
 
-A valid `style.json` can still be visually noisy, semantically misleading, inconsistent across zoom levels, inaccessible, or detached from the source data. MapLibre defines how a renderer draws layers; it does not capture why one feature must dominate another, which field owns a visual channel, or how an agent should preserve business meaning while editing the style.
+`CARTOGRAPHY.md` makes those decisions durable. Prose carries the professional judgment; tokens provide exact reusable values. An agent can understand both what the visual system is and why its constraints matter.
 
-cartography.md adds that upstream contract:
+## The two-layer format
 
-```text
-CARTOGRAPHY.md + DATA_PROFILE.json + existing style.json
-                         ↓
-                 coding / styling agent
-                         ↓
-              validated MapLibre style.json
-                         ↓
-              render fixtures and review evidence
-```
+Every document has two complementary layers:
 
-## The format
+1. YAML front matter holds identity, version, exact tokens, explicit contrast pairs, omissions, and extensions.
+2. Markdown sections describe intent, hierarchy, color, typography, symbols, scale behavior, composition, states, accessibility, review principles, and strong positive and negative examples.
 
-A `CARTOGRAPHY.md` file has two coordinated layers:
-
-1. **YAML front matter** — normative, machine-readable cartographic decisions.
-2. **Markdown body** — rationale, exceptions, priorities, and review guidance.
-
-```md
+```markdown
 ---
-version: "0.1.0"
-name: Road network operations map
-target:
-  renderer: maplibre
-  styleSpecVersion: 8
-  modes: [light, dark]
-intent:
-  mapType: operational
-  primaryTask: locate abnormal road segments
-  audience: [map-user]
-data:
-  profile: ./DATA_PROFILE.json
-  profileRequired: true
-  bindings:
-    status: operating_status
-    importance: traffic_level
-zoom:
-  bands:
-    city: [8, 12]
-    street: [12, 16]
-    site: [16, 24]
+version: "0.2.0"
+name: Quiet Atlas
+description: "A restrained editorial atlas family for clear orientation and unhurried reading."
 tokens:
   colors:
-    normal: "#2F7D5B"
-    danger: "#C63D45"
-    unknown: "#7F8A99"
-scales:
-  status:
-    type: nominal
-    field: "{data.bindings.status}"
-    values:
-      active: "{tokens.colors.normal}"
-      fault: "{tokens.colors.danger}"
-    fallback: "{tokens.colors.unknown}"
-encodings:
-  road-segments:
-    source: road-network
-    geometry: line
-    role: primary
-    layerGroup: subject-line
-    rules:
-      - id: status-color
-        field: "{data.bindings.status}"
-        channel: line-color
-        scale: status
-        critical: true
-        secondaryChannel: line-width
-layerOrder:
-  - id: background
-    order: 0
-  - id: subject-line
-    order: 50
+    paper: "#f8f4f0"
+    water: "#aecfe2"
+    ink: "#000000"
+accessibility:
+  contrastPairs:
+    - id: ink-on-paper
+      foreground: "{tokens.colors.ink}"
+      background: "{tokens.colors.paper}"
+      minimum: 4.5
+      kind: text
 ---
 
 ## Overview
 
-A calm operational map in which disrupted road segments dominate neutral context.
+Quiet Atlas is a restrained editorial map family: warm paper, pale blue water,
+and near-black ink make the page feel calmly printed rather than brightly lit.
+
+## Visual Hierarchy
+
+Paper is the quiet ground. Water establishes context; inked names and the
+reader's active focus carry the strongest attention.
 ```
 
-The complete normative definition is in [`docs/spec.md`](docs/spec.md).
+YAML token values are normative when an exact value is needed. Prose explains their roles, boundaries, tradeoffs, and exceptions. Token references such as `{tokens.colors.ink}` can be used in either layer.
 
-## Getting started
+## Quick start
 
-Install the package:
+Requirements: Node.js 20 or newer.
 
 ```bash
-pnpm add -D @mapseekai/cartography.md
+pnpm dlx --package=@mapseekai/cartography.md cartographymd lint CARTOGRAPHY.md
 ```
 
-Validate a contract, its data profile, and its MapLibre style:
+Use strict mode when warnings must block success:
 
 ```bash
-pnpm dlx --package=@mapseekai/cartography.md cartographymd lint \
-  CARTOGRAPHY.md \
-  --profile DATA_PROFILE.json \
-  --style style.json
+pnpm dlx --package=@mapseekai/cartography.md cartographymd lint CARTOGRAPHY.md --strict
 ```
 
-Output defaults to structured JSON so agents and CI systems can consume it. Use `--format text` for a readable terminal report.
+Compare two design-system documents:
 
 ```bash
-pnpm dlx --package=@mapseekai/cartography.md cartographymd lint \
-  CARTOGRAPHY.md \
-  --profile DATA_PROFILE.json \
-  --style style.json \
-  --format text
+pnpm dlx --package=@mapseekai/cartography.md cartographymd diff before.md after.md
 ```
 
-The dot-free `cartographymd` binary is the cross-platform alias. The package also exposes `cartography.md`; on Windows, the `.md` suffix may collide with Markdown file associations, so `cartographymd` is recommended.
-
-## Validation model
-
-The reference validator separates four different questions:
-
-| Layer | What it checks |
-|---|---|
-| Document | front matter, deterministic YAML profile, schema, sections, token references |
-| Data contract | source/source-layer, geometry, fields, categories, units, zoom availability, stable IDs |
-| MapLibre style | official Style Specification validation and portable resource checks |
-| Cartographic contract | layer provenance, semantic source rules, token drift, layer order, feature-state constraints |
-
-Render fixtures remain a declared evidence requirement rather than a fake automatic “beauty score.” The validator checks that representative scenarios are specified; a consuming project is responsible for rendering and reviewing them.
-
-## CLI
-
-```text
-cartographymd lint  <file> [--profile file] [--style file] [--strict]
-cartographymd parse <file>
-cartographymd diff  <before> <after>
-cartographymd rules
-cartographymd spec  [--output file]
-```
-
-### `lint`
-
-Validates the contract and optional companion artifacts. Exit code `0` means the selected strictness passed, `1` means validation completed with blocking findings, and `2` means input or execution failed.
+Read the bundled normative specification:
 
 ```bash
-cartographymd lint CARTOGRAPHY.md --format json
-cartographymd lint CARTOGRAPHY.md --strict --format text
-cat CARTOGRAPHY.md | cartographymd lint - --profile DATA_PROFILE.json
+pnpm dlx --package=@mapseekai/cartography.md cartographymd spec
 ```
 
-When `lintFile()` or the file-based CLI is used, the validator can resolve `data.profile` relative to `CARTOGRAPHY.md`.
+The CLI also provides `parse` for structured document output and `rules` for the built-in rule catalog. Exit code `0` means the document passed, `1` means blocking findings exist, and `2` means usage, file access, or an internal operation failed.
 
-### `parse`
+## Quiet Atlas example
 
-Parses front matter and canonical Markdown sections without semantic validation.
+[`examples/quiet-atlas/CARTOGRAPHY.md`](examples/quiet-atlas/CARTOGRAPHY.md) is a complete, independently lintable example. Its warm paper, pale water, economical ink, measured typography, and restrained emphasis form a specific visual family without binding the document to current data or a production target.
 
-```bash
-cartographymd parse CARTOGRAPHY.md
-```
-
-### `diff`
-
-Compares contract leaf values and Markdown section bodies. It reports added, removed, and modified paths and marks increases in blocking errors or warnings as a regression.
+From this repository:
 
 ```bash
-cartographymd diff CARTOGRAPHY.md CARTOGRAPHY.next.md
-```
-
-### `rules` and `spec`
-
-```bash
-cartographymd rules
-cartographymd spec --output CARTOGRAPHY-SPEC.md
+pnpm install
+pnpm lint:example
 ```
 
 ## TypeScript API
 
 ```ts
-import {lintFile} from '@mapseekai/cartography.md';
+import {diffCartography, lintFile} from '@mapseekai/cartography.md';
 
-const report = await lintFile('CARTOGRAPHY.md', {
-  dataProfilePath: 'DATA_PROFILE.json',
-  stylePath: 'style.json',
-  strict: true,
-});
+const report = await lintFile('CARTOGRAPHY.md', {strict: true});
 
 if (!report.valid) {
-  console.error(report.findings);
-  process.exitCode = 1;
+  for (const finding of report.findings) {
+    console.error(finding.ruleId, finding.message);
+  }
 }
+
+const changes = diffCartography(previousSource, currentSource);
+console.log(changes.values, changes.sections);
 ```
 
-The package also exports the parser, Zod schemas, default rules, style-contract validator, diff utility, rule catalog, and bundled specification. See [`docs/api.md`](docs/api.md).
+The public API includes parsing, the runtime schema, document linting, reference resolution, semantic diffing, the specification, and the rule catalog. See [docs/api.md](docs/api.md) for exact signatures and exported types.
 
-## Repository structure
+## What core validation guarantees
+
+Core linting checks deterministic properties of one `CARTOGRAPHY.md`, including:
+
+- safe and unambiguous YAML;
+- the `0.2.0` front-matter schema;
+- canonical section presence, order, omissions, and duplicates;
+- known token types and token-reference integrity;
+- declared color contrast relationships;
+- document size and unknown or likely misspelled root keys.
+
+A passing report means only that the document and its internal relationships are valid. It does not establish that current data is correct, that an output satisfies the user's task, that a target-specific artifact is valid, or that visual and accessibility review is complete.
+
+## Repository map
 
 ```text
-cartography.md/
-├── docs/
-│   ├── spec.md                    # normative format specification
-│   ├── spec.zh-CN.md              # Chinese translation of the specification
-│   ├── api.md                     # CLI/API integration reference
-│   └── api.zh-CN.md               # Chinese translation of the API reference
-├── examples/
-│   └── openfreemap-bright/
-│       ├── CARTOGRAPHY.md         # contract adopting the public bright style
-│       ├── DATA_PROFILE.json      # OpenMapTiles source and field facts
-│       ├── style.json             # bright style plus governance metadata
-│       └── README.md
-├── packages/
-│   └── cli/
-│       ├── src/                   # parser, schemas, rules, CLI, public API
-│       └── package.json           # @mapseekai/cartography.md
-├── schema/
-│   ├── cartography.schema.json
-│   └── data-profile.schema.json
-├── .agents/skills/cartography-md/SKILL.md
-├── PHILOSOPHY.md
-└── README.md
+docs/spec.md                 normative format specification
+docs/api.md                  TypeScript API reference
+schema/cartography.schema.json
+                             generated editor and tooling schema
+packages/cli                 CLI and TypeScript package
+examples/quiet-atlas         self-contained design-system example
+.agents/skills               optional agent workflows
 ```
 
-## Example
+## Status and license
 
-The openfreemap-bright example adopts a real production style and adds a governing contract on top:
+Version `0.2.0` is the first public format line. The earlier `0.1` draft was never released and has no compatibility layer.
 
-- water, waterways, and buildings → fills lifted verbatim into tokens;
-- road class → nominal scale over the transportation `class` field;
-- city labels → maximum-contrast text with a white halo;
-- five representative layers carry `cartography:*` governance metadata, demonstrating the style-adoption workflow.
-
-Run it from the repository root:
-
-```bash
-pnpm install
-pnpm lint:example
-```
-
-## Development
-
-Requirements: Node.js 20 or newer.
-
-```bash
-pnpm install
-pnpm check
-pnpm lint:example
-pnpm build
-```
-
-`pnpm check` runs TypeScript validation, tests, and a production build. CI tests Node.js 20 and 22 with pnpm.
-
-## Conformance
-
-The draft defines separate conformance classes for parsers, document validators, data-contract validators, MapLibre-contract validators, render workflows, and agents. The included package implements the parser, document validator, data-contract validator, and MapLibre-contract validator classes. It declares render fixtures but does not render screenshots itself.
-
-## Project principles
-
-- Data meaning precedes decoration.
-- Visual hierarchy is explicit and zoom-aware.
-- One visual channel has one primary semantic owner.
-- Critical meanings use redundant signals where required.
-- Selection augments rather than destroys business status.
-- Unknown and null values are never silently treated as normal.
-- Style syntax validation is necessary but not sufficient.
-- Agents make the smallest coherent change and preserve provenance.
-
-See [`PHILOSOPHY.md`](PHILOSOPHY.md) (中文版：[`PHILOSOPHY.zh-CN.md`](PHILOSOPHY.zh-CN.md)) for the design rationale.
-
-## License
-
-Apache-2.0. See [`LICENSE`](LICENSE).
+Apache-2.0. See [LICENSE](LICENSE).

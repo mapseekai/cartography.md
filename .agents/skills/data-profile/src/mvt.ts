@@ -146,6 +146,15 @@ function validatePackedVarints(bytes: Uint8Array): void {
   while (offset < bytes.length) offset = readVarintEnd(bytes, offset);
 }
 
+function requireWireType(actual: number, expected: number): void {
+  if (actual !== expected) invalidPbf();
+}
+
+function requirePayload(payload: Uint8Array | undefined): Uint8Array {
+  if (!payload) invalidPbf();
+  return payload;
+}
+
 function validateMessage(
   bytes: Uint8Array,
   validateField: (field: number, wireType: number, payload: Uint8Array | undefined) => void,
@@ -184,19 +193,52 @@ function validateMessage(
 
 function validateFeature(bytes: Uint8Array): void {
   validateMessage(bytes, (field, wireType, payload) => {
-    if ((field === 2 || field === 4) && wireType === 2 && payload) validatePackedVarints(payload);
+    if (field === 1 || field === 3) {
+      requireWireType(wireType, 0);
+      return;
+    }
+    if (field === 2 || field === 4) {
+      requireWireType(wireType, 2);
+      validatePackedVarints(requirePayload(payload));
+    }
+  });
+}
+
+function validateValue(bytes: Uint8Array): void {
+  validateMessage(bytes, (field, wireType) => {
+    if (field === 1) requireWireType(wireType, 2);
+    else if (field === 2) requireWireType(wireType, 5);
+    else if (field === 3) requireWireType(wireType, 1);
+    else if (field >= 4 && field <= 7) requireWireType(wireType, 0);
   });
 }
 
 function validateLayer(bytes: Uint8Array): void {
   validateMessage(bytes, (field, wireType, payload) => {
-    if (field === 2 && wireType === 2 && payload) validateFeature(payload);
+    if (field === 1 || field === 3) {
+      requireWireType(wireType, 2);
+      return;
+    }
+    if (field === 2) {
+      requireWireType(wireType, 2);
+      validateFeature(requirePayload(payload));
+      return;
+    }
+    if (field === 4) {
+      requireWireType(wireType, 2);
+      validateValue(requirePayload(payload));
+      return;
+    }
+    if (field === 5 || field === 15) requireWireType(wireType, 0);
   });
 }
 
 function validateTile(bytes: Uint8Array): void {
   validateMessage(bytes, (field, wireType, payload) => {
-    if (field === 3 && wireType === 2 && payload) validateLayer(payload);
+    if (field === 3) {
+      requireWireType(wireType, 2);
+      validateLayer(requirePayload(payload));
+    }
   });
 }
 
@@ -239,7 +281,7 @@ export function decodeMvt(bytes: Uint8Array, evidence: Evidence): TileObservatio
       }
 
       layers[layerName] = {
-        geometries,
+        geometries: geometries.sort(),
         featureCount: layer.length,
         stableIdObserved,
         fields,

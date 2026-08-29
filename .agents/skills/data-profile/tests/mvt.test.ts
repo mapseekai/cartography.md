@@ -129,6 +129,27 @@ describe('decodeMvt', () => {
     });
   });
 
+  it('deduplicates and orders line and polygon geometries within one layer', () => {
+    const buffer = makeTile([
+      {
+        version: 2,
+        name: 'mixed-geometry',
+        keys: [],
+        values: [],
+        extent: 4096,
+        features: [
+          {type: 3, geometry: [9, 0, 0, 10, 2, 0, 15]},
+          {type: 2, geometry: [9, 0, 0, 10, 2, 0]},
+          {type: 2, geometry: [9, 2, 0, 10, 2, 0]},
+        ],
+      },
+    ]);
+
+    const layer = decodeMvt(buffer, evidence).layers['mixed-geometry'];
+    expect(layer.featureCount).toBe(3);
+    expect(layer.geometries).toEqual(['line', 'polygon']);
+  });
+
   it('retains mixed MVT scalar types rather than coercing them', () => {
     const buffer = makeTile([
       {
@@ -204,6 +225,27 @@ describe('decodeMvt', () => {
     expect(() => decodeMvt(new Uint8Array([0x1a, 0x03, 0x0a, 0x0a]), evidence)).toThrow(
       TileDecodeError,
     );
+  });
+
+  it('rejects a value string that crosses its own PBF message boundary', () => {
+    const corruptValueTile = new Uint8Array([
+      0x1a,
+      0x0c,
+      0x78,
+      0x02,
+      0x0a,
+      0x01,
+      0x76,
+      0x22,
+      0x02,
+      0x0a,
+      0x05,
+      0x28,
+      0x80,
+      0x20,
+    ]);
+
+    expect(() => decodeMvt(corruptValueTile, evidence)).toThrow(TileDecodeError);
   });
 
   it('uses typed decode errors for corrupt gzip bytes', () => {

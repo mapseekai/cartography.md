@@ -17,5 +17,8 @@ export const RULE_CATALOG: RuleDescriptor[] = [
   {id: 'section-order', severity: 'warning', scope: 'document', description: 'Checks the canonical order of Markdown sections.'},
   {id: 'unknown-root-key', severity: 'warning', scope: 'document', description: 'Preserves extensions while flagging likely misspellings.'},
   {id: 'token-reference', severity: 'error', scope: 'document', description: 'Checks exact `{path.to.token}` references and cycles.'},
+  {id: 'color-token', severity: 'error', scope: 'document', description: 'Validates color tokens as generic CSS colors.'},
+  {id: 'contrast-pairs', severity: 'error', scope: 'document', description: 'Checks declared color pairs against their WCAG 2.1 contrast minimum.'},
+  {id: 'contract-summary', severity: 'info', scope: 'document', description: 'Summarizes loaded token leaves, token groups, and prose sections.'},
   {id: 'rule-execution', severity: 'error', scope: 'document', description: 'Contains unexpected validator-rule failures.'},
 ];

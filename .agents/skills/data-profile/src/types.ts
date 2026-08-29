@@ -40,6 +40,10 @@ export interface LayerFact {
 export interface SourceFact {
   type: string;
   tileTemplates: string[];
+  bounds?: [number, number, number, number];
+  center?: [number, number, number];
+  minzoom?: number;
+  maxzoom?: number;
   layers: Record<string, LayerFact>;
   evidence: Evidence[];
 }

@@ -8,6 +8,28 @@ importers:
 
   .: {}
 
+  .agents/skills/data-profile:
+    dependencies:
+      '@mapbox/vector-tile':
+        specifier: ^3.0.0
+        version: 3.0.0
+      pbf:
+        specifier: ^5.1.2
+        version: 5.1.2
+    devDependencies:
+      '@mapbox/mvt-fixtures':
+        specifier: ^4.0.0
+        version: 4.0.0
+      tsx:
+        specifier: ^4.19.0
+        version: 4.23.12
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.11(@types/node@22.20.1)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(tsx@4.23.12)(yaml@2.9.0))
+
   packages/cli:
     dependencies:
       citty:
@@ -200,6 +222,18 @@ packages:
   '@jridgewell/sourcemap-codec@1.6.0':
     resolution: {integrity: sha512-T7jf+5zgsZHwNJ4lvQ7/aezbyk0nNX+zJVWpmHA7VYsEx7a7qr5Rg5IbtJFqkgze5Y2sruq1RUY8Q837Od7iFw==}
 
+  '@mapbox/mvt-fixtures@4.0.0':
+    resolution: {integrity: sha512-FWvskVvn8/lmKvpvYbOEEd6VSrsuxM4VQTxNzWvDpNNGkGGt1DfHc1I60YpDM/7zhljhcSDKh42qHolEWohErA==}
+
+  '@mapbox/point-geometry@1.1.0':
+    resolution: {integrity: sha512-YGcBz1cg4ATXDCM/71L9xveh4dynfGmcLDqufR+nQQy3fKwsAZsWd/x4621/6uJaeB9mwOHE6hPeDgXz9uViUQ==}
+
+  '@mapbox/sphericalmercator@2.0.2':
+    resolution: {integrity: sha512-Ai/S9qXupBzFCM0i4sYDIx1A0pDYMaD3xlhVg05JToYeyORq8aAuHbd6CCPC86HlLSjYmoPeljJ5tMVKtzd4Lg==}
+
+  '@mapbox/vector-tile@3.0.0':
+    resolution: {integrity: sha512-Qf10S1uIHMk20ri/IVBnpS+esUEkVaR5Hftmz88jTInrpmWgPGJfPe3LVjjlE77trLx8tH6qjTG7uWH9hIq/0Q==}
+
   '@oxc-project/types@0.147.0':
     resolution: {integrity: sha512-IJ3s6ltHLp45S0bh7phkX+gJO7A1Wuz2EaqpAhb8WjqDwbzMiWKHhyyT42tskaWjEYXtHtVCPpnBJVT9+dcRLg==}
 
@@ -313,6 +347,9 @@ packages:
 
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
+
+  '@types/geojson@7946.0.16':
+    resolution: {integrity: sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg==}
 
   '@types/node@22.20.1':
     resolution: {integrity: sha512-EANqOCF9QFyra+4pfxUcX9STKJpCLjMbObVzljIJomAWSnuSIEAvyzEU53GaajbXJEgdh0iEcPL+DGvpUd4k1Q==}
@@ -501,6 +538,10 @@ packages:
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
 
+  pbf@5.1.2:
+    resolution: {integrity: sha512-mnvGdvOrIvJOBGUEdGkrVXjN8E/VkIJCkf2eS1DH2yv82ORUlLttmDt0rWY38yYZmVwciZwBUvHM20qxBZf40w==}
+    hasBin: true
+
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
@@ -512,9 +553,15 @@ packages:
     resolution: {integrity: sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ==}
     engines: {node: ^10 || ^12 || >=14}
 
+  protocol-buffers-schema@3.6.1:
+    resolution: {integrity: sha512-VG2K63Igkiv9p76tk1lilczEK1cT+kCjKtkdhw1dQZV3k3IXJbd3o6Ho8b9zJZaHSnT2hKe4I+ObmX9w6m5SmQ==}
+
   require-from-string@2.0.2:
     resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
     engines: {node: '>=0.10.0'}
+
+  resolve-protobuf-schema@2.1.0:
+    resolution: {integrity: sha512-kI5ffTiZWmJaS/huM8wZfEMer1eRd7oJQhDuxeCLe3t7N7mX3z94CN0xPxBQxFYQTSNz9T0i+v6inKqSdK8xrQ==}
 
   rolldown@1.2.6:
     resolution: {integrity: sha512-vMM4q3aixf46GiF1Kok8jDPFsEpXgFWGjUHXNkNHNm+Y2adXAG2dbX91jkti3i0ZRsOlcmbuzAz1poObSHCmUA==}
@@ -741,6 +788,23 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.6.0': {}
 
+  '@mapbox/mvt-fixtures@4.0.0':
+    dependencies:
+      '@mapbox/sphericalmercator': 2.0.2
+      '@mapbox/vector-tile': 3.0.0
+      pbf: 5.1.2
+      protocol-buffers-schema: 3.6.1
+
+  '@mapbox/point-geometry@1.1.0': {}
+
+  '@mapbox/sphericalmercator@2.0.2': {}
+
+  '@mapbox/vector-tile@3.0.0':
+    dependencies:
+      '@mapbox/point-geometry': 1.1.0
+      '@types/geojson': 7946.0.16
+      pbf: 5.1.2
+
   '@oxc-project/types@0.147.0': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.6':
@@ -800,6 +864,8 @@ snapshots:
   '@types/deep-eql@4.0.2': {}
 
   '@types/estree@1.0.9': {}
+
+  '@types/geojson@7946.0.16': {}
 
   '@types/node@22.20.1':
     dependencies:
@@ -978,6 +1044,10 @@ snapshots:
 
   pathe@2.0.3: {}
 
+  pbf@5.1.2:
+    dependencies:
+      resolve-protobuf-schema: 2.1.0
+
   picocolors@1.1.1: {}
 
   picomatch@4.0.7: {}
@@ -988,7 +1058,13 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
+  protocol-buffers-schema@3.6.1: {}
+
   require-from-string@2.0.2: {}
+
+  resolve-protobuf-schema@2.1.0:
+    dependencies:
+      protocol-buffers-schema: 3.6.1
 
   rolldown@1.2.6:
     dependencies:

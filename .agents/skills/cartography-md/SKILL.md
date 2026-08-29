@@ -1,37 +1,29 @@
 ---
 name: cartography-md
-description: Read and apply CARTOGRAPHY.md contracts when generating, modifying, or reviewing MapLibre styles.
+description: Use when applying a CARTOGRAPHY.md design system to cartographic work across datasets, tasks, or renderers.
 ---
 
 # cartography.md agent skill
 
-Use this skill when a repository contains `CARTOGRAPHY.md` or the user asks for an agent-governed MapLibre style.
+Use this skill when a repository contains `CARTOGRAPHY.md` or when work should follow a reusable cartographic design system.
 
 ## Required workflow
 
-1. Read the full `CARTOGRAPHY.md`, including YAML and Markdown.
-2. Load `DATA_PROFILE.json` when `data.profileRequired` is true.
-3. Identify the primary task, audience, map type, supported modes, and visual focus.
-4. Resolve exact `{path.to.token}` references before writing `style.json` values.
-5. Verify source names, source layers, geometry types, fields, categories, units, zoom availability, and stable IDs from the data profile.
-6. Preserve protected or human-owned layers and make the smallest coherent change.
-7. Keep one primary semantic owner per visual channel unless a deliberate composite is declared.
-8. Preserve business status when adding hover, selection, alert, invalid, or quality states.
-9. Add `cartography:*` provenance metadata to governed MapLibre layers.
-10. Run the cartography.md validator and official MapLibre style validation.
-11. Review all declared render fixtures before claiming visual completion.
+1. Locate and read the complete `CARTOGRAPHY.md`, including YAML front matter and every Markdown section.
+2. Run `cartographymd lint CARTOGRAPHY.md` and resolve blocking document findings before applying the system.
+3. Identify the stable visual identity, token vocabulary, hierarchy, scale behavior, interaction states, accessibility rules, and Do's and Don'ts.
+4. Read the user's current task and any available runtime data context without writing those facts back into `CARTOGRAPHY.md`.
+5. Resolve every `{tokens.*}` reference to its declared value before applying that value.
+6. Preserve the underlying semantic meaning when adding selection, hover, alert, invalid, or quality emphasis.
+7. Use target-specific tools only outside the core contract, and verify their outputs with the tools appropriate to that target.
+8. Report unresolved runtime facts separately from `CARTOGRAPHY.md` lint findings.
 
-## Never assume
+## Boundaries
 
-Do not invent field names, source layers, units, category ordering, missing-value meaning, or risk severity. Do not treat `style.json` syntax validity as evidence that the map is visually or semantically correct.
+`CARTOGRAPHY.md` holds stable visual guidance. Do not alter it to record a one-off task, observed data fields, runtime assumptions, or target-specific details.
 
-## Commands
+Document lint checks only the document's structure and deterministic internal relationships. A passing lint result is not validation of runtime data, a target format, rendered output, or task suitability. Verify those concerns separately in the environment that owns them.
 
-```bash
-cartographymd lint CARTOGRAPHY.md --profile DATA_PROFILE.json --style style.json
-cartographymd diff CARTOGRAPHY.md CARTOGRAPHY.next.md
-cartographymd rules
-cartographymd spec
-```
+## Runtime facts
 
-Use `--strict` in CI when warnings are intended to block changes.
+Do not invent unavailable runtime facts. State what is known, what remains unresolved, and what information or target-specific verification would resolve it. Keep these runtime observations separate from the reusable design system.

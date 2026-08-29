@@ -34,9 +34,12 @@ productFiles.push(
 productFiles.push(...walk(join(repositoryRoot, 'packages/cli/src')));
 productFiles.push(...walk(join(repositoryRoot, 'schema')));
 productFiles.push(...walk(join(repositoryRoot, 'examples')));
+productFiles.push(
+  join(repositoryRoot, '.agents/skills/cartography-md/SKILL.md'),
+);
 
 // Internal design/planning docs and the data-profile Skill are deliberately outside this
-// product surface. Task 10 rewrites the universal Skill and will add it to this scan.
+// product surface.
 const boundaryTestPath = fileURLToPath(import.meta.url);
 const scannedProductFiles = productFiles.filter((path) => path !== boundaryTestPath);
 const forbidden = [new RegExp(['map', 'libre'].join(''), 'i'), /source-layer/i, /style\.json/i];

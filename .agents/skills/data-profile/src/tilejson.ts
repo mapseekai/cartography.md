@@ -15,6 +15,10 @@ interface SanitizedTemplate {
   explicitLocalTemplate: boolean;
 }
 
+function record<T>(): Record<string, T> {
+  return Object.create(null) as Record<string, T>;
+}
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   if (value === null || typeof value !== 'object') {
     return false;
@@ -112,14 +116,14 @@ function sanitizeTemplate(value: string): SanitizedTemplate {
 }
 
 function sourceFact(type: string, input: string): SourceFact {
-  return {type, tileTemplates: [], layers: {}, evidence: [evidence(input, '#')]};
+  return {type, tileTemplates: [], layers: record<LayerFact>(), evidence: [evidence(input, '#')]};
 }
 
 function layerFact(input: string, location: string): LayerFact {
   return {
     geometries: ['unknown'],
     stableIdObserved: false,
-    fields: {},
+    fields: record<FieldFact>(),
     evidence: [evidence(input, location)],
   };
 }
@@ -153,11 +157,25 @@ function fieldFact(input: string, location: string, type: FieldType): FieldFact 
  * not fetch tiles and never represents declarations as observed tile values.
  */
 export function discoverTileJson(tileJson: unknown, sourceId: string, input: string): ProfileFragment {
-  const fragment: ProfileFragment = {inputs: [input], sources: {}, unresolved: []};
+  const sanitizedInput = sanitizeTemplate(input);
+  const fragment: ProfileFragment = {
+    inputs: [sanitizedInput.value],
+    sources: record<SourceFact>(),
+    unresolved: [],
+  };
+  if (sanitizedInput.credentialRedacted) {
+    addUnresolved(
+      fragment.unresolved,
+      sanitizedInput.value,
+      'credential-redacted',
+      '#',
+      'Credentials or sensitive URL data was redacted before this input was retained.',
+    );
+  }
   if (!isPlainObject(tileJson)) {
     addUnresolved(
       fragment.unresolved,
-      input,
+      sanitizedInput.value,
       'tilejson-not-plain-object',
       '#',
       'The TileJSON document is not a plain object and cannot be inspected.',
@@ -167,7 +185,7 @@ export function discoverTileJson(tileJson: unknown, sourceId: string, input: str
 
   const vectorLayers = tileJson.vector_layers;
   const hasVectorLayers = Array.isArray(vectorLayers);
-  const source = sourceFact(hasVectorLayers ? 'vector' : 'unknown', input);
+  const source = sourceFact(hasVectorLayers ? 'vector' : 'unknown', sanitizedInput.value);
   fragment.sources[sourceId] = source;
 
   const bounds = declaredTuple<number>(tileJson.bounds, 4);
@@ -186,7 +204,7 @@ export function discoverTileJson(tileJson: unknown, sourceId: string, input: str
       if (sanitized.credentialRedacted) {
         addUnresolved(
           fragment.unresolved,
-          input,
+          sanitizedInput.value,
           'credential-redacted',
           location,
           'Credentials or sensitive URL data was redacted before this tile template was retained.',
@@ -195,7 +213,7 @@ export function discoverTileJson(tileJson: unknown, sourceId: string, input: str
       if (!sanitized.validHttpUrl && !sanitized.explicitLocalTemplate) {
         addUnresolved(
           fragment.unresolved,
-          input,
+          sanitizedInput.value,
           'tile-template-not-inspectable',
           location,
           'The tile template is neither HTTP(S) nor an explicit local path and cannot be inspected.',
@@ -210,7 +228,7 @@ export function discoverTileJson(tileJson: unknown, sourceId: string, input: str
     if (!isPlainObject(vectorLayer) || typeof vectorLayer.id !== 'string' || vectorLayer.id.length === 0) {
       addUnresolved(
         fragment.unresolved,
-        input,
+        sanitizedInput.value,
         'tilejson-vector-layer-invalid',
         location,
         'A TileJSON vector layer needs a non-empty string id to be profiled.',
@@ -218,7 +236,7 @@ export function discoverTileJson(tileJson: unknown, sourceId: string, input: str
       continue;
     }
 
-    const layer = layerFact(input, location);
+    const layer = layerFact(sanitizedInput.value, location);
     source.layers[vectorLayer.id] = layer;
     if (isFiniteNumber(vectorLayer.minzoom)) layer.minzoom = vectorLayer.minzoom;
     if (isFiniteNumber(vectorLayer.maxzoom)) layer.maxzoom = vectorLayer.maxzoom;
@@ -227,11 +245,11 @@ export function discoverTileJson(tileJson: unknown, sourceId: string, input: str
     for (const [fieldName, declaration] of Object.entries(vectorLayer.fields)) {
       const fieldLocation = `${location}/fields/${fieldName}`;
       const type = normalizeFieldType(declaration) ?? 'unknown';
-      layer.fields[fieldName] = fieldFact(input, fieldLocation, type);
+      layer.fields[fieldName] = fieldFact(sanitizedInput.value, fieldLocation, type);
       if (type === 'unknown') {
         addUnresolved(
           fragment.unresolved,
-          input,
+          sanitizedInput.value,
           'tilejson-field-type-unknown',
           fieldLocation,
           'A TileJSON field type declaration is not recognized by the profile model.',

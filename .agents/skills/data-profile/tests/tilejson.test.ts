@@ -1,5 +1,6 @@
 import {describe, expect, it} from 'vitest';
 
+import {stableJson} from '../src/stable-json.js';
 import {discoverTileJson} from '../src/tilejson.js';
 
 describe('discoverTileJson', () => {
@@ -82,5 +83,49 @@ describe('discoverTileJson', () => {
     expect(JSON.stringify(fragment)).not.toContain('top-secret');
     expect(JSON.stringify(fragment)).not.toContain('token');
     expect(JSON.stringify(fragment)).not.toContain('private');
+  });
+
+  it('redacts credentials in the input before it reaches facts or evidence', () => {
+    const fragment = discoverTileJson(
+      {vector_layers: [{id: 'places', fields: {name: 'String'}}]},
+      'places',
+      'https://user:password@tiles.example/metadata.json?token=top-secret&client_secret=hidden#private',
+    );
+    const serialized = stableJson(fragment);
+
+    expect(fragment.inputs).toEqual(['https://tiles.example/metadata.json']);
+    expect(fragment.unresolved.map((item) => item.code)).toContain('credential-redacted');
+    expect(serialized).not.toContain('user');
+    expect(serialized).not.toContain('password');
+    expect(serialized).not.toContain('token');
+    expect(serialized).not.toContain('top-secret');
+    expect(serialized).not.toContain('client_secret');
+    expect(serialized).not.toContain('hidden');
+    expect(serialized).not.toContain('private');
+  });
+
+  it('retains prototype-like source, layer, and field IDs as own enumerable facts', () => {
+    const fragment = discoverTileJson(
+      {
+        vector_layers: [
+          {
+            id: '__proto__',
+            fields: JSON.parse('{"__proto__":"String","constructor":"Number","toString":"JSON"}'),
+          },
+        ],
+      },
+      '__proto__',
+      'tilejson.json',
+    );
+
+    expect(Object.getPrototypeOf(fragment.sources)).toBeNull();
+    expect(Object.prototype.propertyIsEnumerable.call(fragment.sources, '__proto__')).toBe(true);
+    const source = fragment.sources.__proto__!;
+    expect(Object.getPrototypeOf(source.layers)).toBeNull();
+    expect(Object.prototype.propertyIsEnumerable.call(source.layers, '__proto__')).toBe(true);
+    const layer = source.layers.__proto__!;
+    expect(Object.getPrototypeOf(layer.fields)).toBeNull();
+    expect(Object.keys(layer.fields)).toEqual(['__proto__', 'constructor', 'toString']);
+    expect(stableJson(fragment)).toContain('"__proto__"');
   });
 });

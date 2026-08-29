@@ -11,7 +11,9 @@
   "scripts": {
     "build": "pnpm --filter @mapseekai/cartography.md run build",
     "test": "pnpm --filter @mapseekai/cartography.md run test",
+    "test:data-profile": "pnpm --filter @cartographymd/data-profile-skill test",
     "typecheck": "pnpm --filter @mapseekai/cartography.md run typecheck",
+    "typecheck:data-profile": "pnpm --filter @cartographymd/data-profile-skill typecheck",
     "check": "pnpm run schema:check && pnpm run typecheck && pnpm run test && pnpm run build && pnpm --filter @mapseekai/cartography.md run check-package",
     "schema:generate": "pnpm --filter @mapseekai/cartography.md run schema:generate",
     "schema:check": "pnpm --filter @mapseekai/cartography.md run schema:check",

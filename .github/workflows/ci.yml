@@ -25,3 +25,7 @@ jobs:
       - run: pnpm build
       - run: pnpm --filter @mapseekai/cartography.md check-package
       - run: pnpm lint:example
+      - name: Typecheck data-profile Skill
+        run: pnpm typecheck:data-profile
+      - name: Test data-profile Skill
+        run: pnpm test:data-profile

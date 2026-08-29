@@ -1,4 +1,4 @@
-import {readFile} from 'node:fs/promises';
+import {access, readFile} from 'node:fs/promises';
 
 import {describe, expect, it} from 'vitest';
 
@@ -7,12 +7,13 @@ const packageJson = JSON.parse(
 ) as {scripts?: Record<string, string>};
 
 describe('data-profile package boundary', () => {
-  it('exposes only runnable current scripts', () => {
+  it('exposes the real profile entrypoint atomically with its package script', async () => {
     expect(packageJson.scripts).toMatchObject({
       test: 'vitest run',
       typecheck: 'tsc --noEmit -p tsconfig.json',
+      profile: 'tsx scripts/generate-profile.ts',
     });
-    expect(packageJson.scripts).not.toHaveProperty('profile');
     expect(Object.values(packageJson.scripts ?? {})).not.toContain('tsx src/profile.ts');
+    await expect(access(new URL('../scripts/generate-profile.ts', import.meta.url))).resolves.toBeUndefined();
   });
 });

@@ -22,7 +22,7 @@ const main = defineCommand({
   },
 });
 
-const knownLintFlags = new Set(['--format', '--strict', '--no-strict', '--help', '-h']);
+const knownLintFlags = new Set(['--format', '--strict', '--help', '-h']);
 
 function findUnknownLintFlag(rawArgs: string[]): string | undefined {
   if (rawArgs[0] !== 'lint') {

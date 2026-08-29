@@ -36,6 +36,16 @@ describe('lint CLI', () => {
     expect(result.stdout).not.toContain('"valid"');
     expect(result.stderr).not.toContain('"valid"');
   });
+
+  it('rejects --no-strict before reading the document', () => {
+    const missingFile = join(temporaryDirectory, 'missing-CARTOGRAPHY.md');
+    const result = runCli(['lint', missingFile, '--no-strict']);
+
+    expect(result.status).toBe(2);
+    expect(result.stdout).not.toContain('"valid"');
+    expect(result.stderr).not.toContain('"valid"');
+    expect(result.stderr).not.toContain('Unable to read');
+  });
 });
 
 afterAll(() => rmSync(temporaryDirectory, {recursive: true, force: true}));

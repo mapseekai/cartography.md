@@ -3,6 +3,7 @@ import {mkdtemp, rm, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {Readable} from 'node:stream';
+import type {AddressInfo} from 'node:net';
 
 import {create} from '@mapbox/mvt-fixtures';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
@@ -84,15 +85,17 @@ function fakeResponse(
   return {stream, destroySpy};
 }
 
-function installHttpResponses(responses: FakeResponse[]): {
+function installHttpResponses(responses: FakeResponse[], lookupAll = false): {
   pinnedAddresses: string[];
   requestedHosts: string[];
   servernames: Array<string | undefined>;
+  agents: unknown[];
 } {
   const queue = [...responses];
   const pinnedAddresses: string[] = [];
   const requestedHosts: string[] = [];
   const servernames: Array<string | undefined> = [];
+  const agents: unknown[] = [];
   const request = vi.fn(
     (
       input: URL,
@@ -105,6 +108,7 @@ function installHttpResponses(responses: FakeResponse[]): {
       servernames.push(
         typeof requestOptions.servername === 'string' ? requestOptions.servername : undefined,
       );
+      agents.push(requestOptions.agent);
       const requestEmitter = new EventEmitter() as EventEmitter & {
         end(): void;
         destroy(error?: Error): void;
@@ -117,19 +121,35 @@ function installHttpResponses(responses: FakeResponse[]): {
           | ((
               hostname: string,
               options: Record<string, unknown>,
-              callback: (error: Error | null, address: string, family: number) => void,
+              callback: (
+                error: Error | null,
+                address: string | Array<{address: string; family: number}>,
+                family?: number,
+              ) => void,
             ) => void)
           | undefined;
         if (!pinnedLookup) {
           queueMicrotask(() => callback(response.stream));
           return;
         }
-        pinnedLookup(input.hostname, {}, (error, address) => {
+        pinnedLookup(input.hostname, {all: lookupAll}, (error, address) => {
           if (error) {
             requestEmitter.emit('error', error);
             return;
           }
-          pinnedAddresses.push(address);
+          if (lookupAll) {
+            if (!Array.isArray(address) || address.length !== 1) {
+              requestEmitter.emit('error', new TypeError('ERR_INVALID_IP_ADDRESS'));
+              return;
+            }
+            pinnedAddresses.push(address[0]!.address);
+          } else {
+            if (typeof address !== 'string') {
+              requestEmitter.emit('error', new TypeError('ERR_INVALID_IP_ADDRESS'));
+              return;
+            }
+            pinnedAddresses.push(address);
+          }
           callback(response.stream);
         });
       };
@@ -138,7 +158,7 @@ function installHttpResponses(responses: FakeResponse[]): {
   );
   transportMocks.httpRequest.mockImplementation(request);
   transportMocks.httpsRequest.mockImplementation(request);
-  return {pinnedAddresses, requestedHosts, servernames};
+  return {pinnedAddresses, requestedHosts, servernames, agents};
 }
 
 beforeEach(() => {
@@ -359,7 +379,74 @@ describe('sampleTiles', () => {
     expect(transport.pinnedAddresses).toEqual(['93.184.216.34']);
     expect(transport.requestedHosts).toEqual(['tiles.example']);
     expect(transport.servernames).toEqual(['tiles.example']);
+    expect(transport.agents).toEqual([false]);
     expect(result.summary).toMatchObject({requested: 1, decoded: 1, failed: 0});
+  });
+
+  it('returns a pinned address array when Node requests lookup all mode', async () => {
+    const tile = pointTile();
+    const transport = installHttpResponses(
+      [fakeResponse(200, {'content-length': String(tile.byteLength)}, tile)],
+      true,
+    );
+
+    const result = await sampleTiles(
+      options({bounds: [0, 0, 0, 0], zooms: [0], retries: 0}),
+    );
+
+    expect(transport.pinnedAddresses).toEqual(['93.184.216.34']);
+    expect(result.summary).toMatchObject({requested: 1, decoded: 1, failed: 0});
+  });
+
+  it('uses a fresh pinned connection for every same-host request in a real redirect chain', async () => {
+    const {createServer} = await vi.importActual<typeof import('node:http')>('node:http');
+    const tile = pointTile('real');
+    let connections = 0;
+    const server = createServer((request, response) => {
+      if (request.url === '/start') {
+        response.writeHead(302, {location: '/tile'});
+        response.end();
+        return;
+      }
+      response.writeHead(200, {'content-length': String(tile.byteLength)});
+      response.end(tile);
+    });
+    server.on('connection', () => {
+      connections += 1;
+    });
+    await new Promise<void>((resolveListen, rejectListen) => {
+      server.once('error', rejectListen);
+      server.listen(0, '127.0.0.1', resolveListen);
+    });
+
+    const dnsLookup = vi.fn(async () => [{address: '127.0.0.1', family: 4}]);
+    try {
+      vi.resetModules();
+      vi.doMock('node:dns/promises', () => ({lookup: dnsLookup}));
+      vi.doUnmock('node:http');
+      vi.doUnmock('node:https');
+      const realSampling = await import('../src/sampling.js');
+      const port = (server.address() as AddressInfo).port;
+
+      const result = await realSampling.sampleTiles(
+        options({
+          template: `http://pinned.invalid:${port}/start`,
+          bounds: [0, 0, 0, 0],
+          zooms: [0],
+          maxRequests: 2,
+          retries: 0,
+          allowPrivateNetwork: true,
+        }),
+      );
+
+      expect(result.summary).toMatchObject({requested: 2, decoded: 1, failed: 0});
+      expect(dnsLookup).toHaveBeenCalledTimes(2);
+      expect(connections).toBe(2);
+    } finally {
+      server.closeAllConnections();
+      await new Promise<void>((resolveClose) => server.close(() => resolveClose()));
+      vi.resetModules();
+    }
   });
 
   it('cancels bodies before rejecting invalid lengths, oversized lengths, and non-OK status', async () => {

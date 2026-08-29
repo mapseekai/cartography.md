@@ -386,7 +386,15 @@ async function readResponse(
 }
 
 function pinnedLookup(address: PinnedAddress): LookupFunction {
-  return ((_hostname, _options, callback) => {
+  return ((_hostname, options: {all?: boolean}, callback) => {
+    if (options.all === true) {
+      const done = callback as (
+        error: NodeJS.ErrnoException | null,
+        addresses: PinnedAddress[],
+      ) => void;
+      done(null, [{address: address.address, family: address.family}]);
+      return;
+    }
     const done = callback as (
       error: NodeJS.ErrnoException | null,
       address: string,
@@ -409,6 +417,8 @@ function requestPinned(
       {
         method: 'GET',
         signal,
+        agent: false,
+        family: address.family,
         lookup: pinnedLookup(address),
         ...(url.protocol === 'https:' && isIP(hostname) === 0 ? {servername: hostname} : {}),
       },

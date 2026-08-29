@@ -16,6 +16,6 @@
     "schema:generate": "pnpm --filter @mapseekai/cartography.md run schema:generate",
     "schema:check": "pnpm --filter @mapseekai/cartography.md run schema:check",
     "dev": "pnpm --filter @mapseekai/cartography.md run dev",
-    "lint:example": "pnpm --filter @mapseekai/cartography.md run dev lint ../../examples/openfreemap-bright/CARTOGRAPHY.md --profile ../../examples/openfreemap-bright/DATA_PROFILE.json --style ../../examples/openfreemap-bright/style.json --format text"
+    "lint:example": "pnpm --filter @mapseekai/cartography.md run dev lint ../../examples/quiet-atlas/CARTOGRAPHY.md --format text"
   }
 }

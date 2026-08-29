@@ -1,12 +1,14 @@
-import {readFileSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
 import {describe, expect, it} from 'vitest';
-import {lint} from '../linter/index.js';
+import {lintFile} from '../linter/index.js';
 
-const contractUrl = new URL('../../../../examples/openfreemap-bright/CARTOGRAPHY.md', import.meta.url);
+const contractUrl = new URL('../../../../examples/quiet-atlas/CARTOGRAPHY.md', import.meta.url);
 
-describe('openfreemap-bright example', () => {
-  it('reports a schema finding for the 0.1 fixture', () => {
-    const report = lint(readFileSync(contractUrl, 'utf8'));
-    expect(report.findings.some((finding) => finding.ruleId === 'schema')).toBe(true);
+describe('quiet-atlas example', () => {
+  it('lints the renderer-neutral example by itself', async () => {
+    const report = await lintFile(fileURLToPath(contractUrl));
+    expect(report.summary.errors).toBe(0);
+    expect(report.valid).toBe(true);
+    expect(report.document.version).toBe('0.2.0');
   });
 });

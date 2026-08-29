@@ -1,10 +1,17 @@
 import {mkdtemp, rm, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {describe, expect, it} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import * as api from '../api.js';
 import {lint, DEFAULT_RULES} from '../linter/index.js';
 import {getRuleCatalog} from '../spec.js';
+import * as io from '../utils/io.js';
+
+const readInputSpy = vi.spyOn(io, 'readInput');
+
+afterEach(() => {
+  readInputSpy.mockClear();
+});
 
 const minimalDocument = `---
 version: "0.2.0"
@@ -80,6 +87,9 @@ describe('document-only linter core', () => {
     try {
       const report = await api.lintFile(documentPath);
       expect(report.document.path).toBe(documentPath);
+      expect(readInputSpy).toHaveBeenCalledTimes(1);
+      expect(readInputSpy).toHaveBeenCalledWith(documentPath);
+      expect(readInputSpy.mock.calls.map(([file]) => file)).toEqual([documentPath]);
       expect(report.findings.some((finding) => finding.ruleId === 'profile' || finding.ruleId === 'style')).toBe(false);
     } finally {
       await rm(directory, {recursive: true, force: true});

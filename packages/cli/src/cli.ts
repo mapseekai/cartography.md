@@ -33,6 +33,9 @@ function findUnknownLintFlag(rawArgs: string[]): string | undefined {
     if (arg === '--') {
       break;
     }
+    if (arg === '-') {
+      continue;
+    }
     if (!arg.startsWith('-')) {
       continue;
     }
@@ -48,11 +51,14 @@ function findUnknownLintFlag(rawArgs: string[]): string | undefined {
 
 const rawArgs = process.argv.slice(2);
 const unknownLintFlag = findUnknownLintFlag(rawArgs);
+const normalizedRawArgs = rawArgs.length === 2 && rawArgs[0] === 'lint' && rawArgs[1] === '-'
+  ? ['lint', '--', '-']
+  : rawArgs;
 
 if (unknownLintFlag) {
   await showUsage(lintCommand);
   process.stderr.write(`Error: Unknown option ${unknownLintFlag}\n`);
   process.exitCode = 2;
 } else {
-  await runMain(main, {rawArgs});
+  await runMain(main, {rawArgs: normalizedRawArgs});
 }

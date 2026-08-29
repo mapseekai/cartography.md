@@ -11,16 +11,25 @@ const temporaryDirectory = mkdtempSync(join(tmpdir(), 'cartography-cli-'));
 const file = join(temporaryDirectory, 'CARTOGRAPHY.md');
 writeFileSync(file, '---\nversion: "0.2.0"\nname: CLI test\n---\n\n## Overview\n\nTest.\n');
 
-function runCli(args: string[]) {
+function runCli(args: string[], input?: string) {
   return spawnSync(process.execPath, ['--import', 'tsx', cli, ...args], {
     cwd: packageDirectory,
     encoding: 'utf8',
+    input,
   });
 }
 
 describe('lint CLI', () => {
   it('returns a JSON lint report for a document', () => {
     const result = runCli(['lint', file]);
+
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout)).toMatchObject({valid: true});
+  });
+
+  it('returns a valid JSON lint report for a document read from stdin', () => {
+    const input = '---\nversion: "0.2.0"\nname: CLI stdin test\n---\n\n## Overview\n\nTest.\n';
+    const result = runCli(['lint', '-'], input);
 
     expect(result.status).toBe(0);
     expect(JSON.parse(result.stdout)).toMatchObject({valid: true});

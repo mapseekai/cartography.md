@@ -1,4 +1,4 @@
-import {mkdtemp, readFile, readdir, rm, writeFile} from 'node:fs/promises';
+import {mkdtemp, readFile, readdir, rename, rm, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 
@@ -19,19 +19,23 @@ describe('atomicWrite', () => {
     const directory = await mkdtemp(join(tmpdir(), 'cartography-atomic-write-'));
     temporaryDirectories.push(directory);
     const destination = join(directory, 'DATA_PROFILE.json');
+    const missingParentTarget = join(directory, 'missing-parent', 'DATA_PROFILE.json');
     await writeFile(destination, 'existing bytes\n');
     let temporaryBytes: string | undefined;
+    let renameCalls = 0;
 
     await expect(
       atomicWrite(destination, 'replacement bytes\n', {
         rename: async (temporary, target) => {
+          renameCalls += 1;
           temporaryBytes = await readFile(temporary, 'utf8');
           expect(target).toBe(destination);
-          throw new Error('controlled rename failure');
+          await rename(temporary, missingParentTarget);
         },
       }),
-    ).rejects.toThrow('controlled rename failure');
+    ).rejects.toMatchObject({code: 'ENOENT'});
 
+    expect(renameCalls).toBe(1);
     expect(temporaryBytes).toBe('replacement bytes\n');
     expect(await readFile(destination, 'utf8')).toBe('existing bytes\n');
     expect(await readdir(directory)).toEqual(['DATA_PROFILE.json']);

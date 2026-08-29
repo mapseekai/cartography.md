@@ -128,7 +128,7 @@ extensions: <object?>
 
 其他 token 组可以通过开放结构保存。已知组进行类型校验，未知组保留，不被解释为渲染属性。
 
-Token 引用必须占据完整字符串。引用必须解析到同一 front matter 内的值；断链和循环是错误。YAML 和 Markdown 中的引用都应检查。
+YAML 标量中的 token 引用必须占据完整字符串；Markdown prose 可以在句子中内嵌引用。两种引用都必须解析到同一 front matter 内的值；断链和循环是错误。
 
 ### 5.4 Accessibility
 

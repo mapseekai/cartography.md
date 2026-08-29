@@ -84,18 +84,43 @@ describe('discoverStyle', () => {
     );
     expect(fragment.unresolved.every((item) => item.evidence[0]?.kind === 'style-inferred')).toBe(true);
   });
+
+  it('treats legacy comparison field positions as fields only inside filters', () => {
+    const fragment = discoverStyle(
+      {
+        sources: {roads: {type: 'vector'}},
+        layers: [
+          {
+            id: 'road-lines',
+            type: 'line',
+            source: 'roads',
+            'source-layer': 'roads',
+            filter: ['==', 'class', 'primary'],
+            paint: {'line-opacity': ['==', 'enabled', 'enabled']},
+          },
+        ],
+      },
+      'style.json',
+    );
+
+    expect(fragment.sources.roads.layers.roads.fields).toHaveProperty('class');
+    expect(fragment.sources.roads.layers.roads.fields).not.toHaveProperty('enabled');
+  });
 });
 
 describe('collectReferencedFields', () => {
-  it('recognizes only supported expression and legacy filter field positions', () => {
+  it('recognizes supported expression field positions', () => {
     expect(
       collectReferencedFields([
         'all',
         ['get', 'modern'],
         ['has', 'present'],
-        ['in', 'legacy', 'a', 'b'],
         ['literal', 'not-a-field'],
       ]),
-    ).toEqual(['modern', 'present', 'legacy']);
+    ).toEqual(['modern', 'present']);
+  });
+
+  it('does not recurse into literal expression values', () => {
+    expect(collectReferencedFields(['literal', ['get', 'not_a_field']])).toEqual([]);
   });
 });

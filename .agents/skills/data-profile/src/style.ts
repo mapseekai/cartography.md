@@ -15,6 +15,11 @@ interface FieldReferences {
   dynamic: boolean;
 }
 
+interface CollectorContext {
+  legacyFilter: boolean;
+  textField: boolean;
+}
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   if (value === null || typeof value !== 'object') {
     return false;
@@ -34,9 +39,17 @@ function addFieldReference(references: FieldReferences, field: string): void {
   }
 }
 
-function collectReferences(value: unknown, references: FieldReferences, textField = false): void {
+function collectReferences(
+  value: unknown,
+  references: FieldReferences,
+  context: CollectorContext,
+): void {
   if (Array.isArray(value)) {
     const [operator, field] = value;
+
+    if (operator === 'literal') {
+      return;
+    }
 
     if (operator === 'get' || operator === 'has') {
       if (typeof field === 'string') {
@@ -44,26 +57,33 @@ function collectReferences(value: unknown, references: FieldReferences, textFiel
       } else {
         references.dynamic = true;
       }
-    } else if (typeof operator === 'string' && legacyFieldOperators.has(operator)) {
+    } else if (
+      context.legacyFilter &&
+      typeof operator === 'string' &&
+      legacyFieldOperators.has(operator)
+    ) {
       if (typeof field === 'string') {
         addFieldReference(references, field);
       }
     }
 
     for (const item of value) {
-      collectReferences(item, references);
+      collectReferences(item, references, {...context, textField: false});
     }
     return;
   }
 
   if (isPlainObject(value)) {
     for (const [key, property] of Object.entries(value)) {
-      collectReferences(property, references, textField || key === 'text-field');
+      collectReferences(property, references, {
+        ...context,
+        textField: context.textField || key === 'text-field',
+      });
     }
     return;
   }
 
-  if (textField && typeof value === 'string') {
+  if (context.textField && typeof value === 'string') {
     for (const match of value.matchAll(templateFieldPattern)) {
       const field = match[1]?.trim();
       if (field) {
@@ -73,9 +93,17 @@ function collectReferences(value: unknown, references: FieldReferences, textFiel
   }
 }
 
-function discoverFieldReferences(value: unknown): FieldReferences {
+function expressionReferences(value: unknown): FieldReferences {
   const references: FieldReferences = {fields: [], dynamic: false};
-  collectReferences(value, references);
+  collectReferences(value, references, {legacyFilter: false, textField: false});
+  return references;
+}
+
+function layerReferences(layer: Record<string, unknown>): FieldReferences {
+  const references: FieldReferences = {fields: [], dynamic: false};
+  collectReferences(layer.filter, references, {legacyFilter: true, textField: false});
+  collectReferences(layer.layout, references, {legacyFilter: false, textField: false});
+  collectReferences(layer.paint, references, {legacyFilter: false, textField: false});
   return references;
 }
 
@@ -84,7 +112,7 @@ function discoverFieldReferences(value: unknown): FieldReferences {
  * Arbitrary string literals are intentionally ignored.
  */
 export function collectReferencedFields(value: unknown): string[] {
-  return discoverFieldReferences(value).fields;
+  return expressionReferences(value).fields;
 }
 
 function emptyLayerFact(evidence: Evidence): LayerFact {
@@ -230,11 +258,7 @@ export function discoverStyle(style: unknown, input: string): ProfileFragment {
     mergeMinzoom(layer, candidate.minzoom);
     mergeMaxzoom(layer, candidate.maxzoom);
 
-    const references = discoverFieldReferences({
-      filter: candidate.filter,
-      layout: candidate.layout,
-      paint: candidate.paint,
-    });
+    const references = layerReferences(candidate);
     for (const field of references.fields) {
       if (!layer.fields[field]) {
         layer.fields[field] = fieldFact(styleEvidence(input, location));

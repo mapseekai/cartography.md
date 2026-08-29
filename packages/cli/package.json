@@ -62,7 +62,9 @@
     "dev": "tsx src/cli.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "check-package": "node scripts/check-package.mjs"
+    "check-package": "node scripts/check-package.mjs",
+    "schema:generate": "tsx scripts/generate-schema.ts",
+    "schema:check": "tsx scripts/generate-schema.ts --check"
   },
   "dependencies": {
     "@maplibre/maplibre-gl-style-spec": "^26.4.1",
@@ -73,6 +75,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.0",
+    "ajv": "^8.20.0",
     "tsx": "^4.19.0",
     "typescript": "^5.8.3",
     "vitest": "^4.1.10"

@@ -10,13 +10,21 @@ const required = [
   'dist/cli.js',
   'dist/spec.md',
   'dist/schema-json/cartography.schema.json',
-  'dist/schema-json/data-profile.schema.json',
   'README.md',
   'LICENSE',
 ];
 
 for (const relative of required) {
   await access(path.join(packageRoot, relative));
+}
+
+try {
+  await access(path.join(packageRoot, 'dist/schema-json/data-profile.schema.json'));
+  throw new Error('dist/schema-json/data-profile.schema.json must not be packaged.');
+} catch (error) {
+  if (error?.code !== 'ENOENT') {
+    throw error;
+  }
 }
 
 const cli = await readFile(path.join(packageRoot, 'dist/cli.js'), 'utf8');

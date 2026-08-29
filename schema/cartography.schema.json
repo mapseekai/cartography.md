@@ -192,7 +192,7 @@
                 "$ref": "#/$defs/__schema0"
               },
               "reason": {
-                "type": "string"
+                "$ref": "#/$defs/__schema0"
               }
             },
             "required": [
@@ -219,7 +219,7 @@
   "$defs": {
     "__schema0": {
       "type": "string",
-      "minLength": 1
+      "pattern": "\\S"
     },
     "__schema1": {
       "type": "string",

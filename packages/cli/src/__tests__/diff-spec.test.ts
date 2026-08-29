@@ -26,5 +26,13 @@ describe('diff and bundled metadata', () => {
     expect(getSpecification()).toContain('**Status:** Draft 0.2.0');
     expect(getSpecification()).toContain('## Markdown sections');
     expect(getRuleCatalog().every((rule) => rule.scope === 'document')).toBe(true);
+    expect(getRuleCatalog()).toContainEqual(expect.objectContaining({
+      id: 'yaml-non-finite-number-prohibited',
+      severity: 'error',
+    }));
+    expect(getRuleCatalog()).toContainEqual(expect.objectContaining({
+      id: 'omitted-sections',
+      severity: 'error',
+    }));
   });
 });

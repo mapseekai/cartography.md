@@ -8,6 +8,40 @@ const cases = [
   {input: {version: '0.2.0', name: 'Tokens', tokens: {colors: {ink: '#111'}}}, valid: true},
   {input: {version: '0.1.0', name: 'Old'}, valid: false},
   {input: {version: '0.2.0', name: 'Bad opacity', tokens: {opacities: {muted: 2}}}, valid: false},
+  {input: {version: '0.2.0', name: '   '}, valid: false},
+  {input: {version: '0.2.0', name: 'Valid', locale: '\t '}, valid: false},
+  {input: {version: '0.2.0', name: 'Valid', omitted: ['   ']}, valid: false},
+  {input: {version: '0.2.0', name: 'Valid', omitted: [{section: '\n'}]}, valid: false},
+  {input: {version: '0.2.0', name: 'Valid', omitted: [{section: 'Color', reason: '   '}]}, valid: false},
+  {
+    input: {
+      version: '0.2.0',
+      name: 'Valid',
+      accessibility: {contrastPairs: [{id: ' ', foreground: '#000', background: '#fff', minimum: 4.5}]},
+    },
+    valid: false,
+  },
+  {
+    input: {
+      version: '0.2.0',
+      name: 'Valid',
+      accessibility: {contrastPairs: [{id: 'pair', foreground: ' ', background: '#fff', minimum: 4.5}]},
+    },
+    valid: false,
+  },
+  {
+    input: {
+      version: '0.2.0',
+      name: 'Valid',
+      accessibility: {contrastPairs: [{id: 'pair', foreground: '#000', background: ' ', minimum: 4.5}]},
+    },
+    valid: false,
+  },
+  {input: {version: '0.2.0', name: 'Valid', tokens: {colors: {ink: '   '}}}, valid: false},
+  {input: {version: '0.2.0', name: 'Valid', tokens: {typography: {label: {fontFamily: ' '}}}}, valid: false},
+  {input: {version: '0.2.0', name: 'Valid', tokens: {typography: {label: {fontFamily: ['Sans', ' ']}}}}, valid: false},
+  {input: {version: '0.2.0', name: 'Valid', tokens: {typography: {label: {fontWeight: '\t'}}}}, valid: false},
+  {input: {version: '0.2.0', name: 'Valid', tokens: {typography: {label: {letterSpacing: '\n'}}}}, valid: false},
 ];
 
 describe('generated cartography JSON Schema', () => {

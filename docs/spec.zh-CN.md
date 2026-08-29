@@ -219,7 +219,7 @@ Markdown 正文按以下顺序使用规范 `##` 章节：
 
 ## 省略章节与扩展
 
-省略条目可以是非空的规范章节名，也可以是包含 `section` 和可选 `reason` 字段的开放对象。
+省略条目可以是非空的规范章节名或已识别别名，也可以是包含 `section` 和可选非空 `reason` 字段的开放对象。别名规范化后，omitted 条目 MUST 唯一，并且 MUST NOT 指向 Markdown 正文中已经出现的规范章节。
 
 ```yaml
 omitted:
@@ -316,6 +316,8 @@ interface Finding {
 
 Lint 只证明 CARTOGRAPHY.md 满足其 schema 和可确定的内部关系。它不证明外部事实正确、任何生成交付物有效、当前任务已满足，或专业制图与无障碍评审已经完成。
 
+内置 `maxDocumentBytes` 检查是事后 advisory：它只在完整输入已经读取和解析后运行；调用方必须在把不受信任的输入传给 `lint`、`lintFile` 或标准输入之前实施字节数或流式限制。
+
 ## 规则目录
 
 每个内置规则的 scope 都是 `document`。
@@ -330,9 +332,11 @@ Lint 只证明 CARTOGRAPHY.md 满足其 schema 和可确定的内部关系。它
 | `yaml-merge-key-prohibited` | error | 拒绝 merge key。 |
 | `yaml-block-scalar-prohibited` | error | 将长篇理由保留在 Markdown。 |
 | `yaml-tab-indentation-prohibited` | error | 拒绝 YAML 中的 tab 缩进。 |
+| `yaml-non-finite-number-prohibited` | error | 拒绝 YAML front matter 任意深度的非有限数字。 |
 | `schema` | error | 校验版本 0.2.0 front-matter schema。 |
 | `duplicate-section` | error | 拒绝重复的规范 Markdown 章节。 |
 | `document-size` | warning | 报告超过配置字节限制的文档。 |
+| `omitted-sections` | error | 拒绝未知、重复或正文中已出现的规范章节省略项。 |
 | `required-sections` | warning 或 info | 报告既未出现也未省略的规范章节。 |
 | `empty-section` | warning | 报告空白叙述章节。 |
 | `section-order` | warning | 检查规范章节顺序。 |

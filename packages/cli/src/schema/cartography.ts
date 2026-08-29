@@ -1,6 +1,6 @@
 import * as z from 'zod';
 
-const nonEmptyString = z.string().trim().min(1);
+const nonEmptyString = z.string().regex(/\S/, 'String must contain at least one non-whitespace character.');
 
 export const tokenReferenceSchema = z.string().regex(/^\{[A-Za-z0-9_.\-\[\]]+\}$/);
 
@@ -23,7 +23,7 @@ export const typographyTokenSchema = z.union([
 
 export const omittedSectionSchema = z.union([
   nonEmptyString,
-  z.object({section: nonEmptyString, reason: z.string().optional()}).passthrough(),
+  z.object({section: nonEmptyString, reason: nonEmptyString.optional()}).passthrough(),
 ]);
 
 export const contrastPairSchema = z.object({

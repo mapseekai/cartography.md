@@ -35,8 +35,56 @@ describe('lint CLI', () => {
     expect(JSON.parse(result.stdout)).toMatchObject({valid: true});
   });
 
+  it('applies --strict when stdin is the positional input', () => {
+    const input = `---
+version: "0.2.0"
+name: CLI stdin strict test
+omitted:
+  - Intent & Audience
+  - Visual Hierarchy
+  - Color
+  - Typography & Labels
+  - Geometry & Symbols
+  - Scale & Generalization
+  - Layering & Composition
+  - Interaction States
+  - Accessibility
+  - Review Principles
+  - Do's and Don'ts
+---
+
+## Overview
+
+Test.
+`;
+    const result = runCli(['lint', '-', '--strict'], input);
+
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout)).toMatchObject({strict: true, valid: true});
+  });
+
+  it('accepts text formatting after the stdin positional input', () => {
+    const input = '---\nversion: "0.2.0"\nname: CLI stdin test\n---\n\n## Overview\n\nTest.\n';
+    const result = runCli(['lint', '-', '--format', 'text'], input);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('CARTOGRAPHY.md validation: PASS');
+  });
+
   it('rejects a bare dash unless it is the only lint input', () => {
     const result = runCli(['lint', file, '-']);
+
+    expect(result.status).toBe(2);
+    expect(result.stdout).not.toContain('"valid"');
+    expect(result.stderr).not.toContain('"valid"');
+  });
+
+  it.each([
+    ['ordinary extra positional', [file, 'extra']],
+    ['extra positional after --', [file, '--', 'extra']],
+    ['stdin marker after a file and --', [file, '--', '-']],
+  ])('rejects %s before producing a lint report', (_name, args) => {
+    const result = runCli(['lint', ...args]);
 
     expect(result.status).toBe(2);
     expect(result.stdout).not.toContain('"valid"');

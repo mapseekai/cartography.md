@@ -10,6 +10,8 @@
 
 ```ts
 import {
+  DEFAULT_RULES,
+  VERSION,
   cartographySchema,
   diffCartography,
   getRuleCatalog,
@@ -29,6 +31,8 @@ import {
 
 | 导出 | 签名 | 用途 |
 |---|---|---|
+| `DEFAULT_RULES` | `LintRule[]` | 当没有同 ID 自定义覆盖时，`lint` 使用的内置 document rule。 |
+| `VERSION` | `"0.2.0"` | 包版本与受支持的 CARTOGRAPHY.md 格式版本。 |
 | `parseCartography` | `(source: string) => ParsedCartography<CartographyConfig>` | 解析 front matter 和 Markdown 章节，并返回 parser finding。 |
 | `cartographySchema` | Zod schema | 校验版本 0.2.0 front-matter 值。 |
 | `lint` | `(source: string, options?: LintOptions) => LintReport` | 对源码字符串运行 parser 检查和 document rule。 |
@@ -115,6 +119,8 @@ interface LintOptions {
 - `rules` 按 ID 添加自定义规则。与现有 ID 相同的自定义规则会替换对应内置规则。
 - `maxDocumentBytes` 默认为 `512_000`。
 
+内置 `maxDocumentBytes` 检查是事后 advisory：它只在完整输入已经读取和解析后运行；调用方必须在把不受信任的输入传给 `lint`、`lintFile` 或标准输入之前实施字节数或流式限制。
+
 ### `LintReport`
 
 ```ts
@@ -193,6 +199,15 @@ const rules: RuleDescriptor[] = getRuleCatalog();
 ```
 
 `getSpecification` 返回随包提供的 `docs/spec.md`。`getRuleCatalog` 返回包含内置描述符的新数组；当前每个描述符都具有 `scope: 'document'`。
+
+## `DEFAULT_RULES` 与 `VERSION`
+
+```ts
+console.log(VERSION); // 0.2.0
+const activeRuleIds = DEFAULT_RULES.map((rule) => rule.id);
+```
+
+`DEFAULT_RULES` 按默认顺序包含可执行的内置 document rule。若要按 ID 覆盖规则，应传入 `LintOptions.rules`，而不是修改该导出。`VERSION` 是此版本支持的精确包版本和格式版本。
 
 ## 导出的 schema 类型
 

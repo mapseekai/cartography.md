@@ -1,5 +1,5 @@
 import type {Finding, LintRule} from '../../model/types.js';
-import {CANONICAL_SECTIONS, SECTION_SEVERITY} from '../../parser/sections.js';
+import {CANONICAL_SECTIONS, normalizeHeading, SECTION_SEVERITY} from '../../parser/sections.js';
 import {exactTokenReference, extractTokenReferences, resolveTokenReference, walkObject} from '../../utils/object.js';
 import {omittedSectionNames} from './helpers.js';
 
@@ -59,6 +59,60 @@ export const documentSizeRule: LintRule = {
       message: `CARTOGRAPHY.md is ${bytes.toLocaleString()} bytes; the configured maximum is ${context.maxDocumentBytes.toLocaleString()} bytes.`,
       suggestion: 'Move large evidence tables and screenshots to linked files while keeping normative decisions in CARTOGRAPHY.md.',
     }];
+  },
+};
+
+export const omittedSectionsRule: LintRule = {
+  id: 'omitted-sections',
+  severity: 'error',
+  scope: 'document',
+  description: 'Require omitted entries to name distinct absent canonical sections.',
+  run(context) {
+    if (!context.cartography) return [];
+    const canonicalSections = new Set<string>(CANONICAL_SECTIONS);
+    const presentSections = new Set(
+      context.parsed.sections
+        .map((section) => section.canonicalHeading)
+        .filter((heading) => canonicalSections.has(heading)),
+    );
+    const seen = new Set<string>();
+    const findings: Finding[] = [];
+
+    for (const [index, item] of (context.cartography.omitted ?? []).entries()) {
+      const declared = typeof item === 'string' ? item : item.section;
+      const normalized = normalizeHeading(declared);
+      const path = `omitted.${index}`;
+      if (!canonicalSections.has(normalized)) {
+        findings.push({
+          ruleId: this.id,
+          severity: this.severity,
+          path,
+          message: `Omitted section "${declared}" is not a canonical heading or recognized alias.`,
+          suggestion: `Use one of: ${CANONICAL_SECTIONS.join(', ')}.`,
+        });
+        continue;
+      }
+      if (seen.has(normalized)) {
+        findings.push({
+          ruleId: this.id,
+          severity: this.severity,
+          path,
+          message: `Canonical section "${normalized}" is omitted more than once.`,
+        });
+      } else {
+        seen.add(normalized);
+      }
+      if (presentSections.has(normalized)) {
+        findings.push({
+          ruleId: this.id,
+          severity: this.severity,
+          path,
+          message: `Canonical section "${normalized}" cannot be both present and omitted.`,
+          suggestion: 'Remove the omitted entry or remove the Markdown section.',
+        });
+      }
+    }
+    return findings;
   },
 };
 
@@ -208,6 +262,7 @@ export const tokenReferenceRule: LintRule = {
 
 export const DOCUMENT_RULES: LintRule[] = [
   documentSizeRule,
+  omittedSectionsRule,
   requiredSectionsRule,
   sectionOrderRule,
   unknownRootKeyRule,

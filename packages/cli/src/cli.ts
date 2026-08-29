@@ -22,40 +22,79 @@ const main = defineCommand({
   },
 });
 
-const knownLintFlags = new Set(['--format', '--strict', '--help', '-h']);
+interface LintGrammarResult {
+  normalizedRawArgs: string[];
+  error?: string;
+}
 
-function findUnknownLintFlag(rawArgs: string[]): string | undefined {
+function validateLintGrammar(rawArgs: string[]): LintGrammarResult {
   if (rawArgs[0] !== 'lint') {
-    return undefined;
+    return {normalizedRawArgs: rawArgs};
   }
 
-  for (const arg of rawArgs.slice(1)) {
-    if (arg === '--') {
-      break;
+  const options: string[] = [];
+  const positionals: string[] = [];
+  let optionsEnded = false;
+  let helpRequested = false;
+  const lintArgs = rawArgs.slice(1);
+
+  for (let index = 0; index < lintArgs.length; index += 1) {
+    const arg = lintArgs[index]!;
+    if (!optionsEnded && arg === '--') {
+      optionsEnded = true;
+      continue;
     }
-    if (!arg.startsWith('-')) {
+
+    if (optionsEnded || arg === '-' || !arg.startsWith('-')) {
+      positionals.push(arg);
+      continue;
+    }
+
+    if (arg === '--help' || arg === '-h') {
+      helpRequested = true;
+      options.push(arg);
+      continue;
+    }
+    if (arg === '--strict' || arg.startsWith('--strict=')) {
+      options.push(arg);
+      continue;
+    }
+    if (arg === '--format') {
+      const value = lintArgs[index + 1];
+      if (value === undefined || value === '--') {
+        return {normalizedRawArgs: rawArgs, error: 'Option --format requires a value.'};
+      }
+      options.push(arg, value);
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--format=')) {
+      options.push(arg);
       continue;
     }
 
     const flag = arg.includes('=') ? arg.slice(0, arg.indexOf('=')) : arg;
-    if (!knownLintFlags.has(flag)) {
-      return flag;
-    }
+    return {normalizedRawArgs: rawArgs, error: `Unknown option ${flag}`};
   }
 
-  return undefined;
+  if (helpRequested) return {normalizedRawArgs: rawArgs};
+  if (positionals.length !== 1) {
+    return {
+      normalizedRawArgs: rawArgs,
+      error: `Expected exactly one CARTOGRAPHY.md input; received ${positionals.length}.`,
+    };
+  }
+
+  return {normalizedRawArgs: ['lint', ...options, '--', positionals[0]!]};
 }
 
 const rawArgs = process.argv.slice(2);
-const normalizedRawArgs = rawArgs.length === 2 && rawArgs[0] === 'lint' && rawArgs[1] === '-'
-  ? ['lint', '--', '-']
-  : rawArgs;
-const unknownLintFlag = findUnknownLintFlag(normalizedRawArgs);
+const lintGrammar = validateLintGrammar(rawArgs);
 
-if (unknownLintFlag) {
+if (lintGrammar.error) {
   await showUsage(lintCommand);
-  process.stderr.write(`Error: Unknown option ${unknownLintFlag}\n`);
+  process.stderr.write(`Error: ${lintGrammar.error}\n`);
   process.exitCode = 2;
 } else {
-  await runMain(main, {rawArgs: normalizedRawArgs});
+  await runMain(main, {rawArgs: lintGrammar.normalizedRawArgs});
 }

@@ -76,6 +76,16 @@ describe('document-only linter core', () => {
     expect(report.findings.some((finding) => finding.ruleId === 'document-size')).toBe(false);
   });
 
+  it('treats the document size finding as an advisory post-input warning', () => {
+    const report = lint(minimalDocument, {maxDocumentBytes: 1});
+
+    expect(report.valid).toBe(true);
+    expect(report.findings).toContainEqual(expect.objectContaining({
+      ruleId: 'document-size',
+      severity: 'warning',
+    }));
+  });
+
   it('reports the supplied file and never reads companion files', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'cartography-md-'));
     const documentPath = join(directory, 'CARTOGRAPHY.md');

@@ -219,7 +219,7 @@ English headings and the recognized Chinese aliases normalize to the same canoni
 
 ## Omitted sections and extensions
 
-An omitted entry is either a non-empty canonical section name or an open object with `section` and optional `reason` fields.
+An omitted entry is either a non-empty canonical section name or recognized alias, or an open object with `section` and an optional non-empty `reason` field. After alias normalization, omitted entries MUST be unique and MUST NOT name a canonical section that is present in the Markdown body.
 
 ```yaml
 omitted:
@@ -316,6 +316,8 @@ The command-line exit codes are:
 
 Linting proves only that CARTOGRAPHY.md satisfies its schema and deterministic internal relationships. It does not prove that outside facts are correct, that any generated deliverable is valid, that a current task is satisfied, or that professional cartographic and accessibility review is complete.
 
+The built-in `maxDocumentBytes` check is advisory and runs only after the complete input has been read and parsed; callers must enforce byte or stream limits before passing untrusted input to `lint`, `lintFile`, or standard input.
+
 ## Rule catalog
 
 Every built-in rule has document scope.
@@ -330,9 +332,11 @@ Every built-in rule has document scope.
 | `yaml-merge-key-prohibited` | error | Reject merge keys. |
 | `yaml-block-scalar-prohibited` | error | Keep long rationale in Markdown. |
 | `yaml-tab-indentation-prohibited` | error | Reject tab indentation in YAML. |
+| `yaml-non-finite-number-prohibited` | error | Reject non-finite numbers anywhere in YAML front matter. |
 | `schema` | error | Validate the version 0.2.0 front-matter schema. |
 | `duplicate-section` | error | Reject duplicate canonical Markdown sections. |
 | `document-size` | warning | Report a document larger than the configured byte limit. |
+| `omitted-sections` | error | Reject unknown, duplicate, or present canonical section omissions. |
 | `required-sections` | warning or info | Report canonical sections that are neither present nor omitted. |
 | `empty-section` | warning | Report empty narrative sections. |
 | `section-order` | warning | Check canonical section order. |

@@ -22,6 +22,13 @@ describe('cartographySchema 0.2', () => {
     expect(result.success).toBe(true);
   });
 
+  it('preserves surrounding whitespace in a non-empty string', () => {
+    const result = cartographySchema.safeParse({...minimal, name: '  Quiet Atlas  '});
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.name).toBe('  Quiet Atlas  ');
+  });
+
   it.each([
     [{...minimal, version: '0.1.0'}, 'version'],
     [{...minimal, tokens: {opacities: {context: 1.1}}}, 'opacities'],

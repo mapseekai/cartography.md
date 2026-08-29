@@ -1,13 +1,67 @@
 import {parseDocument} from 'yaml';
 import {cartographySchema, type CartographyConfig} from '../schema/cartography.js';
 import type {Finding, MarkdownSection, ParsedCartography} from '../model/types.js';
-import {normalizeHeading} from './sections.js';
+import {walkObject} from '../utils/object.js';
+import {CANONICAL_SECTIONS, normalizeHeading} from './sections.js';
+
+interface CommentState {
+  inComment: boolean;
+}
+
+function maskHtmlComments(line: string, state: CommentState): string {
+  let cursor = 0;
+  let visible = '';
+  while (cursor < line.length) {
+    if (state.inComment) {
+      const end = line.indexOf('-->', cursor);
+      if (end < 0) return visible + ' '.repeat(line.length - cursor);
+      visible += ' '.repeat(end + 3 - cursor);
+      cursor = end + 3;
+      state.inComment = false;
+      continue;
+    }
+
+    const start = line.indexOf('<!--', cursor);
+    if (start < 0) return visible + line.slice(cursor);
+    visible += line.slice(cursor, start);
+    const end = line.indexOf('-->', start + 4);
+    if (end < 0) {
+      visible += ' '.repeat(line.length - start);
+      state.inComment = true;
+      return visible;
+    }
+    visible += ' '.repeat(end + 3 - start);
+    cursor = end + 3;
+  }
+  return visible;
+}
 
 function extractSections(body: string, frontmatterLines: number): MarkdownSection[] {
   const lines = body.split('\n');
   const starts: Array<{index: number; heading: string}> = [];
+  const commentState: CommentState = {inComment: false};
+  let fence: {marker: '`' | '~'; length: number} | undefined;
   for (let index = 0; index < lines.length; index += 1) {
-    const match = /^##\s+(.+?)\s*$/.exec(lines[index] ?? '');
+    const line = lines[index] ?? '';
+    if (fence) {
+      const closingPattern = new RegExp(
+        `^ {0,3}${fence.marker}{${fence.length},}[ \\t]*$`,
+      );
+      if (closingPattern.test(line)) fence = undefined;
+      continue;
+    }
+
+    const visible = maskHtmlComments(line, commentState);
+    const opening = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(visible);
+    if (opening?.[1]) {
+      fence = {
+        marker: opening[1][0] as '`' | '~',
+        length: opening[1].length,
+      };
+      continue;
+    }
+
+    const match = /^##\s+(.+?)\s*$/.exec(visible);
     if (match?.[1]) starts.push({index, heading: match[1]});
   }
   return starts.map((start, position) => {
@@ -134,11 +188,24 @@ export function parseCartography(source: string): ParsedCartography<CartographyC
   }
 
   let config: CartographyConfig | undefined;
+  let hasNonFiniteNumber = false;
   if (rawFrontmatter !== undefined) {
+    for (const entry of walkObject(rawFrontmatter)) {
+      if (typeof entry.value !== 'number' || Number.isFinite(entry.value)) continue;
+      hasNonFiniteNumber = true;
+      findings.push({
+        ruleId: 'yaml-non-finite-number-prohibited',
+        severity: 'error',
+        path: entry.path,
+        message: 'YAML non-finite numbers are prohibited by the deterministic CARTOGRAPHY.md profile.',
+        suggestion: 'Use a finite number or quote the value when it is intended as text.',
+      });
+    }
+
     const result = cartographySchema.safeParse(rawFrontmatter);
-    if (result.success) {
+    if (result.success && !hasNonFiniteNumber) {
       config = result.data as CartographyConfig;
-    } else {
+    } else if (!result.success) {
       for (const issue of result.error.issues as Array<{path: Array<string | number>; message: string}>) {
         findings.push({
           ruleId: 'schema',
@@ -150,8 +217,10 @@ export function parseCartography(source: string): ParsedCartography<CartographyC
     }
   }
 
+  const canonicalSections = new Set<string>(CANONICAL_SECTIONS);
   const seen = new Map<string, number>();
   for (const section of sections) {
+    if (!canonicalSections.has(section.canonicalHeading)) continue;
     const count = (seen.get(section.canonicalHeading) ?? 0) + 1;
     seen.set(section.canonicalHeading, count);
     if (count > 1) {

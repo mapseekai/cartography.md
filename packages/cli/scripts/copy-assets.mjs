@@ -1,4 +1,4 @@
-import {copyFile, mkdir, rm} from 'node:fs/promises';
+import {copyFile, mkdir} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 
@@ -8,7 +8,6 @@ const repositoryRoot = path.resolve(packageRoot, '../..');
 const dist = path.join(packageRoot, 'dist');
 const schemaDist = path.join(dist, 'schema-json');
 
-await rm(schemaDist, {force: true, recursive: true});
 await mkdir(schemaDist, {recursive: true});
 await copyFile(path.join(repositoryRoot, 'docs/spec.md'), path.join(dist, 'spec.md'));
 await copyFile(

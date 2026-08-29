@@ -49,7 +49,7 @@ export function getAtPath(root: unknown, path: string): {found: boolean; value?:
       current = current[index];
       continue;
     }
-    if (!isRecord(current) || !(segment in current)) return {found: false};
+    if (!isRecord(current) || !Object.hasOwn(current, segment)) return {found: false};
     current = current[segment];
   }
   return {found: true, value: current};

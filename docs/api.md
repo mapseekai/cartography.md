@@ -10,6 +10,8 @@ The public API parses, validates, resolves, and compares one CARTOGRAPHY.md docu
 
 ```ts
 import {
+  DEFAULT_RULES,
+  VERSION,
   cartographySchema,
   diffCartography,
   getRuleCatalog,
@@ -29,6 +31,8 @@ import {
 
 | Export | Signature | Purpose |
 |---|---|---|
+| `DEFAULT_RULES` | `LintRule[]` | Built-in document rules used by `lint` when no same-ID custom override is supplied. |
+| `VERSION` | `"0.2.0"` | Package and supported CARTOGRAPHY.md format version. |
 | `parseCartography` | `(source: string) => ParsedCartography<CartographyConfig>` | Parse front matter and Markdown sections and return parser findings. |
 | `cartographySchema` | Zod schema | Validate the version 0.2.0 front-matter value. |
 | `lint` | `(source: string, options?: LintOptions) => LintReport` | Run parser checks and document rules against a source string. |
@@ -115,6 +119,8 @@ interface LintOptions {
 - `rules` adds custom rules by ID. A custom rule with an existing ID replaces the built-in rule with that ID.
 - `maxDocumentBytes` defaults to `512_000`.
 
+The built-in `maxDocumentBytes` check is advisory and runs only after the complete input has been read and parsed; callers must enforce byte or stream limits before passing untrusted input to `lint`, `lintFile`, or standard input.
+
 ### `LintReport`
 
 ```ts
@@ -193,6 +199,15 @@ const rules: RuleDescriptor[] = getRuleCatalog();
 ```
 
 `getSpecification` returns the bundled `docs/spec.md`. `getRuleCatalog` returns a new array containing the built-in descriptors; every descriptor currently has `scope: 'document'`.
+
+## `DEFAULT_RULES` and `VERSION`
+
+```ts
+console.log(VERSION); // 0.2.0
+const activeRuleIds = DEFAULT_RULES.map((rule) => rule.id);
+```
+
+`DEFAULT_RULES` contains the executable built-in document rules in their default order. Supply `LintOptions.rules` to override a rule by ID instead of mutating this export. `VERSION` is the exact package and format version supported by this release.
 
 ## Exported schema types
 

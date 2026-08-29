@@ -5,7 +5,7 @@ import {FileReadError, formatOutput, readInput} from '../utils/io.js';
 export default defineCommand({
   meta: {
     name: 'lint',
-    description: 'Validate CARTOGRAPHY.md.',
+    description: 'Validate one CARTOGRAPHY.md design-system document.',
   },
   args: {
     file: {

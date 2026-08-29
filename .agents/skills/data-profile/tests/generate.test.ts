@@ -134,6 +134,82 @@ describe('mergeFragments', () => {
       }),
     ]);
   });
+
+  it('expands independent source, layer, field, and bounds ranges without selecting a center', () => {
+    const first = fieldFragment('tilejson-declared', 'number', 'first.json');
+    const second = fieldFragment('tile-sampled', 'number', 'second.pbf', '2026-08-29T00:00:00Z');
+    Object.assign(first.sources.ecology, {
+      bounds: [-10, -5, 10, 5],
+      center: [0, 0, 4],
+      minzoom: 5,
+      maxzoom: 8,
+    });
+    Object.assign(second.sources.ecology, {
+      bounds: [-20, -4, 5, 9],
+      center: [1, 1, 4],
+      minzoom: 3,
+      maxzoom: 12,
+    });
+    Object.assign(first.sources.ecology.layers.habitat, {minzoom: 6, maxzoom: 9});
+    Object.assign(second.sources.ecology.layers.habitat, {minzoom: 4, maxzoom: 14});
+    Object.assign(first.sources.ecology.layers.habitat.fields.score, {minimum: -2, maximum: 8});
+    Object.assign(second.sources.ecology.layers.habitat.fields.score, {minimum: 1, maximum: 20});
+
+    const merged = mergeFragments([first, second]);
+    const source = merged.sources.ecology;
+
+    expect(source).toMatchObject({
+      bounds: [-20, -5, 10, 9],
+      minzoom: 3,
+      maxzoom: 12,
+      layers: {
+        habitat: {
+          minzoom: 4,
+          maxzoom: 14,
+          fields: {score: {minimum: -2, maximum: 20}},
+        },
+      },
+    });
+    expect(source).not.toHaveProperty('center');
+    expect(merged.unresolved).toContainEqual(
+      expect.objectContaining({
+        code: 'source-center-conflict',
+        location: '#/sources/ecology/center',
+      }),
+    );
+  });
+
+  it('deduplicates identical unresolved items while preserving distinct evidence', () => {
+    const first = fieldFragment('tilejson-declared', 'number', 'first.json');
+    const second = fieldFragment('tile-sampled', 'number', 'second.pbf', '2026-08-29T00:00:00Z');
+    const unresolved = {
+      code: 'same-gap',
+      location: '#/sources/ecology',
+      message: 'The same unresolved fact.',
+    };
+    first.unresolved = [{...unresolved, evidence: first.sources.ecology.evidence}];
+    second.unresolved = [
+      {...unresolved, evidence: second.sources.ecology.evidence},
+      {...unresolved, evidence: second.sources.ecology.evidence},
+    ];
+
+    const merged = mergeFragments([first, second]);
+
+    expect(merged.unresolved).toEqual([
+      {
+        ...unresolved,
+        evidence: [
+          {
+            kind: 'tile-sampled',
+            input: 'second.pbf',
+            location: '#/fields/score',
+            observedAt: '2026-08-29T00:00:00Z',
+          },
+          {kind: 'tilejson-declared', input: 'first.json', location: '#/fields/score'},
+        ],
+      },
+    ]);
+  });
 });
 
 describe('generateProfile', () => {
@@ -239,6 +315,20 @@ describe('generateProfile', () => {
     expect(serialized).not.toMatch(/user|password|token|top-secret|private/);
   });
 
+  it('does not report credential redaction for harmless URL normalization', async () => {
+    const profile = await generateProfile(
+      {stylePath: 'https://example.test', observedAt: '2026-08-29T00:00:00.000Z'},
+      {
+        readText: async () =>
+          JSON.stringify({version: 8, sources: {places: {type: 'vector'}}, layers: []}),
+        now: () => new Date(0),
+      },
+    );
+
+    expect(profile.inputs).toEqual(['https://example.test/']);
+    expect(profile.unresolved.map((item) => item.code)).not.toContain('credential-redacted');
+  });
+
   it('does not expose a credential-bearing input through read failures', async () => {
     const secretInput =
       'https://user:password@example.test/style.json?token=top-secret#private';
@@ -318,6 +408,42 @@ describe('generateProfile', () => {
 });
 
 describe('generate-profile CLI', () => {
+  it.each([
+    ['bbox with an empty token', ['--bbox', '1,,2,3']],
+    ['bbox with a whitespace token', ['--bbox', '1, ,2,3']],
+    ['bbox with only three coordinates', ['--bbox', '1,2,3']],
+    ['zooms with a trailing empty token', ['--zooms', '1,']],
+    ['empty zooms', ['--zooms', '']],
+    ['a non-finite zoom', ['--zooms', 'Infinity']],
+    ['an empty max request count', ['--max-requests', '']],
+    ['a whitespace max request count', ['--max-requests', '   ']],
+    ['a NaN max request count', ['--max-requests', 'NaN']],
+    ['an out-of-range longitude', ['--bbox', '-181,0,1,1']],
+    ['an out-of-range latitude', ['--bbox', '0,-91,1,1']],
+    ['zoom 25', ['--zooms', '25']],
+    ['zero max requests', ['--max-requests', '0']],
+  ])('exits 2 without output for %s', async (_caseName, invalidArgs) => {
+    const directory = await mkdtemp(join(tmpdir(), 'cartography-profile-cli-'));
+    temporaryDirectories.push(directory);
+
+    const result = await runCli(
+      [
+        '--tile-template',
+        './tiles/{z}/{x}/{y}.pbf',
+        '--observed-at',
+        '2026-08-29T00:00:00.000Z',
+        ...invalidArgs,
+        '--output',
+        'profile.json',
+      ],
+      directory,
+    );
+
+    expect(result).toMatchObject({code: 2, stdout: ''});
+    await expect(access(join(directory, 'profile.json'))).rejects.toThrow();
+    expect(await readdir(directory)).toEqual([]);
+  });
+
   it('writes the default DATA_PROFILE.json destination through the real entrypoint', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'cartography-profile-cli-'));
     temporaryDirectories.push(directory);

@@ -1,6 +1,7 @@
 import {readFile} from 'node:fs/promises';
 
 import {mergeFragments} from './merge.js';
+import {sanitizeReference} from './sanitize.js';
 import type {FieldFact, GeneratedProfile, LayerFact, ProfileFragment, SourceFact, UnresolvedItem} from './types.js';
 import {DEFAULT_SAMPLER_OPTIONS, sampleTiles, type SamplingResult, type TileFetcher} from './sampling.js';
 import {discoverStyle} from './style.js';
@@ -53,29 +54,14 @@ async function readDiscoveryText(
   }
 }
 
-function safeTemplate(template: string): string {
-  if (/^[a-z][a-z\d+.-]*:\/\//i.test(template)) {
-    try {
-      const url = new URL(template);
-      url.username = '';
-      url.password = '';
-      url.search = '';
-      url.hash = '';
-      return url.toString().replace(/%7B/gi, '{').replace(/%7D/gi, '}');
-    } catch {
-      return 'invalid-url-template';
-    }
-  }
-  return template.split(/[?#]/, 1)[0] ?? 'invalid-local-template';
-}
-
 function sampledFragment(
   sourceId: string,
   template: string,
   observedAt: string,
   sampling: SamplingResult,
 ): ProfileFragment[] {
-  const input = safeTemplate(template);
+  const sanitizedTemplate = sanitizeReference(template);
+  const input = sanitizedTemplate.value;
   const fragments: ProfileFragment[] = sampling.observations.map(({coordinate, observation}) => {
     const evidence = {
       kind: 'tile-sampled' as const,
@@ -120,7 +106,7 @@ function sampledFragment(
     ...item,
     evidence: item.evidence.map((evidence) => ({...evidence, observedAt})),
   }));
-  if (input !== template) {
+  if (sanitizedTemplate.credentialRedacted) {
     unresolved.push({
       code: 'credential-redacted',
       location: '#/tiles',
@@ -210,14 +196,14 @@ export async function generateProfile(
       await readDiscoveryText(dependencies, options.stylePath, 'style'),
       'style',
     );
-    const retainedInput = safeTemplate(options.stylePath);
-    const fragment = discoverStyle(style, retainedInput);
-    if (retainedInput !== options.stylePath) {
+    const sanitizedInput = sanitizeReference(options.stylePath);
+    const fragment = discoverStyle(style, sanitizedInput.value);
+    if (sanitizedInput.credentialRedacted) {
       fragment.unresolved.push({
         code: 'credential-redacted',
         location: '#',
         message: 'Credentials or sensitive URL data was redacted before this input was retained.',
-        evidence: [{kind: 'style-inferred', input: retainedInput, location: '#'}],
+        evidence: [{kind: 'style-inferred', input: sanitizedInput.value, location: '#'}],
       });
     }
     fragments.push(fragment);

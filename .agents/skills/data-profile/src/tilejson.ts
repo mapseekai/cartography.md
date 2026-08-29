@@ -7,13 +7,7 @@ import type {
   SourceFact,
   UnresolvedItem,
 } from './types.js';
-
-interface SanitizedTemplate {
-  value: string;
-  credentialRedacted: boolean;
-  validHttpUrl: boolean;
-  explicitLocalTemplate: boolean;
-}
+import {sanitizeReference} from './sanitize.js';
 
 function record<T>(): Record<string, T> {
   return Object.create(null) as Record<string, T>;
@@ -50,69 +44,6 @@ function declaredTuple<T extends number>(value: unknown, length: number): T[] | 
   return Array.isArray(value) && value.length === length && value.every(isFiniteNumber)
     ? (value as T[])
     : undefined;
-}
-
-function isExplicitLocalTemplate(value: string): boolean {
-  return !/[?#]/.test(value) && /^(?:\.(?:\.|\/)|\/(?!\/)|file:\/\/)/.test(value);
-}
-
-function hasHttpScheme(value: string): boolean {
-  return /^https?:\/\//i.test(value);
-}
-
-function removeOpaqueUrlParts(value: string): {value: string; credentialRedacted: boolean} {
-  const hashIndex = value.indexOf('#');
-  const withoutHash = hashIndex >= 0 ? value.slice(0, hashIndex) : value;
-  const queryIndex = withoutHash.indexOf('?');
-  const base = queryIndex >= 0 ? withoutHash.slice(0, queryIndex) : withoutHash;
-  const authorityMatch = base.match(/^((?:[a-z][a-z\d+.-]*:)?\/\/)([^/?#]*)/i);
-  const authorityPrefix = authorityMatch?.[1];
-  const authority = authorityMatch?.[2];
-  const matchedAuthority = authorityMatch?.[0];
-  const sanitizedBase =
-    authorityPrefix && authority && matchedAuthority && authority.includes('@')
-      ? `${authorityPrefix}${authority.slice(authority.lastIndexOf('@') + 1)}${base.slice(
-          matchedAuthority.length,
-        )}`
-      : base;
-
-  return {
-    value: sanitizedBase,
-    credentialRedacted: hashIndex >= 0 || queryIndex >= 0 || sanitizedBase !== base,
-  };
-}
-
-function preserveTemplateBraces(value: string): string {
-  return value.replace(/%7B/gi, '{').replace(/%7D/gi, '}');
-}
-
-function sanitizeTemplate(value: string): SanitizedTemplate {
-  if (hasHttpScheme(value)) {
-    try {
-      const url = new URL(value);
-      const credentialRedacted =
-        url.username !== '' || url.password !== '' || value.includes('?') || value.includes('#');
-      url.username = '';
-      url.password = '';
-      url.search = '';
-      url.hash = '';
-      return {
-        value: preserveTemplateBraces(url.toString()),
-        credentialRedacted,
-        validHttpUrl: true,
-        explicitLocalTemplate: false,
-      };
-    } catch {
-      // Retain the redacted form below so invalid declarations remain reportable.
-    }
-  }
-
-  const redacted = removeOpaqueUrlParts(value);
-  return {
-    ...redacted,
-    validHttpUrl: false,
-    explicitLocalTemplate: isExplicitLocalTemplate(value),
-  };
 }
 
 function sourceFact(type: string, input: string): SourceFact {
@@ -157,7 +88,7 @@ function fieldFact(input: string, location: string, type: FieldType): FieldFact 
  * not fetch tiles and never represents declarations as observed tile values.
  */
 export function discoverTileJson(tileJson: unknown, sourceId: string, input: string): ProfileFragment {
-  const sanitizedInput = sanitizeTemplate(input);
+  const sanitizedInput = sanitizeReference(input);
   const fragment: ProfileFragment = {
     inputs: [sanitizedInput.value],
     sources: record<SourceFact>(),
@@ -199,7 +130,7 @@ export function discoverTileJson(tileJson: unknown, sourceId: string, input: str
     for (const [index, template] of tileJson.tiles.entries()) {
       if (typeof template !== 'string') continue;
       const location = `#/tiles/${index}`;
-      const sanitized = sanitizeTemplate(template);
+      const sanitized = sanitizeReference(template);
       source.tileTemplates.push(sanitized.value);
       if (sanitized.credentialRedacted) {
         addUnresolved(

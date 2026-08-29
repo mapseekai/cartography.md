@@ -6,6 +6,7 @@ import type {
   SourceFact,
   UnresolvedItem,
 } from './types.js';
+import {sanitizeReference, type SanitizedReference} from './sanitize.js';
 
 const legacyFieldOperators = new Set(['==', '!=', '>', '>=', '<', '<=', 'in', '!in', '!has']);
 const templateFieldPattern = /\{([^{}]+)\}/g;
@@ -22,12 +23,8 @@ interface CollectorContext {
 
 type CollectorMode = 'legacy-filter' | 'expression';
 
-interface SourceTemplate {
+interface SourceTemplate extends SanitizedReference {
   location: 'url' | `tiles/${number}`;
-  value: string;
-  credentialRedacted: boolean;
-  validHttpUrl: boolean;
-  explicitLocalTemplate: boolean;
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -158,72 +155,6 @@ function addUnresolved(
   unresolved.push({code, location, message, evidence: [styleEvidence(input, location)]});
 }
 
-function isExplicitLocalTemplate(value: string): boolean {
-  return !/[?#]/.test(value) && /^(?:\.(?:\.|\/)|\/(?!\/)|file:\/\/)/.test(value);
-}
-
-function hasHttpScheme(value: string): boolean {
-  return /^https?:\/\//i.test(value);
-}
-
-function removeOpaqueUrlParts(value: string): {value: string; credentialRedacted: boolean} {
-  const hashIndex = value.indexOf('#');
-  const withoutHash = hashIndex >= 0 ? value.slice(0, hashIndex) : value;
-  const queryIndex = withoutHash.indexOf('?');
-  const base = queryIndex >= 0 ? withoutHash.slice(0, queryIndex) : withoutHash;
-  const authorityMatch = base.match(/^((?:[a-z][a-z\d+.-]*:)?\/\/)([^/?#]*)/i);
-  const authorityPrefix = authorityMatch?.[1];
-  const authority = authorityMatch?.[2];
-  const matchedAuthority = authorityMatch?.[0];
-  const sanitizedBase =
-    authorityPrefix && authority && matchedAuthority && authority.includes('@')
-      ? `${authorityPrefix}${authority.slice(authority.lastIndexOf('@') + 1)}${base.slice(
-          matchedAuthority.length,
-        )}`
-      : base;
-
-  return {
-    value: sanitizedBase,
-    credentialRedacted:
-      hashIndex >= 0 || queryIndex >= 0 || sanitizedBase !== base,
-  };
-}
-
-function preserveTemplateBraces(value: string): string {
-  return value.replace(/%7B/gi, '{').replace(/%7D/gi, '}');
-}
-
-function redactHttpTemplate(value: string): Omit<SourceTemplate, 'location' | 'explicitLocalTemplate'> | undefined {
-  try {
-    const url = new URL(value);
-    const credentialRedacted =
-      url.username !== '' || url.password !== '' || value.includes('?') || value.includes('#');
-    url.username = '';
-    url.password = '';
-    url.search = '';
-    url.hash = '';
-
-    return {
-      value: preserveTemplateBraces(url.toString()),
-      credentialRedacted,
-      validHttpUrl: true,
-    };
-  } catch {
-    return undefined;
-  }
-}
-
-function redactTemplate(value: string): Omit<SourceTemplate, 'location' | 'explicitLocalTemplate'> {
-  if (hasHttpScheme(value)) {
-    const redactedHttp = redactHttpTemplate(value);
-    if (redactedHttp) {
-      return redactedHttp;
-    }
-  }
-
-  return {...removeOpaqueUrlParts(value), validHttpUrl: false};
-}
-
 function mergeMinzoom(layer: LayerFact, minzoom: unknown): void {
   if (typeof minzoom !== 'number' || !Number.isFinite(minzoom)) {
     return;
@@ -243,8 +174,7 @@ function sourceTemplates(source: Record<string, unknown>): SourceTemplate[] {
   if (typeof source.url === 'string') {
     templates.push({
       location: 'url',
-      explicitLocalTemplate: isExplicitLocalTemplate(source.url),
-      ...redactTemplate(source.url),
+      ...sanitizeReference(source.url),
     });
   }
   if (Array.isArray(source.tiles)) {
@@ -252,8 +182,7 @@ function sourceTemplates(source: Record<string, unknown>): SourceTemplate[] {
       if (typeof tile === 'string') {
         templates.push({
           location: `tiles/${index}`,
-          explicitLocalTemplate: isExplicitLocalTemplate(tile),
-          ...redactTemplate(tile),
+          ...sanitizeReference(tile),
         });
       }
     }

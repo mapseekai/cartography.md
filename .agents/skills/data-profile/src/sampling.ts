@@ -7,6 +7,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 import {decodeMvt, type TileObservation} from './mvt.js';
+import {sanitizeReference} from './sanitize.js';
 import type {Evidence, SamplingSummary, UnresolvedItem} from './types.js';
 
 const MEBIBYTE = 1024 * 1024;
@@ -177,31 +178,11 @@ export function tileCandidates(
   );
 }
 
-function explicitLocalTemplate(template: string): boolean {
-  return !/[?#]/.test(template) && /^(?:\.(?:\.|\/)|\/(?!\/)|file:\/\/)/.test(template);
-}
-
 function interpolate(template: string, coordinate: TileCoordinate): string {
   return template
     .replaceAll('{z}', String(coordinate.z))
     .replaceAll('{x}', String(coordinate.x))
     .replaceAll('{y}', String(coordinate.y));
-}
-
-function safeTemplate(template: string): string {
-  if (/^[a-z][a-z\d+.-]*:\/\//i.test(template)) {
-    try {
-      const url = new URL(template);
-      url.username = '';
-      url.password = '';
-      url.search = '';
-      url.hash = '';
-      return url.toString().replace(/%7B/gi, '{').replace(/%7D/gi, '}');
-    } catch {
-      return 'invalid-url-template';
-    }
-  }
-  return template.split(/[?#]/, 1)[0] ?? 'invalid-local-template';
 }
 
 function evidence(input: string, coordinate?: TileCoordinate): Evidence {
@@ -517,7 +498,7 @@ function defaultFetcher(
   claimBytes: (length: number) => boolean,
   takeRequest: TakeRequest,
 ): TileFetcher {
-  if (explicitLocalTemplate(options.template)) {
+  if (sanitizeReference(options.template).explicitLocalTemplate) {
     return (coordinate, signal) => {
       if (!takeRequest(coordinate)) {
         throw new SamplingError('sampling-budget-exhausted', false, true);
@@ -598,7 +579,7 @@ export async function sampleTiles(
   injectedFetcher?: TileFetcher,
 ): Promise<SamplingResult> {
   const options = normalizedOptions(inputOptions);
-  const retainedTemplate = safeTemplate(options.template);
+  const retainedTemplate = sanitizeReference(options.template).value;
   const observations: SamplingResult['observations'] = [];
   const unresolved: UnresolvedItem[] = [];
   const candidates = tileCandidates(options.bounds, options.zooms);

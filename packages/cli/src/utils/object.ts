@@ -72,6 +72,13 @@ export function resolveTokenValue(
   return {resolved: true, value: result.value, path: reference};
 }
 
+export function resolveTokenReference(
+  root: unknown,
+  reference: string,
+): {resolved: boolean; value?: unknown; path?: string; cycle?: boolean} {
+  return resolveTokenValue(root, `{${normalizeReferencePath(reference)}}`);
+}
+
 export function resolveReferencesDeep(
   value: unknown,
   root: unknown = value,

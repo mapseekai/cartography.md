@@ -1,6 +1,6 @@
 import type {Finding, LintRule} from '../../model/types.js';
 import {CANONICAL_SECTIONS, SECTION_SEVERITY} from '../../parser/sections.js';
-import {exactTokenReference, extractTokenReferences, getAtPath, walkObject} from '../../utils/object.js';
+import {exactTokenReference, extractTokenReferences, resolveTokenReference, walkObject} from '../../utils/object.js';
 import {omittedSectionNames} from './helpers.js';
 
 const RECOGNIZED_ROOT_KEYS = new Set([
@@ -173,33 +173,33 @@ export const tokenReferenceRule: LintRule = {
         });
         continue;
       }
-      const seen = new Set<string>();
-      let current = exact;
-      while (true) {
-        if (seen.has(current)) {
-          findings.push({
-            ruleId: this.id,
-            severity: 'error',
-            path: entry.path,
-            message: `Token reference cycle detected at {${current}}.`,
-          });
-          break;
-        }
-        seen.add(current);
-        const resolved = getAtPath(root, current);
-        if (!resolved.found) {
-          findings.push({
-            ruleId: this.id,
-            severity: 'error',
-            path: entry.path,
-            message: `Broken token reference {${current}}.`,
-            suggestion: 'Define the referenced path or correct the reference spelling.',
-          });
-          break;
-        }
-        const nested = exactTokenReference(resolved.value);
-        if (!nested) break;
-        current = nested;
+      const resolved = resolveTokenReference(root, exact);
+      if (!resolved.resolved) {
+        findings.push({
+          ruleId: this.id,
+          severity: 'error',
+          path: entry.path,
+          message: resolved.cycle
+            ? `Token reference cycle detected at {${resolved.path}}.`
+            : `Broken token reference {${resolved.path}}.`,
+          ...(!resolved.cycle ? {suggestion: 'Define the referenced path or correct the reference spelling.'} : {}),
+        });
+      }
+    }
+    for (const section of context.parsed.sections) {
+      for (const reference of extractTokenReferences(section.body)) {
+        const resolved = resolveTokenReference(root, reference);
+        if (resolved.resolved) continue;
+        findings.push({
+          ruleId: this.id,
+          severity: 'error',
+          path: `sections.${section.canonicalHeading}`,
+          line: section.line,
+          message: resolved.cycle
+            ? `Token reference cycle detected at {${resolved.path}}.`
+            : `Broken token reference {${resolved.path}}.`,
+          ...(!resolved.cycle ? {suggestion: 'Define the referenced path or correct the reference spelling.'} : {}),
+        });
       }
     }
     return findings;

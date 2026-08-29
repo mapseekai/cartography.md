@@ -7,7 +7,7 @@ description: Use when a cartographic task needs a DATA_PROFILE.json generated, r
 
 Create evidence-carrying runtime context about a dataset without turning observations into stable cartographic policy. Prefer the strongest available evidence, preserve uncertainty, and keep the result outside the cartography.md core contract.
 
-Run commands from the repository root. In automated or reproducible runs, set `--observed-at` to the actual observation time; the fixed timestamps below only make the examples deterministic.
+Run commands from the repository root. Relative `--style`, `--tilejson`, explicit local `--tile-template`, and `--output` paths resolve from the original pnpm invocation directory (`INIT_CWD`), never from the private package directory. Without `--output`, `DATA_PROFILE.json` is written to that caller directory. In automated or reproducible runs, set `--observed-at` to the actual observation time; the fixed timestamps below only make the examples deterministic.
 
 ## Reuse, refresh, or generate
 
@@ -51,8 +51,7 @@ Use this to discover source and field references without fetching TileJSON or ti
 ```bash
 pnpm --filter @cartographymd/data-profile-skill profile -- \
   --style .agents/skills/data-profile/fixtures/openfreemap-bright/style.json \
-  --observed-at 2026-08-29T00:00:00Z \
-  --output DATA_PROFILE.json
+  --observed-at 2026-08-29T00:00:00Z
 ```
 
 Expect `style-inferred` evidence plus unresolved field domains and tile contents.
@@ -69,7 +68,7 @@ pnpm --filter @cartographymd/data-profile-skill profile -- \
 
 ### Local MVT template
 
-Supply explicit spatial and request bounds. Relative tile paths resolve from the command's working directory.
+Supply explicit spatial and request bounds. Relative tile paths resolve from the directory where pnpm was invoked, even though pnpm executes the private package script with a package-local working directory.
 
 ```bash
 pnpm --filter @cartographymd/data-profile-skill profile -- \

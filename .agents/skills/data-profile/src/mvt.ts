@@ -8,6 +8,7 @@ import type {Evidence, FieldType, GeometryType} from './types.js';
 type Category = string | number | boolean | null;
 
 const MAX_CATEGORIES = 256;
+export const DEFAULT_DECODED_BYTE_LIMIT = 5 * 1024 * 1024;
 
 export interface FieldObservation {
   types: FieldType[];
@@ -19,6 +20,7 @@ export interface FieldObservation {
   missingObserved: boolean;
   nullObserved: boolean;
   categoriesTruncated?: boolean;
+  sensitiveValuesRedacted?: boolean;
 }
 
 export interface TileObservation {
@@ -34,14 +36,28 @@ export interface TileObservation {
 }
 
 export class TileDecodeError extends Error {
+  readonly code: 'tile-decode-failed' | 'tile-decoded-too-large';
   readonly evidence: Evidence;
   readonly cause: unknown;
 
-  constructor(message: string, evidence: Evidence, cause: unknown) {
+  constructor(
+    message: string,
+    evidence: Evidence,
+    cause: unknown,
+    code: 'tile-decode-failed' | 'tile-decoded-too-large' = 'tile-decode-failed',
+  ) {
     super(message);
     this.name = 'TileDecodeError';
+    this.code = code;
     this.evidence = evidence;
     this.cause = cause;
+  }
+}
+
+class DecodedTileTooLargeError extends Error {
+  constructor() {
+    super('Decoded tile output exceeded its configured byte limit.');
+    this.name = 'DecodedTileTooLargeError';
   }
 }
 
@@ -61,6 +77,31 @@ function fieldType(value: unknown): FieldType {
 function category(value: unknown): Category | undefined {
   if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function sensitiveFieldName(fieldName: string): boolean {
+  const normalized = fieldName
+    .replace(/([a-z\d])([A-Z])/g, '$1_$2')
+    .toLowerCase()
+    .replace(/[^a-z\d]+/g, '_');
+  return /(?:^|_)(?:api_?key|authorization|auth|cookie|credential|password|passwd|passphrase|pwd|secret|session(?:_?id|_?key|_?token)?|token)(?:_|$)/.test(
+    normalized,
+  );
+}
+
+function obviousCredentialScalar(value: unknown): boolean {
+  if (typeof value !== 'string') return false;
+  const scalar = value.trim();
+  return (
+    /^(?:basic|bearer|digest|negotiate|aws4-hmac-sha256)\s+\S+/i.test(scalar) ||
+    /^(?:api[-_ ]?key|authorization|cookie|credential|password|secret|session(?:id)?|token)\s*[:=]\s*\S+/i.test(
+      scalar,
+    ) ||
+    /^-----BEGIN [A-Z ]*PRIVATE KEY-----/.test(scalar) ||
+    /^[A-Za-z\d_-]{10,}\.[A-Za-z\d_-]{10,}\.[A-Za-z\d_-]{8,}$/.test(scalar) ||
+    /^(?:sk-[A-Za-z\d_-]{16,}|gh[pousr]_[A-Za-z\d]{20,}|AKIA[A-Z\d]{16})$/.test(scalar) ||
+    /^[a-z][a-z\d+.-]*:\/\/[^/@\s]+:[^/@\s]+@/i.test(scalar)
+  );
 }
 
 function geometryType(type: number): GeometryType {
@@ -87,10 +128,16 @@ function appendType(field: FieldObservation, type: FieldType): void {
   if (!field.types.includes(type)) field.types.push(type);
 }
 
-function observeInto(field: FieldObservation, value: unknown): void {
+function observeInto(field: FieldObservation, value: unknown, fieldName = ''): void {
   appendType(field, fieldType(value));
   field.presentCount += 1;
   if (value === null) field.nullObserved = true;
+
+  const sensitive = sensitiveFieldName(fieldName) || obviousCredentialScalar(value);
+  if (sensitive) {
+    field.sensitiveValuesRedacted = true;
+    return;
+  }
 
   const observedCategory = category(value);
   if (observedCategory !== undefined) appendCategory(field, observedCategory);
@@ -101,7 +148,7 @@ function observeInto(field: FieldObservation, value: unknown): void {
   }
 }
 
-export function observeValue(value: unknown): FieldObservation {
+export function observeValue(value: unknown, fieldName = ''): FieldObservation {
   const observation: FieldObservation = {
     types: [],
     categories: [],
@@ -110,7 +157,7 @@ export function observeValue(value: unknown): FieldObservation {
     missingObserved: false,
     nullObserved: false,
   };
-  observeInto(observation, value);
+  observeInto(observation, value, fieldName);
   return observation;
 }
 
@@ -118,32 +165,44 @@ function invalidPbf(): never {
   throw new Error('PBF contains a truncated or invalid wire value.');
 }
 
-function readVarintEnd(bytes: Uint8Array, offset: number): number {
+function readUnsignedVarint(
+  bytes: Uint8Array,
+  offset: number,
+): {value: bigint; offset: number} {
+  let value = 0n;
   for (let index = 0; index < 10; index += 1) {
     if (offset >= bytes.length) invalidPbf();
     const byte = bytes[offset]!;
     offset += 1;
+    value |= BigInt(byte & 0x7f) << BigInt(index * 7);
     if (byte < 0x80) {
       if (index === 9 && byte > 1) invalidPbf();
-      return offset;
+      return {value, offset};
     }
   }
   return invalidPbf();
 }
 
 function readBoundedVarint(bytes: Uint8Array, offset: number): {value: number; offset: number} {
-  const end = readVarintEnd(bytes, offset);
-  let value = 0;
-  for (let index = offset; index < end; index += 1) {
-    value += (bytes[index]! & 0x7f) * 2 ** (7 * (index - offset));
-  }
-  if (!Number.isSafeInteger(value)) invalidPbf();
-  return {value, offset: end};
+  const result = readUnsignedVarint(bytes, offset);
+  if (result.value > BigInt(Number.MAX_SAFE_INTEGER)) invalidPbf();
+  return {value: Number(result.value), offset: result.offset};
 }
 
-function validatePackedVarints(bytes: Uint8Array): void {
+function uint32(value: bigint): number {
+  if (value > 0xffff_ffffn) invalidPbf();
+  return Number(value);
+}
+
+function validatePackedUint32(bytes: Uint8Array): number[] {
+  const values: number[] = [];
   let offset = 0;
-  while (offset < bytes.length) offset = readVarintEnd(bytes, offset);
+  while (offset < bytes.length) {
+    const result = readUnsignedVarint(bytes, offset);
+    values.push(uint32(result.value));
+    offset = result.offset;
+  }
+  return values;
 }
 
 function requireWireType(actual: number, expected: number): void {
@@ -157,7 +216,12 @@ function requirePayload(payload: Uint8Array | undefined): Uint8Array {
 
 function validateMessage(
   bytes: Uint8Array,
-  validateField: (field: number, wireType: number, payload: Uint8Array | undefined) => void,
+  validateField: (
+    field: number,
+    wireType: number,
+    payload: Uint8Array | undefined,
+    scalar: bigint | undefined,
+  ) => void,
 ): void {
   let offset = 0;
   while (offset < bytes.length) {
@@ -168,15 +232,16 @@ function validateMessage(
     if (field === 0) invalidPbf();
 
     if (wireType === 0) {
-      offset = readVarintEnd(bytes, offset);
-      validateField(field, wireType, undefined);
+      const scalar = readUnsignedVarint(bytes, offset);
+      offset = scalar.offset;
+      validateField(field, wireType, undefined, scalar.value);
       continue;
     }
     if (wireType === 1 || wireType === 5) {
       const end = offset + (wireType === 1 ? 8 : 4);
       if (end > bytes.length) invalidPbf();
       offset = end;
-      validateField(field, wireType, undefined);
+      validateField(field, wireType, undefined, undefined);
       continue;
     }
     if (wireType !== 2) invalidPbf();
@@ -187,63 +252,251 @@ function validateMessage(
     if (!Number.isSafeInteger(end) || end > bytes.length) invalidPbf();
     const payload = bytes.subarray(offset, end);
     offset = end;
-    validateField(field, wireType, payload);
+    validateField(field, wireType, payload, undefined);
   }
 }
 
-function validateFeature(bytes: Uint8Array): void {
-  validateMessage(bytes, (field, wireType, payload) => {
-    if (field === 1 || field === 3) {
+function requireScalar(value: bigint | undefined): bigint {
+  if (value === undefined) invalidPbf();
+  return value;
+}
+
+function requiredString(bytes: Uint8Array): string {
+  if (bytes.byteLength === 0) invalidPbf();
+  try {
+    return new TextDecoder('utf-8', {fatal: true}).decode(bytes);
+  } catch {
+    return invalidPbf();
+  }
+}
+
+interface ValidatedFeature {
+  tags: number[];
+  type: number;
+  geometry: number[];
+}
+
+function validateFeature(bytes: Uint8Array): ValidatedFeature {
+  const tags: number[] = [];
+  const geometry: number[] = [];
+  let type: number | undefined;
+
+  validateMessage(bytes, (field, wireType, payload, scalar) => {
+    if (field === 1) {
       requireWireType(wireType, 0);
-      return;
-    }
-    if (field === 2 || field === 4) {
-      requireWireType(wireType, 2);
-      validatePackedVarints(requirePayload(payload));
-    }
-  });
-}
-
-function validateValue(bytes: Uint8Array): void {
-  validateMessage(bytes, (field, wireType) => {
-    if (field === 1) requireWireType(wireType, 2);
-    else if (field === 2) requireWireType(wireType, 5);
-    else if (field === 3) requireWireType(wireType, 1);
-    else if (field >= 4 && field <= 7) requireWireType(wireType, 0);
-  });
-}
-
-function validateLayer(bytes: Uint8Array): void {
-  validateMessage(bytes, (field, wireType, payload) => {
-    if (field === 1 || field === 3) {
-      requireWireType(wireType, 2);
       return;
     }
     if (field === 2) {
       requireWireType(wireType, 2);
-      validateFeature(requirePayload(payload));
+      tags.push(...validatePackedUint32(requirePayload(payload)));
+      return;
+    }
+    if (field === 3) {
+      requireWireType(wireType, 0);
+      if (type !== undefined) invalidPbf();
+      type = uint32(requireScalar(scalar));
+      return;
+    }
+    if (field === 4) {
+      requireWireType(wireType, 2);
+      geometry.push(...validatePackedUint32(requirePayload(payload)));
+    }
+  });
+
+  if (type === undefined || type < 1 || type > 3) invalidPbf();
+  if (tags.length % 2 !== 0 || geometry.length === 0) invalidPbf();
+  return {tags, type, geometry};
+}
+
+function validateValue(bytes: Uint8Array): void {
+  let variants = 0;
+  validateMessage(bytes, (field, wireType) => {
+    if (field === 1) {
+      requireWireType(wireType, 2);
+      variants += 1;
+    } else if (field === 2) {
+      requireWireType(wireType, 5);
+      variants += 1;
+    } else if (field === 3) {
+      requireWireType(wireType, 1);
+      variants += 1;
+    } else if (field >= 4 && field <= 7) {
+      requireWireType(wireType, 0);
+      variants += 1;
+    }
+  });
+  if (variants !== 1) invalidPbf();
+}
+
+function zigZag(value: number): number {
+  return value % 2 === 0 ? value / 2 : -(value + 1) / 2;
+}
+
+interface GeometryState {
+  offset: number;
+  x: number;
+  y: number;
+}
+
+function geometryCommand(
+  geometry: number[],
+  state: GeometryState,
+): {id: number; count: number} {
+  if (state.offset >= geometry.length) invalidPbf();
+  const command = geometry[state.offset++]!;
+  const id = command % 8;
+  const count = Math.floor(command / 8);
+  if (count === 0 || (id !== 1 && id !== 2 && id !== 7)) invalidPbf();
+  return {id, count};
+}
+
+function geometryParameters(
+  geometry: number[],
+  state: GeometryState,
+  count: number,
+  rejectZeroDelta = false,
+): void {
+  if (count > Math.floor((geometry.length - state.offset) / 2)) invalidPbf();
+  for (let index = 0; index < count; index += 1) {
+    const encodedX = geometry[state.offset++]!;
+    const encodedY = geometry[state.offset++]!;
+    if (encodedX === 0xffff_ffff || encodedY === 0xffff_ffff) invalidPbf();
+    const deltaX = zigZag(encodedX);
+    const deltaY = zigZag(encodedY);
+    if (rejectZeroDelta && deltaX === 0 && deltaY === 0) invalidPbf();
+    state.x += deltaX;
+    state.y += deltaY;
+    if (!Number.isSafeInteger(state.x) || !Number.isSafeInteger(state.y)) invalidPbf();
+  }
+}
+
+function validateGeometry(type: number, geometry: number[]): void {
+  const state: GeometryState = {offset: 0, x: 0, y: 0};
+
+  if (type === 1) {
+    const move = geometryCommand(geometry, state);
+    if (move.id !== 1) invalidPbf();
+    geometryParameters(geometry, state, move.count);
+    if (state.offset !== geometry.length) invalidPbf();
+    return;
+  }
+
+  while (state.offset < geometry.length) {
+    const move = geometryCommand(geometry, state);
+    if (move.id !== 1 || move.count !== 1) invalidPbf();
+    geometryParameters(geometry, state, move.count);
+
+    const line = geometryCommand(geometry, state);
+    if (line.id !== 2 || line.count < (type === 3 ? 2 : 1)) invalidPbf();
+    geometryParameters(geometry, state, line.count, true);
+
+    if (type === 3) {
+      const close = geometryCommand(geometry, state);
+      if (close.id !== 7 || close.count !== 1) invalidPbf();
+    }
+  }
+}
+
+function validateLayer(bytes: Uint8Array): string {
+  const features: ValidatedFeature[] = [];
+  let name: string | undefined;
+  let version: number | undefined;
+  let extent = 4096;
+  let extentSeen = false;
+  let keyCount = 0;
+  let valueCount = 0;
+
+  validateMessage(bytes, (field, wireType, payload, scalar) => {
+    if (field === 1) {
+      requireWireType(wireType, 2);
+      if (name !== undefined) invalidPbf();
+      name = requiredString(requirePayload(payload));
+      return;
+    }
+    if (field === 2) {
+      requireWireType(wireType, 2);
+      features.push(validateFeature(requirePayload(payload)));
+      return;
+    }
+    if (field === 3) {
+      requireWireType(wireType, 2);
+      requiredString(requirePayload(payload));
+      keyCount += 1;
       return;
     }
     if (field === 4) {
       requireWireType(wireType, 2);
       validateValue(requirePayload(payload));
+      valueCount += 1;
       return;
     }
-    if (field === 5 || field === 15) requireWireType(wireType, 0);
+    if (field === 5) {
+      requireWireType(wireType, 0);
+      if (extentSeen) invalidPbf();
+      extentSeen = true;
+      extent = uint32(requireScalar(scalar));
+      return;
+    }
+    if (field === 15) {
+      requireWireType(wireType, 0);
+      if (version !== undefined) invalidPbf();
+      version = uint32(requireScalar(scalar));
+    }
   });
+
+  if (name === undefined || version === undefined || (version !== 1 && version !== 2)) {
+    invalidPbf();
+  }
+  if (extent === 0) invalidPbf();
+
+  for (const feature of features) {
+    for (let index = 0; index < feature.tags.length; index += 2) {
+      if (feature.tags[index]! >= keyCount || feature.tags[index + 1]! >= valueCount) {
+        invalidPbf();
+      }
+    }
+    validateGeometry(feature.type, feature.geometry);
+  }
+  return name;
 }
 
 function validateTile(bytes: Uint8Array): void {
+  const layerNames = new Set<string>();
   validateMessage(bytes, (field, wireType, payload) => {
     if (field === 3) {
       requireWireType(wireType, 2);
-      validateLayer(requirePayload(payload));
+      const name = validateLayer(requirePayload(payload));
+      if (layerNames.has(name)) invalidPbf();
+      layerNames.add(name);
     }
   });
 }
 
-function parseTile(bytes: Uint8Array): VectorTile {
-  const source = bytes[0] === 0x1f && bytes[1] === 0x8b ? gunzipSync(bytes) : bytes;
+function decodedTileBytes(bytes: Uint8Array, decodedByteLimit: number): Uint8Array {
+  if (!Number.isSafeInteger(decodedByteLimit) || decodedByteLimit < 0) {
+    throw new RangeError('The decoded MVT byte limit must be a non-negative safe integer.');
+  }
+  if (bytes[0] === 0x1f && bytes[1] === 0x8b) {
+    try {
+      return gunzipSync(bytes, {maxOutputLength: decodedByteLimit});
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'ERR_BUFFER_TOO_LARGE'
+      ) {
+        throw new DecodedTileTooLargeError();
+      }
+      throw error;
+    }
+  }
+  if (bytes.byteLength > decodedByteLimit) throw new DecodedTileTooLargeError();
+  return bytes;
+}
+
+function parseTile(bytes: Uint8Array, decodedByteLimit: number): VectorTile {
+  const source = decodedTileBytes(bytes, decodedByteLimit);
   validateTile(source);
   return new VectorTile(new PbfReader(source));
 }
@@ -252,9 +505,13 @@ function parseTile(bytes: Uint8Array): VectorTile {
  * Observes the fields represented in one PBF/MVT tile without inferring
  * values for properties absent from an individual feature.
  */
-export function decodeMvt(bytes: Uint8Array, evidence: Evidence): TileObservation {
+export function decodeMvt(
+  bytes: Uint8Array,
+  evidence: Evidence,
+  decodedByteLimit = DEFAULT_DECODED_BYTE_LIMIT,
+): TileObservation {
   try {
-    const tile = parseTile(bytes);
+    const tile = parseTile(bytes, decodedByteLimit);
     const layers = record<TileObservation['layers'][string]>();
 
     for (const [layerName, layer] of Object.entries(tile.layers)) {
@@ -269,8 +526,8 @@ export function decodeMvt(bytes: Uint8Array, evidence: Evidence): TileObservatio
         if (feature.id !== undefined) stableIdObserved = true;
 
         for (const [fieldName, value] of Object.entries(feature.properties)) {
-          const field = fields[fieldName] ?? observeValue(value);
-          if (fields[fieldName] !== undefined) observeInto(field, value);
+          const field = fields[fieldName] ?? observeValue(value, fieldName);
+          if (fields[fieldName] !== undefined) observeInto(field, value, fieldName);
           fields[fieldName] = field;
         }
       }
@@ -291,6 +548,14 @@ export function decodeMvt(bytes: Uint8Array, evidence: Evidence): TileObservatio
     return {layers};
   } catch (error) {
     if (error instanceof TileDecodeError) throw error;
+    if (error instanceof DecodedTileTooLargeError) {
+      throw new TileDecodeError(
+        'Decoded MVT tile output exceeded the configured byte limit.',
+        evidence,
+        error,
+        'tile-decoded-too-large',
+      );
+    }
     throw new TileDecodeError('Unable to decode MVT tile bytes.', evidence, error);
   }
 }

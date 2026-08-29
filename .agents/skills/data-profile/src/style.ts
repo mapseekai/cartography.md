@@ -27,6 +27,14 @@ interface SourceTemplate extends SanitizedReference {
   location: 'url' | `tiles/${number}`;
 }
 
+function record<T>(): Record<string, T> {
+  return Object.create(null) as Record<string, T>;
+}
+
+function ownValue<T>(values: Record<string, T>, key: string): T | undefined {
+  return Object.hasOwn(values, key) ? values[key] : undefined;
+}
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   if (value === null || typeof value !== 'object') {
     return false;
@@ -126,7 +134,7 @@ function emptyLayerFact(evidence: Evidence): LayerFact {
   return {
     geometries: ['unknown'],
     stableIdObserved: false,
-    fields: {},
+    fields: record<FieldFact>(),
     evidence: [evidence],
   };
 }
@@ -142,7 +150,7 @@ function fieldFact(evidence: Evidence): FieldFact {
 }
 
 function sourceFact(type: string, tileTemplates: string[], evidence: Evidence): SourceFact {
-  return {type, tileTemplates, layers: {}, evidence: [evidence]};
+  return {type, tileTemplates, layers: record<LayerFact>(), evidence: [evidence]};
 }
 
 function addUnresolved(
@@ -195,7 +203,11 @@ function sourceTemplates(source: Record<string, unknown>): SourceTemplate[] {
  * source and deliberately does not derive field values, categories, or types.
  */
 export function discoverStyle(style: unknown, input: string): ProfileFragment {
-  const fragment: ProfileFragment = {inputs: [input], sources: {}, unresolved: []};
+  const fragment: ProfileFragment = {
+    inputs: [input],
+    sources: record<SourceFact>(),
+    unresolved: [],
+  };
 
   if (!isPlainObject(style)) {
     addUnresolved(
@@ -272,7 +284,7 @@ export function discoverStyle(style: unknown, input: string): ProfileFragment {
     const location = `#/layers/${index}`;
     const sourceId = candidate.source;
     const source =
-      fragment.sources[sourceId] ??
+      ownValue(fragment.sources, sourceId) ??
       sourceFact('unknown', [], styleEvidence(input, `${location}/source`));
     fragment.sources[sourceId] = source;
 
@@ -287,14 +299,15 @@ export function discoverStyle(style: unknown, input: string): ProfileFragment {
       );
     }
 
-    const layer = source.layers[sourceLayer] ?? emptyLayerFact(styleEvidence(input, location));
+    const layer =
+      ownValue(source.layers, sourceLayer) ?? emptyLayerFact(styleEvidence(input, location));
     source.layers[sourceLayer] = layer;
     mergeMinzoom(layer, candidate.minzoom);
     mergeMaxzoom(layer, candidate.maxzoom);
 
     const references = layerReferences(candidate);
     for (const field of references.fields) {
-      if (!layer.fields[field]) {
+      if (!Object.hasOwn(layer.fields, field)) {
         layer.fields[field] = fieldFact(styleEvidence(input, location));
       }
     }

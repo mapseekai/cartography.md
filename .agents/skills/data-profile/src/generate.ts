@@ -70,9 +70,12 @@ function sampledFragment(
       observedAt,
     };
     const layers = record<LayerFact>();
+    const unresolved: UnresolvedItem[] = [];
     for (const [layerId, observedLayer] of Object.entries(observation.layers)) {
       const fields = record<FieldFact>();
       for (const [fieldId, observedField] of Object.entries(observedLayer.fields)) {
+        const fieldLocation =
+          `#/sources/${pointer(sourceId)}/layers/${pointer(layerId)}/fields/${pointer(fieldId)}`;
         const field: FieldFact = {
           types: [...observedField.types],
           categories: [...observedField.categories],
@@ -83,6 +86,22 @@ function sampledFragment(
         if (observedField.minimum !== undefined) field.minimum = observedField.minimum;
         if (observedField.maximum !== undefined) field.maximum = observedField.maximum;
         fields[fieldId] = field;
+        if (observedField.sensitiveValuesRedacted === true) {
+          unresolved.push({
+            code: 'sensitive-values-redacted',
+            location: fieldLocation,
+            message: 'Sensitive sampled values were redacted before category or range capture.',
+            evidence: [evidence],
+          });
+        }
+        if (observedField.categoriesTruncated === true) {
+          unresolved.push({
+            code: 'categories-truncated',
+            location: fieldLocation,
+            message: 'Observed categories exceeded the deterministic 256-value profile limit.',
+            evidence: [evidence],
+          });
+        }
       }
       layers[layerId] = {
         geometries: [...observedLayer.geometries],
@@ -99,7 +118,7 @@ function sampledFragment(
     };
     const sources = record<SourceFact>();
     sources[sourceId] = source;
-    return {inputs: [input], sources, unresolved: []};
+    return {inputs: [input], sources, unresolved};
   });
 
   const unresolved = sampling.unresolved.map((item) => ({

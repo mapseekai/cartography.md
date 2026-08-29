@@ -85,6 +85,58 @@ describe('discoverStyle', () => {
     expect(fragment.unresolved.every((item) => item.evidence[0]?.kind === 'style-inferred')).toBe(true);
   });
 
+  it('retains prototype-like source, source-layer, and field IDs as own enumerable facts', () => {
+    const identifiers = ['__proto__', 'constructor', 'toString'];
+    const style = JSON.parse(`{
+      "version": 8,
+      "sources": {
+        "__proto__": {"type": "vector"},
+        "constructor": {"type": "vector"},
+        "toString": {"type": "vector"}
+      },
+      "layers": [
+        {
+          "id": "prototype",
+          "type": "circle",
+          "source": "__proto__",
+          "source-layer": "__proto__",
+          "paint": {"circle-radius": ["case", ["has", "__proto__"], ["get", "constructor"], ["get", "toString"]]}
+        },
+        {
+          "id": "constructor",
+          "type": "circle",
+          "source": "constructor",
+          "source-layer": "constructor",
+          "paint": {"circle-radius": ["case", ["has", "__proto__"], ["get", "constructor"], ["get", "toString"]]}
+        },
+        {
+          "id": "to-string",
+          "type": "circle",
+          "source": "toString",
+          "source-layer": "toString",
+          "paint": {"circle-radius": ["case", ["has", "__proto__"], ["get", "constructor"], ["get", "toString"]]}
+        }
+      ]
+    }`) as unknown;
+    const objectPrototypeKeys = Object.keys(Object.prototype);
+
+    const fragment = discoverStyle(style, 'style.json');
+
+    expect(Object.getPrototypeOf(fragment.sources)).toBeNull();
+    expect(Object.keys(Object.prototype)).toEqual(objectPrototypeKeys);
+    for (const identifier of identifiers) {
+      expect(Object.prototype.propertyIsEnumerable.call(fragment.sources, identifier)).toBe(true);
+      const source = fragment.sources[identifier]!;
+      expect(Object.getPrototypeOf(source.layers)).toBeNull();
+      expect(Object.prototype.propertyIsEnumerable.call(source.layers, identifier)).toBe(true);
+      const layer = source.layers[identifier]!;
+      expect(Object.getPrototypeOf(layer.fields)).toBeNull();
+      for (const field of identifiers) {
+        expect(Object.prototype.propertyIsEnumerable.call(layer.fields, field)).toBe(true);
+      }
+    }
+  });
+
   it('treats legacy comparison field positions as fields only inside filters', () => {
     const fragment = discoverStyle(
       {

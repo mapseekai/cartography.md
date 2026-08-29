@@ -17,12 +17,13 @@ does not require live network access.
 
 ```bash
 pnpm --filter @cartographymd/data-profile-skill profile -- \
-  --style fixtures/openfreemap-bright/style.json \
+  --style .agents/skills/data-profile/fixtures/openfreemap-bright/style.json \
   --observed-at 2026-08-29T00:00:00Z \
-  --output fixtures/openfreemap-bright/DATA_PROFILE.json
+  --output .agents/skills/data-profile/fixtures/openfreemap-bright/DATA_PROFILE.json
 ```
 
-Run the command from `.agents/skills/data-profile`. Because the run observes
+Run the command from the repository root. All relative CLI paths resolve from
+that original invocation directory, not the private package directory. Because the run observes
 only the style, its evidence is `style-inferred`; field domains and actual tile
 contents remain explicit unresolved items. The committed output is an expected
 test fixture, not an assertion that it completely describes OpenMapTiles data.

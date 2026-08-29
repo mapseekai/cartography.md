@@ -6,7 +6,7 @@ import {isIP, type LookupFunction} from 'node:net';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-import {decodeMvt, type TileObservation} from './mvt.js';
+import {decodeMvt, TileDecodeError, type TileObservation} from './mvt.js';
 import {sanitizeReference} from './sanitize.js';
 import type {Evidence, SamplingSummary, UnresolvedItem} from './types.js';
 
@@ -720,6 +720,7 @@ export async function sampleTiles(
         const observation = decodeMvt(
           result.bytes!,
           evidence(retainedTemplate, result.state.coordinate),
+          options.maxResponseBytes,
         );
         summary.decoded += 1;
         observations.push({coordinate: result.state.coordinate, observation});
@@ -745,13 +746,17 @@ export async function sampleTiles(
           summary.stopReason = 'structure-stable';
           stopped = true;
         }
-      } catch {
+      } catch (error) {
         summary.failed += 1;
+        const decodeTooLarge =
+          error instanceof TileDecodeError && error.code === 'tile-decoded-too-large';
         unresolved.push(
           unresolvedItem(
             retainedTemplate,
-            'tile-decode-failed',
-            'Fetched bytes could not be decoded as an MVT tile.',
+            decodeTooLarge ? 'tile-decoded-too-large' : 'tile-decode-failed',
+            decodeTooLarge
+              ? 'Decoded tile output exceeded the configured per-response byte budget.'
+              : 'Fetched bytes could not be decoded as an MVT tile.',
             result.state.coordinate,
           ),
         );

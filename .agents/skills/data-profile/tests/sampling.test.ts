@@ -4,6 +4,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {Readable} from 'node:stream';
 import type {AddressInfo} from 'node:net';
+import {gzipSync} from 'node:zlib';
 
 import {create} from '@mapbox/mvt-fixtures';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
@@ -554,6 +555,26 @@ describe('sampleTiles', () => {
     expect(totalLimited.unresolved.map((item) => item.code)).toContain(
       'tile-total-bytes-exceeded',
     );
+  });
+
+  it('classifies gzip decoded-output overflow against the response budget', async () => {
+    const compressed = gzipSync(new Uint8Array(2 * 1024));
+    expect(compressed.byteLength).toBeLessThan(1024);
+
+    const result = await sampleTiles(
+      options({
+        bounds: [0, 0, 0, 0],
+        zooms: [0],
+        maxRequests: 1,
+        retries: 0,
+        maxResponseBytes: 1024,
+        maxTotalBytes: 1024,
+      }),
+      async () => compressed,
+    );
+
+    expect(result.summary).toMatchObject({requested: 1, decoded: 0, failed: 1});
+    expect(result.unresolved.map((item) => item.code)).toEqual(['tile-decoded-too-large']);
   });
 
   it('applies injected-fetch byte budgets in candidate order, not completion order', async () => {

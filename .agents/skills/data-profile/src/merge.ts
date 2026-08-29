@@ -11,6 +11,9 @@ import type {
 } from './types.js';
 
 type Category = string | number | boolean | null;
+const MAX_CATEGORIES = 256;
+const CATEGORY_TRUNCATION_MESSAGE =
+  'Observed categories exceeded the deterministic 256-value profile limit.';
 
 export interface MergeResult {
   inputs: string[];
@@ -61,10 +64,14 @@ function compareCategories(left: Category, right: Category): number {
   return categoryRank(left) - categoryRank(right) || compareText(JSON.stringify(left), JSON.stringify(right));
 }
 
-function mergeCategories(groups: Category[][]): Category[] {
+function mergeCategories(groups: Category[][]): {categories: Category[]; truncated: boolean} {
   const categories = new Map<string, Category>();
   for (const category of groups.flat()) categories.set(categoryKey(category), category);
-  return [...categories.values()].sort(compareCategories);
+  const ordered = [...categories.values()].sort(compareCategories);
+  return {
+    categories: ordered.slice(0, MAX_CATEGORIES),
+    truncated: ordered.length > MAX_CATEGORIES,
+  };
 }
 
 function minimum(values: Array<number | undefined>): number | undefined {
@@ -108,9 +115,12 @@ function mergeFields(
     const facts = grouped.get(fieldId)!;
     const types = [...new Set(facts.flatMap((fact) => fact.types))].sort(compareText);
     const evidence = mergeEvidence(facts.map((fact) => fact.evidence));
+    const mergedCategories = mergeCategories(facts.map((fact) => fact.categories));
+    const location =
+      `#/sources/${pointer(sourceId)}/layers/${pointer(layerId)}/fields/${pointer(fieldId)}`;
     const field: FieldFact = {
       types,
-      categories: mergeCategories(facts.map((fact) => fact.categories)),
+      categories: mergedCategories.categories,
       missingObserved: facts.some((fact) => fact.missingObserved),
       nullObserved: facts.some((fact) => fact.nullObserved),
       evidence,
@@ -121,10 +131,21 @@ function mergeFields(
     if (fieldMaximum !== undefined) field.maximum = fieldMaximum;
     merged[fieldId] = field;
 
+    if (mergedCategories.truncated) {
+      generatedUnresolved.push({
+        code: 'categories-truncated',
+        location,
+        message: CATEGORY_TRUNCATION_MESSAGE,
+        evidence: mergeEvidence(
+          facts.filter((fact) => fact.categories.length > 0).map((fact) => fact.evidence),
+        ),
+      });
+    }
+
     if (hasFieldTypeConflict(types)) {
       generatedUnresolved.push({
         code: 'field-type-conflict',
-        location: `#/sources/${pointer(sourceId)}/layers/${pointer(layerId)}/fields/${pointer(fieldId)}`,
+        location,
         message: 'Independent evidence records report incompatible concrete types for this field.',
         evidence,
       });

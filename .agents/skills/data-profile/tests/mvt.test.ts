@@ -50,6 +50,24 @@ function makeZeroIntegerTile(): Uint8Array {
   return pbf.finish();
 }
 
+function makeMetadataTile(options: {
+  name?: string;
+  version?: number;
+  extent?: number;
+}): Uint8Array {
+  const pbf = new PbfWriter();
+  pbf.writeMessage(
+    3,
+    (_, layer) => {
+      if (options.name !== undefined) layer.writeStringField(1, options.name);
+      if (options.extent !== undefined) layer.writeVarintField(5, options.extent);
+      if (options.version !== undefined) layer.writeVarintField(15, options.version);
+    },
+    undefined,
+  );
+  return pbf.finish();
+}
+
 describe('decodeMvt', () => {
   it('observes point-layer field values, missing values, and stable IDs', () => {
     const buffer = makeTile([
@@ -120,6 +138,31 @@ describe('decodeMvt', () => {
     ]);
   });
 
+  it('bounds gzip decoded output with an explicit byte limit', () => {
+    const compressed = gzipSync(new Uint8Array(2 * 1024));
+    expect(compressed.byteLength).toBeLessThan(1024);
+
+    try {
+      decodeMvt(compressed, evidence, 1024);
+      expect.unreachable('decoded output over the explicit limit must throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(TileDecodeError);
+      expect((error as TileDecodeError).code).toBe('tile-decoded-too-large');
+    }
+  });
+
+  it('uses a safe five-MiB default decoded byte limit', () => {
+    const compressed = gzipSync(new Uint8Array(5 * 1024 * 1024 + 1));
+
+    try {
+      decodeMvt(compressed, evidence);
+      expect.unreachable('decoded output over the default limit must throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(TileDecodeError);
+      expect((error as TileDecodeError).code).toBe('tile-decoded-too-large');
+    }
+  });
+
   it('observes the valid integer value zero', () => {
     expect(decodeMvt(makeZeroIntegerTile(), evidence).layers.zeroes.fields.score).toMatchObject({
       types: ['integer'],
@@ -138,7 +181,7 @@ describe('decodeMvt', () => {
         values: [],
         extent: 4096,
         features: [
-          {type: 3, geometry: [9, 0, 0, 10, 2, 0, 15]},
+          {type: 3, geometry: [9, 0, 0, 18, 2, 0, 0, 2, 15]},
           {type: 2, geometry: [9, 0, 0, 10, 2, 0]},
           {type: 2, geometry: [9, 2, 0, 10, 2, 0]},
         ],
@@ -172,6 +215,70 @@ describe('decodeMvt', () => {
       presentCount: 3,
       missingCount: 0,
     });
+  });
+
+  it('redacts sensitive field values and obvious credential scalars before category capture', () => {
+    const password = 'correct-horse-battery-staple';
+    const authorization = 'Bearer header.payload.signature-secret';
+    const sensitiveFields = [
+      'credential',
+      'accessToken',
+      'cookie',
+      'authorization',
+      'password',
+      'client_secret',
+      'sessionId',
+      'api-key',
+    ];
+    const buffer = makeTile([
+      {
+        version: 2,
+        name: 'accounts',
+        keys: [...sensitiveFields, 'description', 'score'],
+        values: [
+          ...sensitiveFields.map((field) => ({
+            string_value: field === 'password' ? password : `${field}-private-value`,
+          })),
+          {string_value: authorization},
+          {int_value: 42},
+        ],
+        extent: 4096,
+        features: [
+          {
+            tags: [
+              0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9,
+            ],
+            type: 1,
+            geometry: point(),
+          },
+        ],
+      },
+    ]);
+
+    const fields = decodeMvt(buffer, evidence).layers.accounts.fields;
+
+    for (const field of sensitiveFields) {
+      expect(fields[field]).toMatchObject({
+        types: ['string'],
+        categories: [],
+        presentCount: 1,
+        sensitiveValuesRedacted: true,
+      });
+    }
+    expect(fields.description).toMatchObject({
+      types: ['string'],
+      categories: [],
+      presentCount: 1,
+      sensitiveValuesRedacted: true,
+    });
+    expect(fields.score).toMatchObject({
+      categories: [42],
+      minimum: 42,
+      maximum: 42,
+    });
+    expect(JSON.stringify(fields)).not.toMatch(
+      /correct-horse-battery-staple|header\.payload\.signature-secret/,
+    );
   });
 
   it('caps distinct scalar categories and reports that the observation was truncated', () => {
@@ -248,8 +355,104 @@ describe('decodeMvt', () => {
     expect(() => decodeMvt(corruptValueTile, evidence)).toThrow(TileDecodeError);
   });
 
+  it.each([
+    ['missing layer name', makeMetadataTile({version: 2, extent: 4096})],
+    ['empty layer name', makeMetadataTile({name: '', version: 2, extent: 4096})],
+    ['missing layer version', makeMetadataTile({name: 'places', extent: 4096})],
+    ['unsupported layer version', makeMetadataTile({name: 'places', version: 3, extent: 4096})],
+    ['zero layer extent', makeMetadataTile({name: 'places', version: 2, extent: 0})],
+  ])('rejects semantic-invalid layer metadata: %s', (_caseName, buffer) => {
+    expect(() => decodeMvt(buffer, evidence)).toThrow(TileDecodeError);
+  });
+
+  it.each([
+    [
+      'tags that reference empty key/value tables',
+      {keys: [], values: [], tags: [0, 0], type: 1, geometry: point()},
+    ],
+    [
+      'an odd tag index list',
+      {keys: ['name'], values: [{string_value: 'harbor'}], tags: [0], type: 1, geometry: point()},
+    ],
+    [
+      'an out-of-range key index',
+      {keys: ['name'], values: [{string_value: 'harbor'}], tags: [1, 0], type: 1, geometry: point()},
+    ],
+    [
+      'an out-of-range value index',
+      {keys: ['name'], values: [{string_value: 'harbor'}], tags: [0, 1], type: 1, geometry: point()},
+    ],
+    [
+      'an unknown feature type',
+      {keys: [], values: [], tags: [], type: 0, geometry: point()},
+    ],
+    [
+      'a truncated geometry parameter pair',
+      {keys: [], values: [], tags: [], type: 1, geometry: [9, 0]},
+    ],
+    [
+      'a zero-count geometry command',
+      {keys: [], values: [], tags: [], type: 1, geometry: [1]},
+    ],
+    [
+      'a point containing a LineTo command',
+      {keys: [], values: [], tags: [], type: 1, geometry: [9, 0, 0, 10, 2, 0]},
+    ],
+    [
+      'a line without a LineTo command',
+      {keys: [], values: [], tags: [], type: 2, geometry: [9, 0, 0]},
+    ],
+    [
+      'a zero-length LineTo parameter pair',
+      {keys: [], values: [], tags: [], type: 2, geometry: [9, 0, 0, 10, 0, 0]},
+    ],
+    [
+      'a polygon without ClosePath',
+      {keys: [], values: [], tags: [], type: 3, geometry: [9, 0, 0, 18, 2, 0, 0, 2]},
+    ],
+    [
+      'a geometry parameter outside uint32 bounds',
+      {keys: [], values: [], tags: [], type: 1, geometry: [9, 2 ** 32, 0]},
+    ],
+    [
+      'the unsupported negative-int32 geometry parameter',
+      {keys: [], values: [], tags: [], type: 1, geometry: [9, 0xffff_ffff, 0]},
+    ],
+  ])('rejects semantic-invalid feature data: %s', (_caseName, definition) => {
+    const buffer = makeTile([
+      {
+        version: 2,
+        name: 'invalid',
+        keys: definition.keys,
+        values: definition.values,
+        extent: 4096,
+        features: [
+          {
+            tags: definition.tags,
+            type: definition.type,
+            geometry: definition.geometry,
+          },
+        ],
+      },
+    ]);
+
+    expect(() => decodeMvt(buffer, evidence)).toThrow(TileDecodeError);
+  });
+
   it('uses typed decode errors for corrupt gzip bytes', () => {
     expect(() => decodeMvt(new Uint8Array([0x1f, 0x8b, 0x08]), evidence)).toThrow(TileDecodeError);
+  });
+
+  it('does not expose secret-like input bytes through typed decode errors', () => {
+    const secret = 'Bearer do-not-leak-this-token';
+
+    try {
+      decodeMvt(new TextEncoder().encode(secret), evidence);
+      expect.unreachable('invalid bytes must throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(TileDecodeError);
+      expect(`${String(error)} ${String((error as TileDecodeError).cause)}`).not.toContain(secret);
+    }
   });
 });
 

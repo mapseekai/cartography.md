@@ -1,7 +1,7 @@
 import {spawn} from 'node:child_process';
-import {access, mkdtemp, readFile, readdir, rm, writeFile} from 'node:fs/promises';
+import {access, mkdir, mkdtemp, readFile, readdir, rm, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
-import {dirname, join} from 'node:path';
+import {dirname, join, relative, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 import {create} from '@mapbox/mvt-fixtures';
@@ -13,6 +13,7 @@ import {stableJson} from '../src/stable-json.js';
 import type {ProfileFragment} from '../src/types.js';
 
 const packageDirectory = dirname(dirname(fileURLToPath(import.meta.url)));
+const repositoryDirectory = resolve(packageDirectory, '../../..');
 const temporaryDirectories: string[] = [];
 
 function fieldFragment(
@@ -74,12 +75,51 @@ function pointTile(score: string | number, kind: string): Uint8Array {
   }).buffer;
 }
 
+function sensitivePointTile(): Uint8Array {
+  return create({
+    layers: [
+      {
+        version: 2,
+        name: 'accounts',
+        keys: ['api_key', 'note', 'score'],
+        values: [
+          {string_value: 'sk-profile-secret-value-123456789'},
+          {string_value: 'Basic dXNlcjpwYXNzd29yZA=='},
+          {int_value: 7},
+        ],
+        extent: 4096,
+        features: [{tags: [0, 0, 1, 1, 2, 2], type: 1, geometry: [9, 50, 34]}],
+      },
+    ],
+  }).buffer;
+}
+
+function manyCategoryTile(): Uint8Array {
+  const values = Array.from({length: 257}, (_, index) => ({int_value: index + 1}));
+  return create({
+    layers: [
+      {
+        version: 2,
+        name: 'many-values',
+        keys: ['value'],
+        values,
+        extent: 4096,
+        features: values.map((_, index) => ({
+          tags: [0, index],
+          type: 1,
+          geometry: [9, 50, 34],
+        })),
+      },
+    ],
+  }).buffer;
+}
+
 function runCli(args: string[], cwd: string): Promise<{code: number | null; stdout: string; stderr: string}> {
   return new Promise((resolve, reject) => {
     const child = spawn(
       join(packageDirectory, 'node_modules/.bin/tsx'),
       [join(packageDirectory, 'scripts/generate-profile.ts'), ...args],
-      {cwd, stdio: ['ignore', 'pipe', 'pipe']},
+      {cwd, env: {...process.env, INIT_CWD: cwd}, stdio: ['ignore', 'pipe', 'pipe']},
     );
     let stdout = '';
     let stderr = '';
@@ -92,6 +132,34 @@ function runCli(args: string[], cwd: string): Promise<{code: number | null; stdo
     child.once('error', reject);
     child.once('close', (code) => resolve({code, stdout, stderr}));
   });
+}
+
+function runPnpmCli(
+  args: string[],
+  cwd: string,
+): Promise<{code: number | null; stdout: string; stderr: string}> {
+  return new Promise((resolveProcess, reject) => {
+    const child = spawn('pnpm', args, {cwd, stdio: ['ignore', 'pipe', 'pipe']});
+    let stdout = '';
+    let stderr = '';
+    child.stdout.setEncoding('utf8').on('data', (chunk: string) => {
+      stdout += chunk;
+    });
+    child.stderr.setEncoding('utf8').on('data', (chunk: string) => {
+      stderr += chunk;
+    });
+    child.once('error', reject);
+    child.once('close', (code) => resolveProcess({code, stdout, stderr}));
+  });
+}
+
+async function exists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 afterEach(async () => {
@@ -209,6 +277,45 @@ describe('mergeFragments', () => {
         ],
       },
     ]);
+  });
+
+  it('enforces one deterministic 256-category cap across independently capped fragments', () => {
+    const first = fieldFragment(
+      'tile-sampled',
+      'number',
+      'a.pbf',
+      '2026-08-29T00:00:00.000Z',
+    );
+    const second = fieldFragment(
+      'tile-sampled',
+      'number',
+      'b.pbf',
+      '2026-08-29T00:00:01.000Z',
+    );
+    first.sources.ecology.layers.habitat.fields.score.categories = Array.from(
+      {length: 256},
+      (_, index) => index + 1,
+    );
+    second.sources.ecology.layers.habitat.fields.score.categories = Array.from(
+      {length: 256},
+      (_, index) => index + 257,
+    );
+
+    const merged = mergeFragments([second, first]);
+    const reversed = mergeFragments([first, second]);
+    const field = merged.sources.ecology.layers.habitat.fields.score;
+    const truncation = merged.unresolved.find((item) => item.code === 'categories-truncated');
+
+    expect(field.categories).toHaveLength(256);
+    expect(new Set(field.categories).size).toBe(256);
+    expect(stableJson(merged)).toBe(stableJson(reversed));
+    expect(truncation).toMatchObject({
+      location: '#/sources/ecology/layers/habitat/fields/score',
+      evidence: [
+        expect.objectContaining({input: 'a.pbf'}),
+        expect.objectContaining({input: 'b.pbf'}),
+      ],
+    });
   });
 });
 
@@ -405,9 +512,199 @@ describe('generateProfile', () => {
     expect(profile.unresolved.map((item) => item.code)).toContain('credential-redacted');
     expect(serialized).not.toMatch(/user|password|token|top-secret|private/);
   });
+
+  it('keeps sensitive sampled feature values out of serialized profiles and unresolved evidence', async () => {
+    const profile = await generateProfile(
+      {
+        tileTemplate: './tiles/{z}/{x}/{y}.pbf',
+        bounds: [0, 0, 0, 0],
+        zooms: [0],
+        maxRequests: 1,
+        observedAt: '2026-08-29T00:00:00.000Z',
+      },
+      {
+        readText: async () => '{}',
+        fetchTile: async () => sensitivePointTile(),
+        now: () => new Date(0),
+      },
+    );
+    const serialized = stableJson(profile);
+
+    expect(profile.sources.default.layers.accounts.fields.api_key).toMatchObject({
+      types: ['string'],
+      categories: [],
+    });
+    expect(profile.sources.default.layers.accounts.fields.note).toMatchObject({
+      types: ['string'],
+      categories: [],
+    });
+    expect(profile.sources.default.layers.accounts.fields.score).toMatchObject({
+      categories: [7],
+      minimum: 7,
+      maximum: 7,
+    });
+    expect(profile.unresolved).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'sensitive-values-redacted',
+          location: '#/sources/default/layers/accounts/fields/api_key',
+        }),
+        expect.objectContaining({
+          code: 'sensitive-values-redacted',
+          location: '#/sources/default/layers/accounts/fields/note',
+        }),
+      ]),
+    );
+    expect(serialized).not.toMatch(/sk-profile-secret-value|dXNlcjpwYXNzd29yZA/);
+  });
+
+  it('propagates a single-tile category truncation into profile unresolved evidence', async () => {
+    const profile = await generateProfile(
+      {
+        tileTemplate: './tiles/{z}/{x}/{y}.pbf',
+        bounds: [0, 0, 0, 0],
+        zooms: [0],
+        maxRequests: 1,
+        observedAt: '2026-08-29T00:00:00.000Z',
+      },
+      {
+        readText: async () => '{}',
+        fetchTile: async () => manyCategoryTile(),
+        now: () => new Date(0),
+      },
+    );
+    const field = profile.sources.default.layers['many-values'].fields.value;
+    const truncation = profile.unresolved.find((item) => item.code === 'categories-truncated');
+
+    expect(field.categories).toHaveLength(256);
+    expect(truncation).toMatchObject({
+      location: '#/sources/default/layers/many-values/fields/value',
+      evidence: [
+        expect.objectContaining({
+          kind: 'tile-sampled',
+          location: '#/tiles/0/0/0',
+          observedAt: '2026-08-29T00:00:00.000Z',
+        }),
+      ],
+    });
+  });
 });
 
 describe('generate-profile CLI', () => {
+  it('executes the documented repo-root command and writes the default output in caller cwd', async () => {
+    const callerOutput = join(repositoryDirectory, 'DATA_PROFILE.json');
+    const packageOutput = join(packageDirectory, 'DATA_PROFILE.json');
+    expect(await exists(callerOutput)).toBe(false);
+    expect(await exists(packageOutput)).toBe(false);
+
+    let result: Awaited<ReturnType<typeof runPnpmCli>>;
+    let serialized: string | undefined;
+    let packageOutputCreated = false;
+    try {
+      result = await runPnpmCli(
+        [
+          '--filter',
+          '@cartographymd/data-profile-skill',
+          'profile',
+          '--',
+          '--style',
+          '.agents/skills/data-profile/fixtures/openfreemap-bright/style.json',
+          '--observed-at',
+          '2026-08-29T00:00:00Z',
+        ],
+        repositoryDirectory,
+      );
+      if (await exists(callerOutput)) serialized = await readFile(callerOutput, 'utf8');
+      packageOutputCreated = await exists(packageOutput);
+    } finally {
+      await rm(callerOutput, {force: true});
+      await rm(packageOutput, {force: true});
+    }
+
+    expect(result!).toMatchObject({code: 0, stderr: ''});
+    expect(JSON.parse(serialized!)).toMatchObject({
+      format: 'cartography-data-profile/1',
+      generatedAt: '2026-08-29T00:00:00Z',
+    });
+    expect(packageOutputCreated).toBe(false);
+  });
+
+  it('resolves every relative discovery and output path from the pnpm caller cwd', async () => {
+    const directory = await mkdtemp(join(repositoryDirectory, '.data-profile-cwd-'));
+    temporaryDirectories.push(directory);
+    const relativeDirectory = `./${relative(repositoryDirectory, directory)}`;
+    const tilesDirectory = join(directory, 'tiles/0/0');
+    await mkdir(tilesDirectory, {recursive: true});
+    await writeFile(
+      join(directory, 'style.json'),
+      JSON.stringify({
+        version: 8,
+        sources: {ecology: {type: 'vector'}},
+        layers: [
+          {
+            id: 'habitat',
+            type: 'circle',
+            source: 'ecology',
+            'source-layer': 'habitat',
+            paint: {'circle-radius': ['get', 'name']},
+          },
+        ],
+      }),
+    );
+    await writeFile(
+      join(directory, 'metadata.json'),
+      JSON.stringify({
+        tilejson: '3.0.0',
+        bounds: [0, 0, 0, 0],
+        minzoom: 0,
+        maxzoom: 0,
+        vector_layers: [{id: 'habitat', fields: {name: 'String'}}],
+      }),
+    );
+    await writeFile(join(tilesDirectory, '0.pbf'), pointTile(1, 'woodland'));
+    const relativeOutput = `${relativeDirectory}/profile.json`;
+
+    const result = await runPnpmCli(
+      [
+        '--filter',
+        '@cartographymd/data-profile-skill',
+        'profile',
+        '--',
+        '--style',
+        `${relativeDirectory}/style.json`,
+        '--tilejson',
+        `${relativeDirectory}/metadata.json`,
+        '--source-id',
+        'ecology',
+        '--tile-template',
+        `${relativeDirectory}/tiles/{z}/{x}/{y}.pbf`,
+        '--bbox=0,0,0,0',
+        '--zooms=0',
+        '--max-requests=1',
+        '--observed-at',
+        '2026-08-29T00:00:00Z',
+        '--output',
+        relativeOutput,
+      ],
+      repositoryDirectory,
+    );
+
+    expect(result).toMatchObject({code: 0, stderr: ''});
+    const profile = JSON.parse(await readFile(join(directory, 'profile.json'), 'utf8'));
+    expect(profile).toMatchObject({
+      sources: {ecology: {layers: {habitat: {geometries: ['point', 'unknown']}}}},
+      sampling: {requested: 1, decoded: 1, failed: 0},
+    });
+    expect(profile.inputs).toEqual(
+      [
+        `${relativeDirectory}/metadata.json`,
+        `${relativeDirectory}/style.json`,
+        `${relativeDirectory}/tiles/{z}/{x}/{y}.pbf`,
+      ].sort(),
+    );
+    expect(await exists(join(packageDirectory, relativeOutput))).toBe(false);
+  });
+
   it.each([
     ['bbox with an empty token', ['--bbox', '1,,2,3']],
     ['bbox with a whitespace token', ['--bbox', '1, ,2,3']],

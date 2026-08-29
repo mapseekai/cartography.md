@@ -2,13 +2,13 @@
   "format": "cartography-data-profile/1",
   "generatedAt": "2026-08-29T00:00:00Z",
   "inputs": [
-    "fixtures/openfreemap-bright/style.json"
+    ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json"
   ],
   "sources": {
     "ne2_shaded": {
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/sources/ne2_shaded"
         }
@@ -22,7 +22,7 @@
     "openmaptiles": {
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/sources/openmaptiles"
         }
@@ -31,7 +31,7 @@
         "aerodrome_label": {
           "evidence": [
             {
-              "input": "fixtures/openfreemap-bright/style.json",
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/109"
             }
@@ -41,7 +41,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/109"
                 }
@@ -56,7 +56,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/109"
                 }
@@ -71,7 +71,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/109"
                 }
@@ -86,7 +86,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/109"
                 }
@@ -101,7 +101,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/109"
                 }
@@ -122,7 +122,7 @@
         "aeroway": {
           "evidence": [
             {
-              "input": "fixtures/openfreemap-bright/style.json",
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/44"
             }
@@ -132,7 +132,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/44"
                 }
@@ -153,7 +153,7 @@
         "boundary": {
           "evidence": [
             {
-              "input": "fixtures/openfreemap-bright/style.json",
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/91"
             }
@@ -163,7 +163,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/91"
                 }
@@ -178,7 +178,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/91"
                 }
@@ -193,7 +193,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/91"
                 }
@@ -208,7 +208,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/91"
                 }
@@ -229,7 +229,7 @@
         "building": {
           "evidence": [
             {
-              "input": "fixtures/openfreemap-bright/style.json",
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/25"
             }
@@ -243,7 +243,7 @@
         "landcover": {
           "evidence": [
             {
-              "input": "fixtures/openfreemap-bright/style.json",
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/1"
             }
@@ -253,7 +253,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/11"
                 }
@@ -268,7 +268,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/1"
                 }
@@ -288,7 +288,7 @@
         "landuse": {
           "evidence": [
             {
-              "input": "fixtures/openfreemap-bright/style.json",
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/2"
             }
@@ -298,7 +298,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/2"
                 }
@@ -319,7 +319,7 @@
         "park": {
           "evidence": [
             {
-              "input": "fixtures/openfreemap-bright/style.json",
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/10"
             }
@@ -329,7 +329,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/13"
                 }
@@ -349,7 +349,7 @@
         "place": {
           "evidence": [
             {
-              "input": "fixtures/openfreemap-bright/style.json",
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/110"
             }
@@ -359,7 +359,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/114"
                 }
@@ -374,7 +374,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/110"
                 }
@@ -389,7 +389,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/110"
                 }
@@ -404,7 +404,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/110"
                 }
@@ -419,7 +419,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/110"
                 }
@@ -434,7 +434,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/110"
                 }
@@ -449,7 +449,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/116"
                 }
@@ -471,7 +471,7 @@
         "poi": {
           "evidence": [
             {
-              "input": "fixtures/openfreemap-bright/style.json",
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/99"
             }
@@ -481,7 +481,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/99"
                 }
@@ -496,7 +496,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/99"
                 }
@@ -511,7 +511,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/99"
                 }
@@ -526,7 +526,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/99"
                 }
@@ -541,7 +541,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/99"
                 }
@@ -556,7 +556,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/99"
                 }
@@ -571,7 +571,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/99"
                 }
@@ -592,7 +592,7 @@
         "transportation": {
           "evidence": [
             {
-              "input": "fixtures/openfreemap-bright/style.json",
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/27"
             }
@@ -602,7 +602,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/27"
                 }
@@ -617,7 +617,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/27"
                 }
@@ -632,7 +632,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/94"
                 }
@@ -647,7 +647,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/28"
                 }
@@ -662,7 +662,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/69"
                 }
@@ -677,7 +677,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/89"
                 }
@@ -698,7 +698,7 @@
         "transportation_name": {
           "evidence": [
             {
-              "input": "fixtures/openfreemap-bright/style.json",
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/103"
             }
@@ -708,7 +708,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/103"
                 }
@@ -723,7 +723,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/103"
                 }
@@ -738,7 +738,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/103"
                 }
@@ -753,7 +753,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/103"
                 }
@@ -768,7 +768,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/103"
                 }
@@ -783,7 +783,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/106"
                 }
@@ -798,7 +798,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/106"
                 }
@@ -813,7 +813,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/106"
                 }
@@ -834,7 +834,7 @@
         "water": {
           "evidence": [
             {
-              "input": "fixtures/openfreemap-bright/style.json",
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/21"
             }
@@ -844,7 +844,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/21"
                 }
@@ -859,7 +859,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/21"
                 }
@@ -879,7 +879,7 @@
         "water_name": {
           "evidence": [
             {
-              "input": "fixtures/openfreemap-bright/style.json",
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/97"
             }
@@ -889,7 +889,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/97"
                 }
@@ -904,7 +904,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/97"
                 }
@@ -919,7 +919,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/97"
                 }
@@ -934,7 +934,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/97"
                 }
@@ -954,7 +954,7 @@
         "waterway": {
           "evidence": [
             {
-              "input": "fixtures/openfreemap-bright/style.json",
+              "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
               "kind": "style-inferred",
               "location": "#/layers/14"
             }
@@ -964,7 +964,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/14"
                 }
@@ -979,7 +979,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/14"
                 }
@@ -994,7 +994,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/15"
                 }
@@ -1009,7 +1009,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/96"
                 }
@@ -1024,7 +1024,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/96"
                 }
@@ -1039,7 +1039,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/96"
                 }
@@ -1054,7 +1054,7 @@
               "categories": [],
               "evidence": [
                 {
-                  "input": "fixtures/openfreemap-bright/style.json",
+                  "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
                   "kind": "style-inferred",
                   "location": "#/layers/96"
                 }
@@ -1084,7 +1084,7 @@
       "code": "dynamic-field-reference",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/109"
         }
@@ -1096,7 +1096,7 @@
       "code": "dynamic-field-reference",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/69"
         }
@@ -1108,7 +1108,7 @@
       "code": "dynamic-field-reference",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/70"
         }
@@ -1120,7 +1120,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/109"
         }
@@ -1132,7 +1132,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/109"
         }
@@ -1144,7 +1144,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/109"
         }
@@ -1156,7 +1156,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/109"
         }
@@ -1168,7 +1168,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/109"
         }
@@ -1180,7 +1180,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/44"
         }
@@ -1192,7 +1192,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/91"
         }
@@ -1204,7 +1204,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/91"
         }
@@ -1216,7 +1216,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/91"
         }
@@ -1228,7 +1228,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/91"
         }
@@ -1240,7 +1240,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/11"
         }
@@ -1252,7 +1252,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/1"
         }
@@ -1264,7 +1264,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/2"
         }
@@ -1276,7 +1276,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/13"
         }
@@ -1288,7 +1288,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/114"
         }
@@ -1300,7 +1300,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/110"
         }
@@ -1312,7 +1312,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/110"
         }
@@ -1324,7 +1324,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/110"
         }
@@ -1336,7 +1336,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/110"
         }
@@ -1348,7 +1348,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/110"
         }
@@ -1360,7 +1360,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/116"
         }
@@ -1372,7 +1372,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/99"
         }
@@ -1384,7 +1384,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/99"
         }
@@ -1396,7 +1396,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/99"
         }
@@ -1408,7 +1408,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/99"
         }
@@ -1420,7 +1420,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/99"
         }
@@ -1432,7 +1432,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/99"
         }
@@ -1444,7 +1444,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/99"
         }
@@ -1456,7 +1456,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/27"
         }
@@ -1468,7 +1468,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/27"
         }
@@ -1480,7 +1480,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/94"
         }
@@ -1492,7 +1492,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/28"
         }
@@ -1504,7 +1504,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/69"
         }
@@ -1516,7 +1516,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/89"
         }
@@ -1528,7 +1528,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/103"
         }
@@ -1540,7 +1540,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/103"
         }
@@ -1552,7 +1552,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/103"
         }
@@ -1564,7 +1564,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/103"
         }
@@ -1576,7 +1576,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/103"
         }
@@ -1588,7 +1588,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/106"
         }
@@ -1600,7 +1600,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/106"
         }
@@ -1612,7 +1612,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/106"
         }
@@ -1624,7 +1624,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/21"
         }
@@ -1636,7 +1636,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/21"
         }
@@ -1648,7 +1648,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/97"
         }
@@ -1660,7 +1660,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/97"
         }
@@ -1672,7 +1672,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/97"
         }
@@ -1684,7 +1684,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/97"
         }
@@ -1696,7 +1696,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/14"
         }
@@ -1708,7 +1708,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/14"
         }
@@ -1720,7 +1720,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/15"
         }
@@ -1732,7 +1732,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/96"
         }
@@ -1744,7 +1744,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/96"
         }
@@ -1756,7 +1756,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/96"
         }
@@ -1768,7 +1768,7 @@
       "code": "field-domain-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/layers/96"
         }
@@ -1780,7 +1780,7 @@
       "code": "tile-contents-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/sources/ne2_shaded"
         }
@@ -1792,7 +1792,7 @@
       "code": "tile-contents-unobserved",
       "evidence": [
         {
-          "input": "fixtures/openfreemap-bright/style.json",
+          "input": ".agents/skills/data-profile/fixtures/openfreemap-bright/style.json",
           "kind": "style-inferred",
           "location": "#/sources/openmaptiles"
         }

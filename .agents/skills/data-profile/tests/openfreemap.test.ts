@@ -5,7 +5,8 @@ import {describe, expect, it} from 'vitest';
 import {generateProfile} from '../src/generate.js';
 import {stableJson} from '../src/stable-json.js';
 
-const styleInput = 'fixtures/openfreemap-bright/style.json';
+const styleInput = '.agents/skills/data-profile/fixtures/openfreemap-bright/style.json';
+const styleFile = new URL('../fixtures/openfreemap-bright/style.json', import.meta.url);
 const observedAt = '2026-08-29T00:00:00Z';
 
 describe('OpenFreeMap bright fixture', () => {
@@ -21,7 +22,7 @@ describe('OpenFreeMap bright fixture', () => {
           if (path !== styleInput) {
             throw new Error(`Unexpected discovery input: ${path}`);
           }
-          return readFile(new URL(`../${path}`, import.meta.url), 'utf8');
+          return readFile(styleFile, 'utf8');
         },
         fetchTile: async () => {
           tileFetches += 1;

@@ -60,7 +60,17 @@ function numberList(value: string, length?: number): number[] {
   return numbers;
 }
 
-function parseOptions(args: string[], interactive: boolean): {options: GenerateOptions; output: string} {
+function invocationDirectory(): string {
+  const initialDirectory = process.env.INIT_CWD?.trim();
+  return resolve(
+    initialDirectory === undefined || initialDirectory === '' ? process.cwd() : initialDirectory,
+  );
+}
+
+function parseOptions(
+  args: string[],
+  interactive: boolean,
+): {options: GenerateOptions; output: string} {
   let parsed: ReturnType<typeof parseCliArguments>;
   try {
     parsed = parseCliArguments(args);
@@ -122,6 +132,7 @@ function parseOptions(args: string[], interactive: boolean): {options: GenerateO
 
 export async function main(args = process.argv.slice(2)): Promise<void> {
   const forwardedArgs = args[0] === '--' ? args.slice(1) : args;
+  process.chdir(invocationDirectory());
   const {options, output} = parseOptions(forwardedArgs, process.stdin.isTTY === true);
   const serialized = stableJson(await generateProfile(options));
   await atomicWrite(output, serialized);

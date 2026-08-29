@@ -15,12 +15,13 @@ fixture 使用公开的 [OpenFreeMap bright](https://tiles.openfreemap.org/style
 
 ```bash
 pnpm --filter @cartographymd/data-profile-skill profile -- \
-  --style fixtures/openfreemap-bright/style.json \
+  --style .agents/skills/data-profile/fixtures/openfreemap-bright/style.json \
   --observed-at 2026-08-29T00:00:00Z \
-  --output fixtures/openfreemap-bright/DATA_PROFILE.json
+  --output .agents/skills/data-profile/fixtures/openfreemap-bright/DATA_PROFILE.json
 ```
 
-请从 `.agents/skills/data-profile` 运行该命令。由于此次运行只观察样式，证据均为
+请从仓库根目录运行该命令。所有相对 CLI 路径都以原始调用目录解析，而不是以私有
+package 目录解析。由于此次运行只观察样式，证据均为
 `style-inferred`；字段域与实际瓦片内容仍作为明确的 unresolved 项保留。提交的
 输出是测试所用的预期 fixture，并不声称完整描述了 OpenMapTiles 数据。
 

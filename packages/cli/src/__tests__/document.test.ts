@@ -85,6 +85,13 @@ Prototype test.
     'tokens.colors.ink.',
     'tokens.colors[ink]',
     'tokens.colors.ink[]',
+    'tokens.colors.ink[ ]',
+    'tokens.colors.ink[+1]',
+    'tokens.colors.ink[-1]',
+    'tokens.colors.ink[a/b]',
+    'tokens.colors.ink[0',
+    'tokens.colors.ink]',
+    'tokens.colors.ink[[0]]',
     'tokens.colors.ink[0]tail',
     'tokens.colors.[0]',
   ])('rejects malformed token path grammar in YAML and prose: %s', (reference) => {
@@ -97,6 +104,17 @@ Prototype test.
         message: `Invalid token reference path {${reference}}.`,
       }));
     }
+  });
+
+  it('does not treat ordinary prose or code braces as token references', () => {
+    const report = lint(base.replace('Quiet.', `Objects may look like { color: red; } or {left + right}.
+Inline code may contain \`{left[0] + right[0]}\`.
+
+\`\`\`js
+const style = {color: '#25221D'};
+\`\`\``));
+
+    expect(report.findings.some((finding) => finding.ruleId === 'token-reference')).toBe(false);
   });
 
   it('accepts dotted and hyphenated names with numeric bracket indices', () => {

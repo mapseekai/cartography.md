@@ -23,13 +23,44 @@ export function walkObject(value: unknown, path = '$'): WalkEntry[] {
 
 export const REFERENCE_PATH_SOURCE =
   '[A-Za-z0-9_-]+(?:\\[\\d+\\])*(?:\\.[A-Za-z0-9_-]+(?:\\[\\d+\\])*)*';
-const referenceCandidateSource = '[A-Za-z0-9_.\\-\\[\\]]+';
-const referenceCandidatePattern = new RegExp(`\\{(${referenceCandidateSource})\\}`, 'g');
+const bracedReferenceCandidatePattern = /\{([^{}\r\n]*)\}/g;
+const pathOutsideBracketsPattern = /^[A-Za-z0-9_.\[\]-]+$/;
 const referencePathPattern = new RegExp(`^(?:${REFERENCE_PATH_SOURCE})$`);
 const exactReferencePattern = new RegExp(`^\\{(${REFERENCE_PATH_SOURCE})\\}$`);
 
 export function validReferencePath(path: string): boolean {
   return referencePathPattern.test(path);
+}
+
+function referencePathCandidate(path: string): boolean {
+  if (validReferencePath(path)) return true;
+
+  let bracketDepth = 0;
+  let outsideBrackets = '';
+  let hasPathStructure = false;
+  for (const character of path) {
+    if (character === '[') {
+      hasPathStructure = true;
+      if (bracketDepth === 0) outsideBrackets += '[]';
+      bracketDepth += 1;
+      continue;
+    }
+    if (character === ']') {
+      hasPathStructure = true;
+      if (bracketDepth === 0) outsideBrackets += ']';
+      else bracketDepth -= 1;
+      continue;
+    }
+    if (bracketDepth > 0) continue;
+    if (character === '.') hasPathStructure = true;
+    outsideBrackets += character;
+  }
+
+  return (
+    hasPathStructure &&
+    /[A-Za-z0-9_-]/.test(outsideBrackets) &&
+    pathOutsideBracketsPattern.test(outsideBrackets)
+  );
 }
 
 export function normalizeReferencePath(path: string): string {
@@ -41,8 +72,8 @@ export function extractTokenReferences(value: string): string[] {
 }
 
 export function extractTokenReferenceCandidates(value: string): string[] {
-  return Array.from(value.matchAll(referenceCandidatePattern), (match) => match[1]).filter(
-    (path): path is string => Boolean(path),
+  return Array.from(value.matchAll(bracedReferenceCandidatePattern), (match) => match[1]).filter(
+    (path): path is string => path !== undefined && referencePathCandidate(path),
   );
 }
 

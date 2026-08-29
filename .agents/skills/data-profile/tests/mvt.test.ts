@@ -83,6 +83,37 @@ function exactIntegerValue(field: 4 | 5 | 6, raw: bigint): Uint8Array {
   return new Uint8Array([field << 3, ...unsignedVarint(raw)]);
 }
 
+function stringValue(value: string): Uint8Array {
+  const pbf = new PbfWriter();
+  pbf.writeStringField(1, value);
+  return pbf.finish();
+}
+
+function makeDuplicatePropertyTile(values: Uint8Array[], tags: number[]): Uint8Array {
+  const pbf = new PbfWriter();
+  pbf.writeMessage(
+    3,
+    (_, layer) => {
+      layer.writeStringField(1, 'duplicate-values');
+      layer.writeMessage(
+        2,
+        (_, feature) => {
+          feature.writePackedVarint(2, tags);
+          feature.writeVarintField(3, 1);
+          feature.writePackedVarint(4, point());
+        },
+        undefined,
+      );
+      layer.writeStringField(3, 'value');
+      for (const value of values) layer.writeBytesField(4, value);
+      layer.writeVarintField(5, 4096);
+      layer.writeVarintField(15, 2);
+    },
+    undefined,
+  );
+  return pbf.finish();
+}
+
 function makeExactIntegerTile(
   values: Array<{name: string; field: 4 | 5 | 6; raw: bigint}>,
 ): Uint8Array {
@@ -243,6 +274,51 @@ describe('decodeMvt', () => {
     expect(fields['uint-max'].categories).toEqual([Number.MAX_SAFE_INTEGER]);
     expect(fields['sint-max'].categories).toEqual([Number.MAX_SAFE_INTEGER]);
     expect(fields['sint-min'].categories).toEqual([-Number.MAX_SAFE_INTEGER]);
+  });
+
+  it('clears an earlier exact-integer override when a duplicate key ends as a string', () => {
+    const tile = makeDuplicatePropertyTile(
+      [exactIntegerValue(4, 7n), stringValue('last')],
+      [0, 0, 0, 1],
+    );
+
+    expect(decodeMvt(tile, evidence).layers['duplicate-values'].fields.value).toMatchObject({
+      types: ['string'],
+      categories: ['last'],
+      presentCount: 1,
+    });
+  });
+
+  it('uses a later safe exact integer when a duplicate key starts as a string', () => {
+    const tile = makeDuplicatePropertyTile(
+      [stringValue('first'), exactIntegerValue(4, 7n)],
+      [0, 0, 0, 1],
+    );
+
+    expect(decodeMvt(tile, evidence).layers['duplicate-values'].fields.value).toMatchObject({
+      types: ['integer'],
+      categories: [7],
+      minimum: 7,
+      maximum: 7,
+    });
+  });
+
+  it('rejects an unsafe duplicate integer even when a later tag would replace it', () => {
+    const tile = makeDuplicatePropertyTile(
+      [
+        exactIntegerValue(5, BigInt(Number.MAX_SAFE_INTEGER) + 1n),
+        stringValue('last'),
+      ],
+      [0, 0, 0, 1],
+    );
+
+    try {
+      decodeMvt(tile, evidence);
+      expect.unreachable('unsafe duplicate integers must not be hidden by a later tag');
+    } catch (error) {
+      expect(error).toBeInstanceOf(TileDecodeError);
+      expect((error as TileDecodeError).code).toBe('tile-unsafe-64-bit-value');
+    }
   });
 
   it.each([

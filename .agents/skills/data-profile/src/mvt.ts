@@ -538,6 +538,7 @@ function validateLayer(bytes: Uint8Array): ValidatedLayer {
       const key = keys[feature.tags[index]!]!;
       const value = values[feature.tags[index + 1]!]!;
       if (value.exactInteger !== undefined) properties[key] = value.exactInteger;
+      else delete properties[key];
     }
     return properties;
   });

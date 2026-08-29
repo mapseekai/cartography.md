@@ -54,6 +54,8 @@ const commandGrammars: Record<string, CommandGrammar> = {
   rules: {positionals: 0, options: {}},
 };
 
+const topLevelOptions = new Set(['--help', '-h', '--version']);
+
 interface GrammarResult {
   normalizedRawArgs: string[];
   error?: string;
@@ -62,10 +64,16 @@ interface GrammarResult {
 
 function validateCommandGrammar(rawArgs: string[]): GrammarResult {
   const commandName = rawArgs[0];
-  const grammar = commandName === undefined ? undefined : commandGrammars[commandName];
-  if (commandName === undefined || !grammar || !(commandName in subCommands)) {
+  if (commandName === undefined || topLevelOptions.has(commandName)) {
     return {normalizedRawArgs: rawArgs};
   }
+  if (commandName.startsWith('-')) {
+    return {normalizedRawArgs: rawArgs, error: `Unknown option ${commandName}`};
+  }
+  if (!Object.hasOwn(commandGrammars, commandName) || !Object.hasOwn(subCommands, commandName)) {
+    return {normalizedRawArgs: rawArgs, error: `Unknown command ${commandName}.`};
+  }
+  const grammar = commandGrammars[commandName]!;
 
   const options: string[] = [];
   const positionals: string[] = [];
@@ -97,8 +105,10 @@ function validateCommandGrammar(rawArgs: string[]): GrammarResult {
       return {normalizedRawArgs: rawArgs, error: `Unknown option ${flag}`};
     }
     const optionName = flag.slice(2);
-    const option = grammar.options[optionName];
-    if (!option) return {normalizedRawArgs: rawArgs, error: `Unknown option ${flag}`};
+    if (!Object.hasOwn(grammar.options, optionName)) {
+      return {normalizedRawArgs: rawArgs, error: `Unknown option ${flag}`};
+    }
+    const option = grammar.options[optionName]!;
 
     if (option.kind === 'boolean') {
       if (equals >= 0) {

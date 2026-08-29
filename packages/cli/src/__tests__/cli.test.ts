@@ -114,6 +114,53 @@ Test.
 });
 
 describe('exact CLI grammar', () => {
+  it.each(['constructor', 'toString', '__proto__'])(
+    'rejects prototype-like command name %s before command output',
+    (command) => {
+      const result = runCli([command]);
+
+      expect(result.status).toBe(2);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toContain(`Unknown command ${command}`);
+      expect(result.stderr).not.toContain('USAGE rules');
+      expect(result.stderr).not.toContain('ERROR');
+    },
+  );
+
+  it.each(['constructor', 'toString', '__proto__'])(
+    'rejects prototype-like option --%s before lint work',
+    (option) => {
+      const result = runCli(['lint', file, `--${option}`, 'accepted']);
+
+      expect(result.status).toBe(2);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toContain(`Unknown option --${option}`);
+      expect(result.stderr).not.toContain('"valid"');
+      expect(result.stderr).not.toContain('ERROR');
+    },
+  );
+
+  it.each(['constructor', 'toString', '__proto__'])(
+    'rejects prototype-like top-level option --%s before help or command output',
+    (option) => {
+      const result = runCli([`--${option}`, 'accepted']);
+
+      expect(result.status).toBe(2);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toContain(`Unknown option --${option}`);
+      expect(result.stderr).not.toContain('USAGE cartography.md');
+      expect(result.stderr).not.toContain('ERROR');
+    },
+  );
+
+  it('rejects an unsupported top-level short option before output', () => {
+    const result = runCli(['-v']);
+
+    expect(result.status).toBe(2);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('Unknown option -v');
+  });
+
   it.each([
     ['lint format followed by an option', ['lint', file, '--format', '--strict'], '"valid"'],
     ['lint invalid format', ['lint', file, '--format', 'yaml'], '"valid"'],
@@ -145,9 +192,23 @@ describe('exact CLI grammar', () => {
     ['spec', ['spec', '--help']],
     ['rules', ['rules', '--help']],
     ['top-level', ['--help']],
+    ['top-level short help', ['-h']],
     ['top-level version', ['--version']],
   ])('preserves %s help or version handling', (_name, args) => {
     expect(runCli(args).status).toBe(0);
+  });
+
+  it.each([
+    ['lint', ['lint', file], '"valid": true'],
+    ['parse', ['parse', file], '"frontmatter"'],
+    ['diff', ['diff', file, file], '"regression": false'],
+    ['spec', ['spec'], '**Status:** Draft 0.2.0'],
+    ['rules', ['rules'], 'frontmatter-required'],
+  ])('preserves normal %s command execution', (_name, args, expectedOutput) => {
+    const result = runCli(args);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(expectedOutput);
   });
 
   it('accepts lint options on either side of the one positional input', () => {

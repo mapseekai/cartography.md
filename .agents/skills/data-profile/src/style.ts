@@ -8,6 +8,15 @@ import type {
 } from './types.js';
 
 const legacyFieldOperators = new Set(['==', '!=', '>', '>=', '<', '<=', 'in', '!in', '!has']);
+const sensitiveQueryKeys = new Set([
+  'token',
+  'access_token',
+  'api_key',
+  'key',
+  'signature',
+  'sig',
+  'auth',
+]);
 const templateFieldPattern = /\{([^{}]+)\}/g;
 
 interface FieldReferences {
@@ -18,6 +27,14 @@ interface FieldReferences {
 interface CollectorContext {
   legacyFilter: boolean;
   textField: boolean;
+}
+
+type CollectorMode = 'legacy-filter' | 'expression';
+
+interface SourceTemplate {
+  location: 'url' | `tiles/${number}`;
+  value: string;
+  credentialRedacted: boolean;
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -93,9 +110,9 @@ function collectReferences(
   }
 }
 
-function expressionReferences(value: unknown): FieldReferences {
+function referencesFor(value: unknown, mode: CollectorMode): FieldReferences {
   const references: FieldReferences = {fields: [], dynamic: false};
-  collectReferences(value, references, {legacyFilter: false, textField: false});
+  collectReferences(value, references, {legacyFilter: mode === 'legacy-filter', textField: false});
   return references;
 }
 
@@ -112,7 +129,7 @@ function layerReferences(layer: Record<string, unknown>): FieldReferences {
  * Arbitrary string literals are intentionally ignored.
  */
 export function collectReferencedFields(value: unknown): string[] {
-  return expressionReferences(value).fields;
+  return referencesFor(value, 'legacy-filter').fields;
 }
 
 function emptyLayerFact(evidence: Evidence): LayerFact {
@@ -149,12 +166,64 @@ function addUnresolved(
 }
 
 function isHttpUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value);
+}
+
+function isExplicitLocalTemplate(value: string): boolean {
+  return /^(?:\.(?:\.|\/)|\/(?!\/)|file:\/\/)/.test(value);
+}
+
+function isSensitiveQueryKey(value: string): boolean {
   try {
-    const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
+    return sensitiveQueryKeys.has(decodeURIComponent(value.replace(/\+/g, ' ')).toLowerCase());
   } catch {
-    return false;
+    return sensitiveQueryKeys.has(value.toLowerCase());
   }
+}
+
+function redactTemplate(value: string): {value: string; credentialRedacted: boolean} {
+  let redacted = false;
+  let withoutHash = value;
+  const hashIndex = withoutHash.indexOf('#');
+  if (hashIndex >= 0) {
+    withoutHash = withoutHash.slice(0, hashIndex);
+    redacted = true;
+  }
+
+  const queryIndex = withoutHash.indexOf('?');
+  const base = queryIndex >= 0 ? withoutHash.slice(0, queryIndex) : withoutHash;
+  const query = queryIndex >= 0 ? withoutHash.slice(queryIndex + 1) : undefined;
+  const authorityMatch = base.match(/^((?:[a-z][a-z\d+.-]*:)?\/\/)([^/?#]*)/i);
+  const authorityPrefix = authorityMatch?.[1];
+  const authority = authorityMatch?.[2];
+  const matchedAuthority = authorityMatch?.[0];
+  const sanitizedBase =
+    authorityPrefix && authority && matchedAuthority && authority.includes('@')
+      ? `${authorityPrefix}${authority.slice(authority.lastIndexOf('@') + 1)}${base.slice(
+          matchedAuthority.length,
+        )}`
+      : base;
+  if (sanitizedBase !== base) {
+    redacted = true;
+  }
+
+  if (query === undefined) {
+    return {value: sanitizedBase, credentialRedacted: redacted};
+  }
+
+  const safePairs = query.split('&').filter((pair) => {
+    const separator = pair.indexOf('=');
+    const key = separator >= 0 ? pair.slice(0, separator) : pair;
+    return !isSensitiveQueryKey(key);
+  });
+  if (safePairs.length !== query.split('&').length) {
+    redacted = true;
+  }
+
+  return {
+    value: safePairs.length === 0 ? sanitizedBase : `${sanitizedBase}?${safePairs.join('&')}`,
+    credentialRedacted: redacted,
+  };
 }
 
 function mergeMinzoom(layer: LayerFact, minzoom: unknown): void {
@@ -171,19 +240,19 @@ function mergeMaxzoom(layer: LayerFact, maxzoom: unknown): void {
   layer.maxzoom = layer.maxzoom === undefined ? maxzoom : Math.max(layer.maxzoom, maxzoom);
 }
 
-function sourceTiles(source: Record<string, unknown>): string[] {
-  const tiles: string[] = [];
+function sourceTemplates(source: Record<string, unknown>): SourceTemplate[] {
+  const templates: SourceTemplate[] = [];
   if (typeof source.url === 'string') {
-    tiles.push(source.url);
+    templates.push({location: 'url', ...redactTemplate(source.url)});
   }
   if (Array.isArray(source.tiles)) {
-    for (const tile of source.tiles) {
+    for (const [index, tile] of source.tiles.entries()) {
       if (typeof tile === 'string') {
-        tiles.push(tile);
+        templates.push({location: `tiles/${index}`, ...redactTemplate(tile)});
       }
     }
   }
-  return tiles;
+  return templates;
 }
 
 /**
@@ -212,16 +281,46 @@ export function discoverStyle(style: unknown, input: string): ProfileFragment {
 
       const location = `#/sources/${sourceId}`;
       const type = typeof source.type === 'string' ? source.type : 'unknown';
-      fragment.sources[sourceId] = sourceFact(type, sourceTiles(source), styleEvidence(input, location));
+      const templates = sourceTemplates(source);
+      fragment.sources[sourceId] = sourceFact(
+        type,
+        templates.map((template) => template.value),
+        styleEvidence(input, location),
+      );
 
-      if (typeof source.url === 'string' && !isHttpUrl(source.url)) {
-        addUnresolved(
-          fragment.unresolved,
-          'source-url-not-inspectable',
-          input,
-          `${location}/url`,
-          'The non-HTTP source URL cannot be inspected without a provider-specific fetcher.',
-        );
+      for (const template of templates) {
+        const templateLocation = `${location}/${template.location}`;
+        if (template.credentialRedacted) {
+          addUnresolved(
+            fragment.unresolved,
+            'credential-redacted',
+            input,
+            templateLocation,
+            'Credentials or sensitive URL data was redacted before this source template was retained.',
+          );
+        }
+        if (template.location === 'url' && !isHttpUrl(template.value)) {
+          addUnresolved(
+            fragment.unresolved,
+            'source-url-not-inspectable',
+            input,
+            templateLocation,
+            'The non-HTTP source URL cannot be inspected without a provider-specific fetcher.',
+          );
+        }
+        if (
+          template.location.startsWith('tiles/') &&
+          !isHttpUrl(template.value) &&
+          !isExplicitLocalTemplate(template.value)
+        ) {
+          addUnresolved(
+            fragment.unresolved,
+            'tile-template-not-inspectable',
+            input,
+            templateLocation,
+            'The tile template is neither HTTP(S) nor an explicit local path and cannot be inspected.',
+          );
+        }
       }
     }
   }

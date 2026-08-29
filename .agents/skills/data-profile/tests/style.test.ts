@@ -109,18 +109,73 @@ describe('discoverStyle', () => {
 });
 
 describe('collectReferencedFields', () => {
-  it('recognizes supported expression field positions', () => {
+  it('defaults to legacy filter semantics for direct callers', () => {
     expect(
       collectReferencedFields([
         'all',
         ['get', 'modern'],
         ['has', 'present'],
+        ['in', 'legacy', 'a', 'b'],
         ['literal', 'not-a-field'],
       ]),
-    ).toEqual(['modern', 'present']);
+    ).toEqual(['modern', 'present', 'legacy']);
   });
 
   it('does not recurse into literal expression values', () => {
     expect(collectReferencedFields(['literal', ['get', 'not_a_field']])).toEqual([]);
+  });
+});
+
+describe('style source templates', () => {
+  it('redacts credentials and sensitive query values before retaining source templates', () => {
+    const fragment = discoverStyle(
+      {
+        sources: {
+          roads: {
+            type: 'vector',
+            url: 'https://user:password@tiles.example/roads.json?token=top-secret&lang=en#private',
+            tiles: ['https://tiles.example/{z}/{x}/{y}.pbf?access_token=also-secret&locale=en'],
+          },
+        },
+      },
+      'style.json',
+    );
+
+    expect(fragment.sources.roads.tileTemplates).toEqual([
+      'https://tiles.example/roads.json?lang=en',
+      'https://tiles.example/{z}/{x}/{y}.pbf?locale=en',
+    ]);
+    expect(fragment.unresolved.map((item) => item.code)).toContain('credential-redacted');
+    expect(JSON.stringify(fragment)).not.toContain('user');
+    expect(JSON.stringify(fragment)).not.toContain('password');
+    expect(JSON.stringify(fragment)).not.toContain('top-secret');
+    expect(JSON.stringify(fragment)).not.toContain('also-secret');
+  });
+
+  it('reports non-HTTP non-local tile templates as unresolved while retaining safe templates', () => {
+    const fragment = discoverStyle(
+      {
+        sources: {
+          roads: {
+            type: 'vector',
+            tiles: [
+              'mapbox://tileset/{z}/{x}/{y}',
+              'https://tiles.example/{z}/{x}/{y}.pbf',
+              './tiles/{z}/{x}/{y}.pbf',
+              '/tiles/{z}/{x}/{y}.pbf',
+            ],
+          },
+        },
+      },
+      'style.json',
+    );
+
+    expect(fragment.sources.roads.tileTemplates).toEqual([
+      'mapbox://tileset/{z}/{x}/{y}',
+      'https://tiles.example/{z}/{x}/{y}.pbf',
+      './tiles/{z}/{x}/{y}.pbf',
+      '/tiles/{z}/{x}/{y}.pbf',
+    ]);
+    expect(fragment.unresolved.map((item) => item.code)).toContain('tile-template-not-inspectable');
   });
 });

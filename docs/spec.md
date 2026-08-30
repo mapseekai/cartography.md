@@ -5,49 +5,120 @@
 **Canonical file name:** `CARTOGRAPHY.md`  
 **中文版:** [spec.zh-CN.md](spec.zh-CN.md)
 
-CARTOGRAPHY.md is a self-contained format for preserving a cartographic design system. It combines machine-readable YAML tokens with human-readable Markdown judgment so people and agents can apply one stable visual identity across datasets, subjects, and tasks.
+CARTOGRAPHY.md is a self-contained, renderer-neutral format for preserving a cartographic design system. It gives humans and agents a durable description of how a family of maps should look, feel, and behave even when the dataset, subject, task, scale, or implementation technology changes.
+
+The format combines two complementary forms of design knowledge:
+
+- YAML front matter records exact, reusable design values.
+- Markdown prose records visual identity, relationships, judgment, exceptions, and examples.
+
+The prose is where the design system is explained. Tokens support that explanation with precision; they are not rendering instructions. This document defines the content and meaning of CARTOGRAPHY.md. It does not specify how a particular validator, renderer, or generator must be implemented.
 
 This document is normative unless a passage is explicitly marked informative.
 
 ## Purpose
 
-A CARTOGRAPHY.md document records durable visual identity and cartographic judgment:
+A map style can list colors, widths, fonts, symbols, and layer properties without explaining why those choices belong together. It can reproduce one output while failing to preserve the design logic that should guide the next dataset, task, or scale. CARTOGRAPHY.md fills that gap.
 
-- the visual world the design should evoke;
-- the audience and long-lived contexts it serves;
-- the relative prominence of background, context, subject, focus, and critical states;
-- exact reusable color, typography, width, size, and opacity values;
-- principles for labels, geometry, symbols, scale transitions, composition, interaction states, accessibility, and review.
+A CARTOGRAPHY.md document SHOULD make it possible for a reader to answer all of these questions:
 
-The document does not record a one-time user request, the fields or sources of a particular dataset, or instructions for a particular output system. Those are operation-time inputs. Core parsing, linting, and diffing accept one CARTOGRAPHY.md document and assess only that document.
+- What visual world does this design system evoke?
+- What makes maps from this system recognizable as one family?
+- Which qualities should remain stable across subjects and tasks?
+- What is visually dominant, supporting, quiet, exceptional, or prohibited?
+- Which exact design values are reused, and what semantic roles do they have?
+- How do labels, geometry, symbols, density, and composition behave?
+- How does the map reveal or remove detail as scale changes?
+- How do interaction states add emphasis without rewriting meaning?
+- What accessibility principles apply beyond a single contrast calculation?
+- What should a reviewer protect when adapting the system to a new map?
+
+CARTOGRAPHY.md stores durable design decisions. It MUST NOT become a container for operation-time facts such as a current user request, dataset field names, source identifiers, data values, output-layer identifiers, target-format properties, generated-file paths, or temporary implementation choices.
+
+The same CARTOGRAPHY.md SHOULD be reusable for different subjects. A road map and an ecological map may use different data and different visual encodings while still sharing the same paper tone, typographic voice, hierarchy, density, emphasis discipline, and state behavior.
+
+## Scope and boundaries
+
+The format governs cartographic design identity, not a particular data model or rendering language.
+
+It includes:
+
+- exact visual tokens;
+- the design system's identity and long-lived audience assumptions;
+- hierarchy, color, typography, label, geometry, and symbol principles;
+- scale progression and generalization principles;
+- layering, composition, interaction, accessibility, and review guidance;
+- explicit positive and negative examples.
+
+It excludes:
+
+- one-time user tasks or prompts;
+- dataset schemas, fields, categories, ranges, units, IDs, or sampled values;
+- target-specific source, layer, expression, paint, or layout properties;
+- runtime plans, generated artifacts, and adapter interfaces;
+- claims that syntax alone proves visual or professional quality.
+
+Operation-time tools MAY combine CARTOGRAPHY.md with current tasks, data profiles, existing outputs, or target-specific capabilities. Those inputs remain external to this format and MUST NOT be written into CARTOGRAPHY.md merely because they are useful for one operation.
+
+“Self-contained” means that the design system's identity and rules can be understood from CARTOGRAPHY.md alone. It does not mean that CARTOGRAPHY.md contains every input needed to generate a particular map.
+
+A useful durability test is:
+
+- if a statement should still guide several datasets, subjects, or tasks, it belongs in CARTOGRAPHY.md;
+- if it becomes false when the current dataset or request changes, it belongs in operation-time context;
+- if it names how one target technology implements a decision, it belongs in target-specific tooling or documentation.
 
 ## Normative language
 
 The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHOULD**, **SHOULD NOT**, and **MAY** express normative requirement levels.
 
-## Design goals
+- **MUST** and **MUST NOT** define requirements necessary for format validity or preservation of meaning.
+- **SHOULD** and **SHOULD NOT** define strong design guidance that may be overridden only for a documented reason.
+- **MAY** identifies an optional capability or expression.
 
-The format has these goals:
+Normative requirements describe the document and its semantics. They do not imply that every design judgment can be checked automatically.
 
-1. **Prose first.** Prose carries design judgment, boundaries, tradeoffs, and exceptions.
-2. **Exact context.** Tokens provide reusable values where precision matters.
-3. **Portability.** A document remains useful across datasets, subjects, tasks, and output technologies.
-4. **Human and agent readability.** The same file supports professional review and agent use.
-5. **Determinism.** Equivalent source produces equivalent parsed values and findings.
-6. **Open growth.** Named extensions and unknown token groups can preserve project-specific information without changing core meaning.
-7. **Honest validation.** A successful lint establishes document-internal validity only.
+## Design philosophy
+
+### Prose carries the design
+
+Exact values alone do not produce a coherent map family. A color value cannot explain why it is scarce, why a label disappears before a subject line, or why selection must not erase a warning state. The Markdown body MUST explain the relationships and judgment behind the values.
+
+Descriptions such as “clean,” “modern,” “professional,” or “beautiful” are too broad to guide reliable design. A strong document uses concrete references and choices: warm archival paper rather than pure white, graphite-like text rather than maximum black, quiet context rather than uniformly saturated layers, or technical annotation rather than decorative labeling.
+
+### Tokens provide exact context
+
+Tokens are named values that prevent accidental drift. They help an agent use the same canvas, ink, accent, width, size, or opacity across tasks. A token name SHOULD express a role such as `canvas`, `context`, `subject`, `critical`, or `selection`, rather than an incidental appearance such as `blue500` or `thickLine`.
+
+Tokens do not define target-format properties. A `widths.emphasis` token describes a reusable design value; a downstream tool decides how that value maps into its own output language.
+
+### Identity is stable; expression adapts
+
+Reuse does not mean every map looks identical. Geometry, data scale, information density, and task can change the appropriate expression. The design system supplies the stable family resemblance and the principles used to adapt it.
+
+For example, one system may use a scarce brick accent for decisive focus. A line-based network might express that accent through casing, while an area-based thematic map might use a boundary or annotation. The implementation differs, but the accent remains scarce and semantically consistent.
+
+### Relationships matter more than isolated values
+
+Cartographic quality emerges from relationships: figure and ground, subject and context, text and background, dense and sparse regions, default and selected states, overview and detail. The document SHOULD describe these relationships explicitly so that changing one value does not silently destroy the larger system.
+
+### Professional judgment remains visible
+
+The format does not reduce cartography to a single score or algorithm. It preserves the reasoning that a professional reviewer needs: what is emphasized, what is restrained, where exceptions are allowed, and what would make an output misleading or visually inconsistent.
 
 ## Discovery
 
 The canonical file name is `CARTOGRAPHY.md`.
 
-A tool SHOULD use an explicit caller-supplied path when present. Otherwise it MAY search the current directory and then its ancestors for the nearest file with the canonical name. File-name matching SHOULD be case-sensitive on every platform for reproducibility.
+A consumer SHOULD use an explicit caller-supplied path when one is available. Otherwise it MAY search the current directory and then ancestor directories for the nearest file with the canonical name. File-name matching SHOULD be case-sensitive on every platform for reproducibility.
 
-A repository MAY contain multiple documents. Unless a tool defines a narrower scope, a document applies to its containing directory and descendants.
+A repository MAY contain multiple CARTOGRAPHY.md files. Unless a consumer defines a narrower rule, a document applies to its containing directory and descendants. A more deeply nested document MAY specialize the design system for a clearly bounded part of a project, but it SHOULD preserve the parent system's identity unless it explicitly declares a different design family.
+
+Version 0.2.0 defines scope selection, not document inheritance. The nearest applicable CARTOGRAPHY.md replaces the parent document for that scope. Consumers MUST NOT automatically merge parent and child tokens, prose, `omitted`, or `extensions` unless an external tool explicitly defines and discloses its own merge policy.
 
 ## Document structure
 
-A document has exactly two structural layers:
+A CARTOGRAPHY.md document has exactly two structural layers:
 
 1. YAML front matter delimited by `---` at the beginning of the file;
 2. Markdown prose organized with canonical `##` headings.
@@ -58,8 +129,8 @@ version: "0.2.0"
 name: Quiet civic atlas
 tokens:
   colors:
-    ink: "#24303A"
     canvas: "#F4F1E8"
+    ink: "#24303A"
 ---
 
 ## Overview
@@ -67,97 +138,189 @@ tokens:
 An archival civic atlas with warm paper, restrained ink, and one scarce accent.
 ```
 
-The front matter supplies exact values. The Markdown body explains why those values exist, when they apply, and which relationships an implementation must preserve.
+The front matter gives exact values and compact metadata. The Markdown body explains why those values exist, how they relate, when they apply, and what must remain recognizable when the system is adapted.
+
+When an exact front-matter value conflicts with prose, the exact value takes precedence for that value. The contradiction SHOULD still be corrected because it makes the design system ambiguous to human and agent readers.
 
 ## Deterministic YAML
 
 Front matter MUST use a safe, deterministic YAML subset.
 
-It MAY contain mappings with string keys, sequences, strings, finite numbers, booleans, and `null`. Dates, timestamps, leading-zero values, and ambiguous words SHOULD be quoted.
+It MAY contain mappings with string keys, sequences, strings, finite numbers, booleans, and `null`.
 
-It MUST NOT contain:
+It MUST NOT contain duplicate keys, anchors or aliases, merge keys, custom tags or executable values, tab indentation, block scalars, implicit environment-variable expansion, or non-finite values such as `.nan`, `.inf`, or `-.inf`.
 
-- duplicate mapping keys;
-- anchors or aliases;
-- merge keys;
-- custom tags or executable values;
-- tab indentation;
-- block scalars;
-- implicit environment-variable expansion;
-- non-finite numbers.
+Dates, timestamps, values with leading zeroes, and words that could be interpreted as booleans SHOULD be quoted. Long rationale MUST be written in Markdown rather than hidden inside multiline YAML.
 
-Long rationale belongs in Markdown. Reusable exact values SHOULD be expressed as named tokens and token references.
+The YAML is configuration-like in syntax but design-system-like in meaning. It SHOULD remain compact enough that the prose is visibly the primary source of design judgment.
 
 ## Root schema
 
-The front matter has the following root fields. This table is the complete normative root schema for version 0.2.0.
+The front matter has eight normative root fields in version 0.2.0.
 
-| Field | Required | Type | Meaning |
-|---|---:|---|---|
-| `version` | yes | literal `"0.2.0"` | Format version used by the document. |
-| `name` | yes | non-empty string | Human-readable name of the design system. |
-| `description` | no | string | Concise catalog description. |
-| `locale` | no | non-empty string | Primary language or locale of the document. |
-| `tokens` | no | `TokenSet` | Open collection of exact reusable design values. |
-| `accessibility` | no | `Accessibility` | Explicit document-internal contrast relationships. |
-| `omitted` | no | `OmittedSection[]` | Canonical Markdown sections intentionally omitted. |
-| `extensions` | no | object | Project-specific structured data with no core semantics. |
+```yaml
+version: "0.2.0"
+name: <non-empty string>
+description: <string?>
+locale: <non-empty string?>
+tokens: <TokenSet?>
+accessibility: <Accessibility?>
+omitted: <OmittedSection[]?>
+extensions: <object?>
+```
 
-Unknown root keys are preserved. A validator MAY warn about them, especially when a key resembles a normative key. Intentional custom data SHOULD be placed under `extensions`, use an `x-` prefix, or use a namespaced key such as `acme:review`.
+The `?` suffix means that the field is optional; it does not mean that `null` is accepted. Normative root keys and known token-group names are case-sensitive.
 
-`version` and `name` are the only required root fields. Version 0.2.0 does not define root fields for operation-time tasks, datasets, output technologies, generated files, or provenance.
+### `version`
+
+`version` is REQUIRED and MUST equal `"0.2.0"`. It identifies the CARTOGRAPHY.md format version, not the revision of a particular design system or a target technology.
+
+### `name`
+
+`name` is REQUIRED and MUST contain a non-whitespace character. It identifies the design family, not one map, dataset, or task. Prefer `Quiet Civic Atlas` over `roads-v4`.
+
+### `description`
+
+`description` is OPTIONAL. It SHOULD be one concise sentence suitable for a catalog or agent context. It summarizes identity and scope but does not replace the Markdown body.
+
+### `locale`
+
+`locale` is OPTIONAL and MUST be non-blank when present. It identifies the document's primary language, not the languages available in current data. Label-language principles belong in `Typography & Labels`.
+
+### `tokens`
+
+`tokens` is OPTIONAL and contains exact reusable design values. It is open: known groups have defined semantics and unknown groups are preserved. A prose-only document can be valid, but a mature system SHOULD tokenize values whose consistency matters.
+
+### `accessibility`
+
+`accessibility` is OPTIONAL. Version 0.2.0 defines exact `contrastPairs`; broader accessibility guidance belongs in the Markdown section.
+
+### `omitted`
+
+`omitted` is OPTIONAL and records canonical Markdown sections intentionally absent. Omission is a documented design choice, not a shortcut for unfinished work.
+
+### `extensions`
+
+`extensions` is OPTIONAL and preserves project-specific structured information with no core semantics. Extensions MUST NOT redefine a normative field incompatibly.
+
+Extension values use the same deterministic YAML value types as the rest of front matter. Extension owners SHOULD use namespaced keys, describe their meaning in prose or external documentation, and define their own conflict rules.
+
+### Unknown root keys
+
+Unknown root keys are preserved. Intentional custom data SHOULD normally use `extensions`, an `x-` prefix, or a namespace such as `acme:review`. A key resembling a normative field is likely a spelling mistake and SHOULD be surfaced rather than guessed.
+
+The root schema deliberately has no fields for datasets, source layers, user tasks, target formats, output files, adapters, or provenance.
 
 ## Token types
 
-`tokens` is an open mapping. A document MAY define any additional token group, and consumers MUST preserve unknown groups. The following groups have core validation semantics.
+### General token principles
 
-| Group | Value type | Requirements |
-|---|---|---|
-| `colors` | map of strings | Each value MUST be a non-empty generic CSS color or an exact reference resolving to one. |
-| `typography` | map of `TypographyToken` | Each value is an exact reference or an open typography object. |
-| `widths` | map of `DimensionToken` | Each value is a non-negative number, a supported dimension string, or an exact reference. |
-| `sizes` | map of `DimensionToken` | Each value is a non-negative number, a supported dimension string, or an exact reference. |
-| `opacities` | map of numbers or references | Each number MUST be in the inclusive range 0–1. |
+`tokens` is an open mapping. Token names SHOULD describe purpose rather than appearance, remain stable when literal values change, avoid dataset and target-property names, and expose relationships such as `context`, `subject`, `focus`, and `critical`.
 
-These requirements apply after exact reference resolution. A known-group token MAY reference another group when the resolved value matches the destination type. Broken and cyclic references are reported by `token-reference` without a second type finding.
+A design system SHOULD avoid near-duplicate tokens whose distinctions cannot be explained.
 
-A dimension string is a non-negative decimal followed by `px`, `pt`, `mm`, `cm`, `in`, `em`, `rem`, or `%`.
+The five known groups are:
 
-A typography object is open and MAY contain:
-
-| Field | Type |
+| Group | Core value semantics |
 |---|---|
-| `fontFamily` | non-empty string or non-empty array of non-empty strings |
-| `fontSize` | `DimensionToken` |
-| `fontWeight` | number from 1 through 1000, or non-empty string |
-| `lineHeight` | positive number or `DimensionToken` |
-| `letterSpacing` | finite number or non-empty string |
+| `colors` | Generic CSS Color Level 4 value or exact reference resolving to one. |
+| `typography` | Open typography object or exact reference resolving to one. |
+| `widths` | `DimensionToken`. |
+| `sizes` | `DimensionToken`. |
+| `opacities` | Finite number from 0 through 1 or exact reference resolving to one. |
 
-Token names SHOULD describe semantic roles rather than incidental appearance. A strong semantic color SHOULD have one stable meaning. Interaction emphasis SHOULD preserve an underlying business meaning when both must remain visible.
+A `DimensionToken` is a non-negative finite number, a supported dimension string, or an exact reference resolving to either form. A supported dimension string is a non-negative decimal followed by `px`, `pt`, `mm`, `cm`, `in`, `em`, `rem`, or `%`.
 
-## Token references
+### `colors`
 
-A token reference uses the form `{path.to.value}`. Each dot-separated name segment is non-empty and contains letters, numbers, `_`, or `-`; numeric array indexes are attached as `[n]`. Leading, trailing, or repeated dots, empty or non-numeric brackets, and a name joined directly after an index are invalid.
+`tokens.colors` maps names to generic CSS Color Level 4 strings or exact references resolving to such colors. Supported families include hexadecimal, named, `rgb()`, `hsl()`, `hwb()`, Lab/LCH, OKLab/OKLCH, and `color()` forms defined by that standard.
 
 ```yaml
 tokens:
   colors:
-    ink: "#24303A"
+    canvas: "#F7F5EF"
+    ink: "#1F2933"
+    water: "oklch(82% 0.05 220)"
     label: "{tokens.colors.ink}"
+```
+
+Color tokens SHOULD have durable semantic roles. Palette relationships and exceptions belong in the prose `Color` section.
+
+### `typography`
+
+`tokens.typography` maps names to open typography objects or exact references resolving to them.
+
+| Field | Meaning and constraints |
+|---|---|
+| `fontFamily` | Non-empty string or non-empty array of non-empty fallback names. |
+| `fontSize` | `DimensionToken`. |
+| `fontWeight` | Finite number from 1 through 1000, or non-empty string. |
+| `lineHeight` | Positive unitless number, or a `DimensionToken`. A zero dimension string is structurally permitted but SHOULD NOT be used for readable text. |
+| `letterSpacing` | Finite number or non-empty string. |
+
+Typography tokens provide exact values; hierarchy, density, collision, language, and halo behavior remain prose decisions.
+
+### `widths` and `sizes`
+
+`tokens.widths` and `tokens.sizes` map names to `DimensionToken` values.
+
+Widths commonly describe line weight, casing, halo, or outline. Sizes commonly describe symbols and other reusable dimensions. Names SHOULD express hierarchy or function.
+
+### `opacities`
+
+`tokens.opacities` maps names to finite numbers from 0 through 1 or exact references. Opacity can make context recede, but can also disappear unpredictably over changing backgrounds. Prose SHOULD state what it communicates and the minimum visibility to preserve.
+
+### Unknown token groups
+
+Projects MAY define patterns, dash rhythms, symbol families, or other groups. Unknown groups are preserved but have no core interpretation. They SHOULD still use semantic naming, durable meaning, target independence, and prose explanation.
+
+### References across groups
+
+A token MAY reference another group when the resolved value is valid for the destination group. A width may reuse a dimension; a width MUST NOT resolve to a color merely because the path exists.
+
+## Token references
+
+A token reference uses `{path.to.value}`. Each dot-separated name segment is non-empty and contains letters, numbers, `_`, or `-`; numeric array indexes are appended as `[n]`.
+
+`n` is one or more decimal digits interpreted as a non-negative integer. Signs, whitespace, names, and arithmetic expressions are not valid inside brackets. Leading zeroes are accepted but SHOULD be avoided because they obscure the intended index.
+
+Valid examples:
+
+```text
+{tokens.colors.ink}
+{tokens.typography.fallbacks[0]}
+{extensions.acme-review.palette.primary}
+```
+
+Invalid examples:
+
+```text
+{tokens..colors.ink}
+{tokens.colors.ink[ ]}
+{tokens.colors.ink[+1]}
+{tokens.colors.ink[name]}
+{tokens.colors.ink.}
 ```
 
 Rules:
 
 1. Every reference MUST resolve within the same front matter.
-2. A reference in YAML MUST occupy the entire string.
-3. Markdown prose MAY embed references within a sentence.
-4. Array indexes such as `[0]` resolve only own numeric array properties; inherited sparse indices are ignored.
-5. Broken references and reference cycles are errors.
-6. Consumers MUST NOT silently substitute a fallback for an unresolved reference.
+2. YAML references MUST occupy the entire scalar string.
+3. Visible Markdown prose MAY embed references within sentences.
+4. References inside fenced code, inline code, or HTML comments are illustrative and are not applied.
+5. An array index MUST identify an element that actually exists in the referenced YAML sequence; a missing or sparse index is unresolved.
+6. Broken references and cycles are errors.
+7. Consumers MUST NOT invent or silently substitute a fallback.
+
+References should improve consistency rather than obscure meaning. Deep chains SHOULD be avoided.
+
+An embedded prose reference is a semantic cross-link to the exact front-matter value. When an agent applies the design, it resolves that link to understand the named value and relationship. It is not a requirement to replace the visible Markdown text during display or serialization; consumers MAY continue to show the literal `{path}` notation to readers.
 
 ## Accessibility
 
-`accessibility.contrastPairs` declares exact color relationships that the core validator can calculate.
+### Exact contrast relationships
+
+`accessibility.contrastPairs` declares exact relationships that matter to the design system.
 
 ```yaml
 accessibility:
@@ -169,23 +332,29 @@ accessibility:
       kind: text
 ```
 
-Each contrast pair has this shape:
+| Field | Required | Meaning |
+|---|---:|---|
+| `id` | yes | Stable non-empty identifier. |
+| `foreground` | yes | CSS color or reference resolving to one. |
+| `background` | yes | CSS color or reference resolving to one. |
+| `minimum` | yes | Positive finite WCAG 2.1 ratio. |
+| `kind` | no | `text`, `large-text`, or `graphic`. |
 
-| Field | Required | Type | Meaning |
-|---|---:|---|---|
-| `id` | yes | non-empty string | Stable identifier for the declared relationship. |
-| `foreground` | yes | non-empty string | CSS color or exact reference resolving to a color. |
-| `background` | yes | non-empty string | CSS color or exact reference resolving to a color. |
-| `minimum` | yes | positive finite number | Minimum WCAG 2.1 contrast ratio. |
-| `kind` | no | `text`, `large-text`, or `graphic` | Informative classification of the relationship. |
+Both colors MUST be fully opaque. Semitransparent contrast depends on compositing and cannot be established from isolated values.
 
-The object is open, so additional project keys are preserved.
+WCAG 2.1 relative luminance is defined in the sRGB color space. For a declared pair, consumers MUST convert each resolved opaque color deterministically to sRGB before calculating the ratio. Authors SHOULD prefer colors already inside the sRGB gamut for portable exact relationships. If an out-of-gamut color requires gamut mapping, the chosen mapping MUST be documented because different mappings can produce different ratios.
 
-A contrast pair MUST resolve to two fully opaque colors. Transparent or semitransparent values are an error because WCAG 2.1 contrast requires the rendered compositing result. A passing contrast-pair check proves only that the declared opaque color values meet the declared numeric minimum. It does not establish accessibility for every composition, background, scale, state, device, or use context. The Markdown `Accessibility` section MUST carry the broader design judgment.
+Meaningful WCAG 2.1 contrast ratios range from 1:1 through 21:1. A `minimum` outside that range does not describe a useful WCAG threshold and SHOULD NOT be used. Contrast-pair IDs SHOULD be unique within the document.
+
+The `accessibility` object is open. It MAY be present without `contrastPairs`, and additional project-specific accessibility keys are preserved. Such keys have no core semantics and SHOULD be explained in the Markdown `Accessibility` section.
+
+### Accessibility is broader than contrast
+
+A pair does not prove accessibility over imagery, blended fills, changing backgrounds, dense labels, interaction states, or color-vision differences. The Markdown section SHOULD explain redundant channels, grayscale behavior, minimum readable text and symbols, small-screen behavior, difficult backgrounds, and risks requiring rendered review.
 
 ## Markdown sections
 
-The Markdown body uses the following canonical `##` sections in this order:
+The Markdown body is the core design narrative. It uses these canonical `##` sections in order:
 
 1. `Overview`
 2. `Intent & Audience`
@@ -200,171 +369,175 @@ The Markdown body uses the following canonical `##` sections in this order:
 11. `Review Principles`
 12. `Do's and Don'ts`
 
-Their responsibilities are:
+Every canonical section MUST be accounted for exactly once: either it appears in the Markdown body or it is named in `omitted`. Unknown sections are preserved. A canonical section MUST NOT appear twice, including through aliases. Present sections SHOULD follow this order. A document that silently lacks a section is incomplete even if its front matter is otherwise valid.
 
-| Section | Responsibility |
-|---|---|
-| `Overview` | Establish a concrete visual world and recognizable family, not a list of generic adjectives. |
-| `Intent & Audience` | Describe long-lived contexts and people served by the design system, not a one-time request. |
-| `Visual Hierarchy` | Define stable prominence relationships among background, context, subject, focus, and critical states. |
-| `Color` | Explain palette roles, scarcity of emphasis, and lightness and saturation tradeoffs. |
-| `Typography & Labels` | Define typographic character, label hierarchy, density, conflict handling, and readability. |
-| `Geometry & Symbols` | Define the family language for points, lines, areas, textures, patterns, and symbols without binding it to particular data. |
-| `Scale & Generalization` | Describe output-independent stages of progressive disclosure and cartographic generalization without numeric view levels. |
-| `Layering & Composition` | Explain stacking, whitespace, density, balance, and focal composition without concrete identifiers or ordering values. |
-| `Interaction States` | Define visual relationships among hover, selection, alert, invalid, and related states while preserving underlying semantics. |
-| `Accessibility` | Cover redundant channels, color vision, contrast, small-screen labels, and critical-state legibility. |
-| `Review Principles` | State durable professional review dimensions and questions. |
-| `Do's and Don'ts` | Protect the visual family with forceful positive and negative examples. |
+Heading normalization trims surrounding whitespace, removes a trailing colon, normalizes curly apostrophes, collapses repeated whitespace, and compares aliases case-insensitively. The recognized aliases are:
 
-English headings and the recognized Chinese aliases normalize to the same canonical names. Unknown `##` sections are preserved. A canonical section MUST NOT appear more than once. Present canonical sections SHOULD follow the order above. An empty canonical section produces a warning. Missing sections produce findings unless declared in `omitted`.
+| Canonical section | English aliases | Chinese aliases |
+|---|---|---|
+| `Overview` | `overview`, `purpose` | `概述`, `目的` |
+| `Intent & Audience` | `map intent`, `intent`, `intent and audience`, `intent & audience` | `地图意图`, `意图与受众` |
+| `Visual Hierarchy` | `hierarchy`, `visual hierarchy` | `视觉层级` |
+| `Color` | `color`, `colors` | `色彩`, `颜色` |
+| `Typography & Labels` | `labels`, `typography`, `typography and labels`, `typography & labels` | `字体与标注`, `标注` |
+| `Geometry & Symbols` | `geometry`, `symbols`, `geometry and symbols`, `geometry & symbols` | `几何与符号` |
+| `Scale & Generalization` | `scale`, `generalization`, `scale and generalization`, `scale & generalization` | `比例尺与制图综合` |
+| `Layering & Composition` | `layering`, `composition`, `layering and composition`, `layering & composition` | `层叠与构图` |
+| `Interaction States` | `states`, `interaction states` | `交互状态` |
+| `Accessibility` | `accessibility` | `无障碍` |
+| `Review Principles` | `review`, `review principles` | `评审原则` |
+| `Do's and Don'ts` | `do's and don'ts`, `dos and donts` | `正反例`, `应该与不应该` |
+
+### `Overview`
+
+`Overview` establishes the visual world in language rich enough to guide choices with no explicit token. It SHOULD describe concrete references, tone, family resemblance, restraint versus emphasis, and what the system refuses to resemble. It SHOULD NOT be a current project brief, dataset description, generic adjective list, or repetition of token values.
+
+Useful questions: What remains recognizable if values shift? Which publication, material, instrument, or mapping tradition evokes the system? What should a viewer feel before reading? Which visual temptation must be resisted?
+
+> Example: A quiet civic atlas printed on warm archival paper—precise ink, pale cool water, compact humanist labels, and one brick accent used only for decisive focus; never glossy, neon, or dashboard-like.
+
+### `Intent & Audience`
+
+This section records long-lived contexts and audience characteristics. It SHOULD describe recurring reading modes, map literacy, domain familiarity, reading conditions, density, tone, and the balance between experts and general readers.
+
+A durable intent is not a current request. “Support calm public orientation and careful comparison” belongs here; “highlight this month's failures” does not.
+
+Useful questions: Who should understand the map without training? Who needs extra precision? Is it read slowly or scanned under pressure? How much density can the audience interpret?
+
+Durable media guidance also belongs here: screen versus print, expected physical size, viewing distance, color-management assumptions, and field or presentation conditions. Device-specific implementation settings remain external.
+
+### `Visual Hierarchy`
+
+This section defines stable prominence among **background**, **context**, **subject**, **focus**, and **critical** information. These are roles, not required layer names.
+
+It SHOULD explain which channels establish order first, how many focal points are allowed, how context remains useful without competing, how critical differs from ordinary emphasis, and what happens when roles overlap. Hierarchy SHOULD remain legible without hue alone.
+
+### `Color`
+
+This section explains palette roles, not attractive swatches. It SHOULD describe canvas, ink, context, subject, accent, critical, unknown, and selection roles when applicable; lightness and saturation ranges; accent scarcity; stable meanings; and family resemblance across backgrounds.
+
+Establish hierarchy with lightness and weight before saturation. Do not reuse critical color as decoration. Do not assign categories by unstable input order. Keep unknown and normal distinct. Selection SHOULD add emphasis rather than replace meaningful color.
+
+### `Typography & Labels`
+
+This section defines the voice and behavior of text: font personality and fallbacks; hierarchy by semantic role; size, weight, casing, spacing, and halo relationships; script/language behavior; density, collision, repetition, and abbreviation; reduction order; difficult-background and small-screen behavior.
+
+Lower-priority labels SHOULD disappear before important text becomes unreadably small. Latin conventions MUST NOT be blindly applied to other scripts. Halos exist for separation, not decoration.
+
+The section SHOULD address right-to-left layout, complex-script shaping, localized number/date formatting, and mixed-script fallback whenever those concerns are durable parts of the design system.
+
+### `Geometry & Symbols`
+
+This section defines family language for points, lines, areas, boundaries, textures, patterns, and symbols. It SHOULD explain line character and weight relationships, fill/boundary behavior, symbol silhouettes, familiar versus custom conventions, cross-geometry family resemblance, and detail to avoid at small sizes.
+
+The same meaning may adapt across geometry: criticality can use shape plus outline for points, casing plus pattern for lines, and boundary plus texture for areas.
+
+Durable projection or coordinate-reference preferences MAY be explained here when they materially shape geometry, direction, distortion, or the visual world. Dataset-specific CRS facts and transformation parameters remain operation-time context.
+
+### `Scale & Generalization`
+
+This section explains change across reading scales without target-specific numeric view levels. It SHOULD describe semantic stages such as overview, regional, local, and detail; what enters or leaves; label density; weight and size change; aggregation or simplification; preserved relationships; and avoidance of abrupt jumps.
+
+Visual disclosure is not the same as geometric simplification, aggregation, displacement, or topology protection. The document SHOULD keep that boundary honest.
+
+### `Layering & Composition`
+
+This section describes figure-ground, conceptual stacking, whitespace, density, rhythm, balance, overlap, and aspect-ratio adaptation. It MUST NOT list target layer IDs or concrete ordering values; it explains why information sits above or below other information.
+
+A composition SHOULD have one clear primary subject. Temporary focus may sit above it but SHOULD NOT erase its meaning.
+
+When they are part of the map family, this section SHOULD also describe titles, legends, scale indicators, north arrows, graticules, annotations, insets, attribution, frames, and other marginal elements. It defines their visual role and placement principles, not target-specific widgets.
+
+### `Interaction States`
+
+This section defines default, hover, selection, focus, alert, invalid, disabled, uncertain, and editing states when relevant. Interaction is emphasis, not reclassification. Selected critical information remains critical.
+
+It SHOULD explain coexistence precedence, permitted channels, differences between hover/selection/alert, accessible invalid/uncertain states, and fallback when a target cannot express the preferred state.
+
+### `Accessibility`
+
+This section covers realistic contrast, redundant critical channels, grayscale and color-vision behavior, minimum readable text/symbols, small-screen and dense-scene behavior, imagery legibility, state distinctions, and motion restraint when relevant.
+
+Color MUST NOT be the only carrier of critical meaning. Redundancy may use shape, pattern, text, weight, outline, or position.
+
+For interactive maps, durable guidance MAY also cover keyboard focus, text alternatives, announcements, and screen-reader relationships in the surrounding interface. CARTOGRAPHY.md describes the design intent; application code remains responsible for exposing those semantics.
+
+### `Review Principles`
+
+This section tells reviewers what to protect. It SHOULD address identity, hierarchy, legibility, density, consistency, accessibility, adaptation, and honesty. Review should ask whether the result belongs to the family, remains readable, adapts without losing identity, and avoids implying unsupported certainty or importance.
+
+Recurring review scenarios MAY be listed, but they do not replace rendered inspection or professional judgment.
+
+### `Do's and Don'ts`
+
+This section protects the family with concrete paired examples:
+
+- Do reserve the brick accent for decisive focus. Don't turn it into a generic category palette.
+- Do remove low-priority labels when density rises. Don't shrink everything below readable size.
+- Do add selection with casing or outline. Don't overwrite meaningful status.
+- Do preserve quiet context. Don't give every boundary equal contrast.
+
+Avoid vague instructions such as “make it beautiful.” Each rule SHOULD name a real decision or failure mode.
+
+## Cross-section design relationships
+
+The sections are not independent checklists.
+
+- `Overview` defines the world; `Intent & Audience` constrains its application.
+- `Visual Hierarchy`, `Color`, `Typography & Labels`, and `Geometry & Symbols` share limited visual channels. One channel SHOULD have one primary semantic owner in a given expression.
+- `Scale & Generalization` determines when information appears; `Layering & Composition` determines how present information shares attention.
+- `Interaction States` defines combinations; `Accessibility` ensures combinations remain distinguishable.
+- Tokens give values; prose gives meaning. Incompatible prose meanings assigned to one token make the system incoherent.
 
 ## Omitted sections and extensions
 
-An omitted entry is either a non-empty canonical section name or recognized alias, or an open object with `section` and an optional non-empty `reason` field. After alias normalization, omitted entries MUST be unique and MUST NOT name a canonical section that is present in the Markdown body.
+An omitted entry is a canonical name/alias or an open object with `section` and optional non-empty `reason`.
 
 ```yaml
 omitted:
   - section: Interaction States
-    reason: The design system has no interactive use context.
+    reason: The system is used only for static printed maps.
 ```
 
-Omission is an explicit design decision. A document SHOULD include a reason whenever the absence would otherwise be ambiguous. Omission MUST NOT be used to hide an unresolved decision that affects the design system.
+After normalization, entries MUST be unique and MUST NOT name a present section. A reason SHOULD be supplied when absence could look unfinished. Omission MUST NOT hide a decision that materially affects the design.
 
-The `extensions` object and unknown token groups are preserved but have no core interpretation. An extension MUST NOT redefine a normative field with incompatible meaning. Unknown Markdown sections are likewise preserved and MUST NOT duplicate a canonical section under an alias.
+Extensions, unknown token groups, and unknown Markdown sections preserve project-specific meaning. They SHOULD have a clear owner, avoid redefining core fields, remain understandable without custom tooling, and be preserved by consumers.
 
-## Precedence
+Durable professional modes MAY appear as prose subsections inside relevant canonical sections. One-time modes remain operation-time inputs.
 
-When instructions conflict, a consumer SHOULD apply this order:
+## Precedence and conflict resolution
 
-1. applicable safety, legal, and organizational requirements;
-2. explicit human constraints for the current operation;
+When instructions conflict, consumers SHOULD apply:
+
+1. safety, legal, and organizational requirements;
+2. explicit current-operation human constraints;
 3. exact front-matter values;
-4. normative statements in the Markdown body;
+4. normative Markdown statements;
 5. consumer defaults.
 
-Current-operation constraints do not become durable design-system content automatically. A consumer MUST NOT write task-specific facts into CARTOGRAPHY.md merely to resolve an operation-time need.
-
-When an exact front-matter value conflicts with prose, the exact value wins. A tool MAY report a contradiction when it can do so deterministically, but it MUST NOT pretend to understand every natural-language conflict.
+Current-operation constraints do not automatically become design-system content. Conflicting prose SHOULD be resolved by the document owner rather than repeatedly inferred by consumers.
 
 ## Agent use
 
-An agent using CARTOGRAPHY.md SHOULD:
+An agent SHOULD read the complete document, understand identity/audience/hierarchy/tokens/scale/states/accessibility/prohibitions, resolve references, separate durable guidance from current facts, adapt to geometry while preserving family resemblance, make the smallest coherent change, preserve human work and uncertainty, report capability gaps, and leave CARTOGRAPHY.md unchanged during ordinary dataset-specific work.
 
-1. locate and read the complete document;
-2. run the core linter and inspect every finding;
-3. resolve exact token references before applying values;
-4. understand the design family, audience, hierarchy, and declared exceptions from the prose;
-5. combine that stable guidance with the current task and facts supplied at operation time;
-6. make the smallest coherent change to the requested deliverable;
-7. preserve human-owned work and unresolved meaning;
-8. report where professional review or missing facts still matter.
+An agent MUST NOT invent data meaning, treat tokens as target properties, convert current prompts into identity without instruction, use color alone for critical meaning, overwrite meaningful states with interaction, or claim document validity proves rendered quality.
 
-An agent MUST NOT:
+## Conformance
 
-- invent data facts or business meanings;
-- convert a one-time task into durable front matter;
-- treat unknown prose as if it were a deterministic rule;
-- claim that a successful lint proves anything beyond document-internal validity;
-- overwrite a stable semantic role with a transient interaction state.
+A conforming document begins with deterministic YAML, declares version `"0.2.0"` and a non-empty name, uses known token groups according to their types, contains valid references, uses or omits canonical sections consistently, and preserves the boundary between durable design and operation-time facts.
 
-## Validator model
+Specifically, each of the twelve canonical sections MUST either appear once or be declared once in `omitted`; it cannot be silently absent, duplicated, or both present and omitted.
 
-The reference linter accepts one source string or one file and returns a structured report:
-
-```ts
-interface LintReport {
-  valid: boolean;
-  strict: boolean;
-  findings: Finding[];
-  summary: FindingSummary;
-  cartography?: CartographyConfig;
-  resolved?: unknown;
-  sections: string[];
-  document: {
-    path?: string;
-    name?: string;
-    version?: string;
-  };
-}
-```
-
-A finding has this shape:
-
-```ts
-interface Finding {
-  ruleId: string;
-  severity: 'error' | 'warning' | 'info';
-  message: string;
-  path?: string;
-  line?: number;
-  suggestion?: string;
-  autoFixable?: boolean;
-  evidence?: unknown;
-}
-```
-
-Normal mode is valid when the report has no errors. Strict mode is valid when it has neither errors nor warnings. Informational findings never block validity.
-
-Ordinary document invalidity is returned as findings. File-access, command-usage, and unexpected internal failures are operational errors.
-
-The command-line exit codes are:
-
-| Code | Meaning |
-|---:|---|
-| `0` | The operation completed and validation passed under the selected strictness. |
-| `1` | Validation completed with blocking findings, or a diff introduced more errors or warnings. |
-| `2` | Command usage, file access, or internal execution failed. |
-
-Linting proves only that CARTOGRAPHY.md satisfies its schema and deterministic internal relationships. It does not prove that outside facts are correct, that any generated deliverable is valid, that a current task is satisfied, or that professional cartographic and accessibility review is complete.
-
-The built-in `maxDocumentBytes` check is advisory and runs only after the complete input has been read and parsed; callers must enforce byte or stream limits before passing untrusted input to `lint`, `lintFile`, or standard input.
-
-## Rule catalog
-
-Every built-in rule has document scope.
-
-| Rule ID | Severity | Purpose |
-|---|---|---|
-| `frontmatter-required` | error | Require a YAML front-matter fence at the beginning of the file. |
-| `frontmatter-unclosed` | error | Detect a missing closing front-matter fence. |
-| `yaml-syntax` | error | Report YAML syntax errors and duplicate keys. |
-| `yaml-alias-prohibited` | error | Reject anchors and aliases. |
-| `yaml-custom-tag-prohibited` | error | Reject custom YAML tags. |
-| `yaml-merge-key-prohibited` | error | Reject merge keys. |
-| `yaml-block-scalar-prohibited` | error | Keep long rationale in Markdown. |
-| `yaml-tab-indentation-prohibited` | error | Reject tab indentation in YAML. |
-| `yaml-non-finite-number-prohibited` | error | Reject non-finite numbers anywhere in YAML front matter. |
-| `schema` | error | Validate the version 0.2.0 front-matter schema. |
-| `duplicate-section` | error | Reject duplicate canonical Markdown sections. |
-| `document-size` | warning | Report a document larger than the configured byte limit. |
-| `omitted-sections` | error | Reject unknown, duplicate, or present canonical section omissions. |
-| `required-sections` | warning or info | Report canonical sections that are neither present nor omitted. |
-| `empty-section` | warning | Report empty narrative sections. |
-| `section-order` | warning | Check canonical section order. |
-| `unknown-root-key` | warning | Preserve custom root keys while identifying likely mistakes. |
-| `token-reference` | error | Check exact references, embedded YAML references, broken paths, and cycles. |
-| `color-token` | error | Validate known color tokens as generic CSS colors. |
-| `known-token-type` | error | Validate resolved width, size, opacity, and typography token values. |
-| `contrast-pairs` | error | Require opaque colors and calculate declared WCAG 2.1 contrast minimums. |
-| `contract-summary` | info | Summarize token leaves, token groups, and prose sections. |
-| `rule-execution` | error | Contain an unexpected custom-rule failure as a finding. |
-
-Custom rules MAY replace a built-in rule with the same ID. They SHOULD be deterministic, side-effect free, network independent, and scoped to the document.
+Structural conformance is necessary but not sufficient. A document can be structurally valid yet vague, contradictory, generic, or professionally weak. The design sections above define the content quality expected from a useful CARTOGRAPHY.md.
 
 ## Versioning
 
-The format uses semantic versioning.
+The format uses semantic versioning. Patch versions clarify or correct compatibly; minor versions may add optional fields or semantics; major versions may change required structure or meaning. Consumers SHOULD reject unsupported versions.
 
-- A patch version clarifies wording or makes backward-compatible corrections.
-- A minor version may add optional fields, token semantics, sections, or findings.
-- A major version may change required structure or existing meaning.
+The format version does not track revisions of a particular design system. Projects MAY record their own revision in a namespaced extension.
 
-A consumer SHOULD reject an unsupported version rather than silently reinterpret it. The reference schema for this specification accepts the exact literal `"0.2.0"`.
-
-## Minimal example
-
-The following complete document uses every canonical section and passes document-internal validation in normal mode.
+## Complete example
 
 ```md
 ---
@@ -377,16 +550,17 @@ tokens:
     canvas: "#F7F5EF"
     ink: "#1F2933"
     context: "#8A938B"
+    water: "#A8C8D4"
     accent: "#A33A2B"
   typography:
-    label:
+    primary-label:
       fontFamily: ["Source Sans 3", "sans-serif"]
       fontSize: 12px
       fontWeight: 500
       lineHeight: 1.35
   widths:
     hairline: 0.75px
-    emphasis: 2px
+    subject: 2px
   sizes:
     compact-symbol: 6px
   opacities:
@@ -398,59 +572,57 @@ accessibility:
       background: "{tokens.colors.canvas}"
       minimum: 4.5
       kind: text
-extensions:
-  acme:reviewCycle: annual
 ---
 
 ## Overview
 
-A quiet civic atlas: warm paper, precise dark ink, soft context, and a scarce brick accent.
+A quiet civic atlas printed on warm paper. Precise dark ink carries text and structure; pale cool water and soft gray-green context recede; one brick accent marks decisive focus. The family should feel edited and public-minded, never glossy, neon, or dashboard-like.
 
 ## Intent & Audience
 
-The system serves broad public audiences who need calm orientation before detailed comparison.
+The system supports orientation, public explanation, and careful comparison for readers with mixed map literacy. It favors calm hierarchy and plain language while retaining enough precision for professional review.
 
 ## Visual Hierarchy
 
-Canvas recedes, context supports, the subject leads, and the accent is reserved for decisive focus.
+The canvas is quiet, context is subordinate, and the subject is evident. Lightness and weight establish order before saturation. Critical information remains stronger than ordinary focus.
 
 ## Color
 
-Lightness establishes order before hue. The brick accent never becomes a general category palette.
+Warm off-white replaces pure white, graphite replaces maximum black, and water remains pale and cool. Brick is the sole saturated accent and never becomes a generic category palette.
 
 ## Typography & Labels
 
-Labels are plainspoken and compact, with density reduced before type becomes too small to read.
+Labels use a compact humanist sans-serif and ordinary sentence casing. Context labels disappear before text becomes too small. Halos are narrow and used only where needed.
 
 ## Geometry & Symbols
 
-Lines use restrained weight changes; symbols share simple silhouettes and avoid decorative detail.
+Lines use a small explainable weight range. Areas stay quiet, and boundaries strengthen only when separation is meaningful. Point symbols use simple silhouettes that survive at compact sizes.
 
 ## Scale & Generalization
 
-The system moves from broad structure to local detail in deliberate stages, preserving identity as detail changes.
+Overview reveals broad structure; regional reading adds important connections; local reading reveals complete subject geometry; detail adds annotation. Each transition preserves identity and avoids simultaneous unrelated additions.
 
 ## Layering & Composition
 
-Whitespace and soft context frame one primary subject; focus marks sit above but do not erase its meaning.
+Quiet regions provide breathing room. Background and context sit below the subject; labels and interaction marks sit above it. Composition maintains one primary reading path.
 
 ## Interaction States
 
-Hover is subtle, selection is additive, and critical states retain a redundant cue beyond color.
+Hover is subtle. Selection adds casing or outline while preserving base meaning. Alerts combine emphasis with a redundant pattern or symbol.
 
 ## Accessibility
 
-Important differences use shape, weight, text, or pattern as well as color and remain legible on small screens.
+Important differences use shape, pattern, text, weight, or outline as well as color. Density is reduced before text becomes unreadable. Contrast is reviewed in realistic compositions.
 
 ## Review Principles
 
-Review hierarchy, label collisions, semantic consistency, density, contrast, and honest treatment of uncertainty.
+Review family resemblance, subject prominence, context restraint, label collision, scale progression, state combinations, color-vision resilience, and honest uncertainty.
 
 ## Do's and Don'ts
 
-Do preserve warm restraint and scarce emphasis. Don't introduce unrelated saturated accents or ornamental symbols.
+Do preserve warm restraint and scarce emphasis. Don't use brick for ordinary categories, shrink all labels equally, replace meaningful states with selection, or add ornamental symbols that fail at map scale.
 ```
 
 ## Final principle
 
-> CARTOGRAPHY.md preserves transferable cartographic identity and durable design judgment. Core tools validate only the document itself; operation-time tasks and facts remain outside the format.
+> CARTOGRAPHY.md preserves a portable cartographic identity and the durable judgment needed to apply it. Exact tokens keep values stable; prose keeps the design meaningful; operation-time tasks and data remain outside the format.

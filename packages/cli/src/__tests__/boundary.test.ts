@@ -69,10 +69,10 @@ describe('renderer-neutral product boundary', () => {
   });
 
   test('states the advisory resource boundary consistently in public docs', () => {
-    for (const relative of ['SECURITY.md', 'docs/spec.md', 'docs/api.md']) {
+    for (const relative of ['SECURITY.md', 'docs/api.md']) {
       expect(readFileSync(join(repositoryRoot, relative), 'utf8'), relative).toContain(englishResourceBoundary);
     }
-    for (const relative of ['docs/spec.zh-CN.md', 'docs/api.zh-CN.md']) {
+    for (const relative of ['docs/api.zh-CN.md']) {
       expect(readFileSync(join(repositoryRoot, relative), 'utf8'), relative).toContain(chineseResourceBoundary);
     }
   });

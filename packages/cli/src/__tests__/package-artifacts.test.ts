@@ -1,4 +1,4 @@
-import {readdir} from 'node:fs/promises';
+import {readFile, readdir} from 'node:fs/promises';
 import {describe, expect, it} from 'vitest';
 
 describe('package artifacts', () => {
@@ -9,5 +9,9 @@ describe('package artifacts', () => {
   it('ships the renamed front-matter schema artifact only', async () => {
     const entries = await readdir('dist/schema-json');
     expect(entries).toEqual(['cartography-front-matter.schema.json']);
+  });
+  it('declares public access for the scoped npm package', async () => {
+    const manifest = JSON.parse(await readFile('package.json', 'utf8'));
+    expect(manifest.publishConfig).toEqual({access: 'public'});
   });
 });

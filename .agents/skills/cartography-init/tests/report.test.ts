@@ -26,6 +26,18 @@ describe('report', () => {
     expect(json.unresolved).toHaveLength(1);
   });
 
+  it('overwrites an existing symbolRef with the consolidated name', () => {
+    const ir = sampleIr();
+    const [binding] = ir.bindings;
+    if (!binding) throw new Error('sample binding missing');
+    binding.symbolRef = 'outdated-roads';
+    const consolidated = consolidate(ir);
+    consolidated.nameMap.set('roads', 'different');
+
+    const json = JSON.parse(renderReportJson(ir, consolidated));
+    expect(json.bindings[0].symbolRef).toBe('different');
+  });
+
   it('markdown lists skipped and a next-steps checklist', () => {
     const md = renderReportMarkdown(sampleIr(), consolidate(sampleIr()));
     expect(md).toContain('嵌套符号层特效');

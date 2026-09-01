@@ -38,7 +38,7 @@ function buildReport(ir: ExtractedStyle, c: Consolidated): InitReport {
     skipped: ir.skipped,
     datasources: ir.datasources,
     bindings: ir.bindings.map(binding => {
-      const symbolRef = binding.symbolRef ?? c.nameMap.get(binding.layer);
+      const symbolRef = c.nameMap.get(binding.layer);
       return symbolRef === undefined ? { ...binding } : { ...binding, symbolRef };
     }),
     unresolved: ir.unresolved,

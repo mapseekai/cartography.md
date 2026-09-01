@@ -10,6 +10,12 @@ type CimNode = Record<string, unknown>;
 
 export function parseLyrx(buffer: Buffer, fileName: string): ExtractedStyle {
   const extracted = emptyExtracted({ kind: 'lyrx', name: fileName });
+  extracted.unresolved.push(
+    { topic: 'target tile source url/type', detail: '桌面样式不含瓦片源定义,转换需另行供给' },
+    { topic: 'crs/tiling', detail: '坐标参考与切片方案未定' },
+    { topic: 'glyphs', detail: '字体供给未定' },
+    { topic: 'sprites', detail: '符号精灵图供给未定' },
+  );
   const document = parseDocument(buffer);
   if (!document) return extracted;
   for (const layer of nodes(document.layerDefinitions)) extractLayer(layer, extracted);
@@ -28,6 +34,12 @@ export function parseStylx(buffer: Buffer, fileName: string): ExtractedStyle {
     if (!itemsTable) throw new Error('.stylx database does not contain an ITEMS table');
 
     const extracted = emptyExtracted({ kind: 'stylx', name: fileName });
+    extracted.unresolved.push(
+      { topic: 'target tile source url/type', detail: '桌面样式不含瓦片源定义,转换需另行供给' },
+      { topic: 'crs/tiling', detail: '坐标参考与切片方案未定' },
+      { topic: 'glyphs', detail: '字体供给未定' },
+      { topic: 'sprites', detail: '符号精灵图供给未定' },
+    );
     const items = database.prepare('SELECT NAME AS name, CATEGORY AS category, CONTENT AS content FROM ITEMS').all() as StylxItem[];
     for (const item of items) extractStylxItem(item, extracted);
     return extracted;

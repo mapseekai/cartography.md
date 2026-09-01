@@ -5,7 +5,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseLyrx, parseStylx } from '../src/adapters/arcgis.js';
 import { cimSymbolToStyle } from '../src/adapters/cim.js';
-import { loadFixture } from './helpers.js';
+import { loadFixture, makeStylx } from './helpers.js';
 
 describe('parseLyrx', () => {
   it('extracts CIM solid stroke/fill with pt units and hex colors', () => {
@@ -69,23 +69,6 @@ describe('parseLyrx', () => {
   });
 });
 
-function makeStylx(items: Array<{ category: string; name: string; content: string }> = [{
-  category: 'Symbols',
-  name: 'major-road',
-  content: JSON.stringify({
-    type: 'CIMLineSymbol',
-    symbolLayers: [{ type: 'CIMSolidStroke', color: { type: 'CIMRGBColor', values: [51, 136, 255] }, width: 1.5 }],
-  }),
-}]): Buffer {
-  const dir = mkdtempSync(path.join(tmpdir(), 'stylx-'));
-  const file = path.join(dir, 'test.stylx');
-  const db = new Database(file);
-  db.exec('CREATE TABLE ITEMS (ID INTEGER PRIMARY KEY, CLASS INTEGER, CATEGORY TEXT, NAME TEXT, TAGS TEXT, CONTENT BLOB, KEY TEXT)');
-  const insert = db.prepare('INSERT INTO ITEMS (CLASS, CATEGORY, NAME, CONTENT) VALUES (?, ?, ?, ?)');
-  for (const item of items) insert.run(3, item.category, item.name, Buffer.from(item.content, 'utf8'));
-  db.close();
-  return readFileSync(file);
-}
 
 function makeEmptyStylx(): Buffer {
   const dir = mkdtempSync(path.join(tmpdir(), 'stylx-'));

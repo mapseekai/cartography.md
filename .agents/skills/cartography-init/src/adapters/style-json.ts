@@ -16,6 +16,12 @@ export function parseStyleJson(text: string, fileName?: string): ExtractedStyle 
 
   const extracted = emptyExtracted(fileName === undefined ? { kind: 'style' } : { kind: 'style', name: fileName });
   extractSources(parsed.sources, extracted);
+  if (!Object.hasOwn(parsed, 'glyphs')) {
+    extracted.unresolved.push({ topic: 'glyphs', detail: 'style.json 未定义 glyphs,下游转换需补充' });
+  }
+  if (!Object.hasOwn(parsed, 'sprite')) {
+    extracted.unresolved.push({ topic: 'sprites', detail: 'style.json 未定义 sprite,下游转换需补充' });
+  }
   if (!Array.isArray(parsed.layers)) return extracted;
 
   for (const layer of parsed.layers) {

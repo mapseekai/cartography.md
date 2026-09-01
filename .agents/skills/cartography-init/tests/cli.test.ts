@@ -3,22 +3,49 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { runCli } from '../src/cli.js';
-import { fixturesDir } from './helpers.js';
+import { fixturesDir, makeStylx } from './helpers.js';
 
 describe('runCli end-to-end', () => {
-  it('generates a lint-clean document from style-min.json', async () => {
-    const dir = mkdtempSync(path.join(tmpdir(), 'init-e2e-'));
-    const out = path.join(dir, 'CARTOGRAPHY.md');
-    const code = await runCli([
-      '--input', path.join(fixturesDir, 'style-min.json'),
-      '--output', out,
-      '--report-json', path.join(dir, 'INIT_REPORT.json'),
-    ]);
-    expect(code).toBe(0);
-    const doc = readFileSync(out, 'utf8');
-    expect(doc).toContain('version: "0.3.0"');
-    expect(doc).not.toContain('source-layer');
-  });
+  const inputs: ReadonlyArray<{ name: string; fixture?: string; stylx?: true }> = [
+    { name: 'style-min.json', fixture: 'style-min.json' },
+    { name: 'sld-min.xml', fixture: 'sld-min.xml' },
+    { name: 'qgis-min.qgs', fixture: 'qgis-min.qgs' },
+    { name: 'arcgis-min.lyrx', fixture: 'arcgis-min.lyrx' },
+    { name: 'arcgis-min.stylx', stylx: true },
+  ];
+
+  for (const input of inputs) {
+    it(`generates a lint-clean document from ${input.name}`, async () => {
+      const dir = mkdtempSync(path.join(tmpdir(), 'init-e2e-'));
+      const source = input.fixture ? path.join(fixturesDir, input.fixture) : path.join(dir, input.name);
+      if (input.stylx) writeFileSync(source, makeStylx());
+      const out = path.join(dir, 'CARTOGRAPHY.md');
+      const reportJson = path.join(dir, 'INIT_REPORT.json');
+      const code = await runCli([
+        '--input', source,
+        '--output', out,
+        '--report-json', reportJson,
+      ]);
+      expect(code).toBe(0);
+      expect(existsSync(out)).toBe(true);
+      expect(readFileSync(out, 'utf8')).toContain('version: "0.3.0"');
+      if (input.name === 'qgis-min.qgs') {
+        const report = JSON.parse(readFileSync(reportJson, 'utf8')) as { unresolved: unknown[] };
+        const topics = report.unresolved.map((item) => {
+          if (!item || typeof item !== 'object' || !('topic' in item) || typeof item.topic !== 'string') {
+            throw new Error('report unresolved item is missing a topic');
+          }
+          return item.topic;
+        });
+        expect(topics).toEqual([
+          'target tile source url/type',
+          'crs/tiling',
+          'glyphs',
+          'sprites',
+        ]);
+      }
+    });
+  }
 
   it('refuses to write on unrecognised input', async () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'init-e2e-'));

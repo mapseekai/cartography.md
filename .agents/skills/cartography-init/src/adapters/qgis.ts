@@ -24,6 +24,12 @@ export function parseQgis(buffer: Buffer, fileName: string): ExtractedStyle {
     isArray: (tagName) => ['maplayer', 'symbol', 'layer', 'rule', 'category', 'range', 'prop', 'Option'].includes(tagName),
   }).parse(xml);
   const extracted = emptyExtracted({ kind: 'qgis', name: fileName });
+  extracted.unresolved.push(
+    { topic: 'target tile source url/type', detail: '桌面样式不含瓦片源定义,转换需另行供给' },
+    { topic: 'crs/tiling', detail: '坐标参考与切片方案未定' },
+    { topic: 'glyphs', detail: '字体供给未定' },
+    { topic: 'sprites', detail: '符号精灵图供给未定' },
+  );
   if (!isNode(parsed)) return extracted;
 
   for (const mapLayer of findNodes(parsed, 'maplayer')) extractMapLayer(mapLayer, extracted);

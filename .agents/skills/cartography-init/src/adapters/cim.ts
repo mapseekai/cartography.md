@@ -34,7 +34,7 @@ function extractSymbolLayer(layer: CimNode, style: CoreStyleProps, skippedReason
     case 'CIMSolidStroke':
       if (color) style.strokeColor = color;
       setDimension(layer.width, 'strokeWidth', style);
-      setDimension(layer.xoffset, 'offset', style);
+      setOffset(layer, style, skippedReasons);
       return;
     case 'CIMSolidFill':
       if (color) style.fillColor = color;
@@ -43,7 +43,7 @@ function extractSymbolLayer(layer: CimNode, style: CoreStyleProps, skippedReason
     case 'CIMVectorMarker':
       style.symbol = markerName(layer);
       setDimension(layer.size, 'size', style);
-      setDimension(layer.xoffset, 'offset', style);
+      setOffset(layer, style, skippedReasons);
       return;
     case 'CIMHaloFill':
       if (color) style.haloColor = color;
@@ -80,6 +80,11 @@ function markerName(layer: CimNode): string {
 function setDimension(value: unknown, property: 'strokeWidth' | 'haloWidth' | 'size' | 'offset', style: CoreStyleProps): void {
   const number = numberOf(value);
   if (number !== undefined) style[property] = pt(number);
+}
+
+function setOffset(layer: CimNode, style: CoreStyleProps, skippedReasons: string[]): void {
+  setDimension(layer.xoffset, 'offset', style);
+  if (numberOf(layer.yoffset)) skippedReasons.push('CIM yoffset not migrated: IR offset only supports one axis');
 }
 
 function pt(value: number): Dimension {

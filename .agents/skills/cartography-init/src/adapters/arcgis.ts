@@ -97,7 +97,10 @@ function extractClassBreaks(renderer: CimNode, layerName: string, extracted: Ext
 
 function extractElement(symbol: CimNode | undefined, name: string, family: string | undefined, roleHint: ExtractedElement['roleHint'] | undefined, extracted: ExtractedStyle): ExtractedElement | undefined {
   const styleAndGeometry = symbol && cimSymbolToStyle(symbol);
-  if (!styleAndGeometry) return undefined;
+  if (!styleAndGeometry) {
+    extracted.skipped.push({ source: 'lyrx', layer: name, reason: `Unsupported CIM symbol: ${stringOf(symbol?.type) ?? 'unknown'}` });
+    return undefined;
+  }
   const element: ExtractedElement = { name, geometry: styleAndGeometry.geometry, style: styleAndGeometry.style, scaleHints: [] };
   if (family) element.family = family;
   if (roleHint) element.roleHint = roleHint;

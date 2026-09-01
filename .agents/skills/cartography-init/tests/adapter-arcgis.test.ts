@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseLyrx } from '../src/adapters/arcgis.js';
+import { cimSymbolToStyle } from '../src/adapters/cim.js';
 import { loadFixture } from './helpers.js';
 
 describe('parseLyrx', () => {
@@ -39,5 +40,27 @@ describe('parseLyrx', () => {
     expect(ir.bindings).toContainEqual({
       source: 'lyrx', layer: 'park', family: 'land use', kind: 'field-ref', expression: 'kind = park',
     });
+  });
+
+  it('records unsupported CIM symbols as skipped', () => {
+    const ir = parseLyrx(Buffer.from(JSON.stringify({
+      layerDefinitions: [{
+        name: 'mesh',
+        renderer: { type: 'CIMSimpleRenderer', symbol: { symbol: { type: 'CIMMeshSymbol', symbolLayers: [] } } },
+      }],
+    })), 'unsupported.lyrx');
+
+    expect(ir.skipped).toContainEqual({
+      source: 'lyrx', layer: 'mesh', reason: 'Unsupported CIM symbol: CIMMeshSymbol',
+    });
+  });
+
+  it('records an unrepresentable CIM yoffset as skipped', () => {
+    const result = cimSymbolToStyle({
+      type: 'CIMPointSymbol',
+      symbolLayers: [{ type: 'CIMCharacterMarker', character: 'A', size: 8, xoffset: 2, yoffset: 3 }],
+    });
+
+    expect(result?.skippedReasons).toContain('CIM yoffset not migrated: IR offset only supports one axis');
   });
 });

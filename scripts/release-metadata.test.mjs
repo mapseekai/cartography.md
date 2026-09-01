@@ -20,6 +20,12 @@ test('rejects malformed release tags', () => {
   assert.throws(() => resolveReleaseMetadata('release-0.4.0', versions), /valid v-prefixed SemVer/);
 });
 
+test('rejects numeric prerelease identifiers with leading zeroes', () => {
+  assert.throws(() => resolveReleaseMetadata('v1.2.3-01', {
+    root: '1.2.3-01', cli: '1.2.3-01', source: '1.2.3-01',
+  }), /valid v-prefixed SemVer/);
+});
+
 test('rejects version drift', () => {
   assert.throws(() => resolveReleaseMetadata('v0.4.0', {...versions, cli: '0.4.1'}), /version mismatch/);
 });

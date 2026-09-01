@@ -12,6 +12,10 @@ export function extractSourceVersion(source) {
 export function resolveReleaseMetadata(tag, versions) {
   if (!TAG_PATTERN.test(tag)) throw new Error(`Release tag ${tag} is not a valid v-prefixed SemVer.`);
   const version = tag.slice(1);
+  const prereleasePart = version.split('-')[1];
+  if (prereleasePart?.split('.').some((identifier) => /^\d+$/.test(identifier) && identifier.length > 1 && identifier.startsWith('0'))) {
+    throw new Error(`Release tag ${tag} is not a valid v-prefixed SemVer.`);
+  }
   const declared = [versions.root, versions.cli, versions.source];
   if (declared.some((item) => item !== version)) {
     throw new Error(`Release version mismatch: tag=${version}, root=${versions.root}, cli=${versions.cli}, source=${versions.source}.`);

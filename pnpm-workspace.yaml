@@ -1,6 +1,8 @@
 packages:
   - packages/*
   - .agents/skills/data-profile
+  - .agents/skills/cartography-init
 
 onlyBuiltDependencies:
   - esbuild
+  - better-sqlite3

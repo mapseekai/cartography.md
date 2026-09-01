@@ -24,6 +24,19 @@ describe('consolidate', () => {
     expect(c.tokens.colors['color-1']).toBe('#ffffff');
   });
 
+  it('keeps distinct dimension values in separate width tokens', () => {
+    const ir = emptyExtracted({ kind: 'style' });
+    ir.widths.push(
+      { value: { value: 12, unit: 'px' }, usedBy: ['a'] },
+      { value: { value: 1.2, unit: 'px' }, usedBy: ['b'] },
+    );
+
+    expect(Object.values(consolidate(ir).tokens.widths)).toEqual([
+      { value: 12, unit: 'px' },
+      { value: 1.2, unit: 'px' },
+    ]);
+  });
+
   it('assigns roles within a family and replaces element values with token names', () => {
     const ir = emptyExtracted({ kind: 'style' });
     ir.colors.push({ value: '#3388ff', nameHint: 'accent', usedBy: ['a', 'b'] });

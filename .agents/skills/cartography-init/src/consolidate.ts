@@ -63,15 +63,19 @@ export function slugify(raw: string): string {
 }
 
 function dimensionKey(value: Dimension): string {
-  return `${value.value}${value.unit}`;
+  return JSON.stringify([value.value, value.unit]);
 }
 
 function dashKey(value: Dimension[]): string {
-  return value.map(dimensionKey).join('|');
+  return JSON.stringify(value.map(({ value: length, unit }) => [length, unit]));
 }
 
 function typographyKey(value: TypographyToken): string {
-  return `${value.fontFamily.join('|')}${dimensionKey(value.fontSize)}${String(value.fontWeight)}`;
+  return JSON.stringify([
+    value.fontFamily,
+    [value.fontSize.value, value.fontSize.unit],
+    value.fontWeight,
+  ]);
 }
 
 function addTokens<T>(

@@ -4,7 +4,22 @@ cartography.md 的所有重要变更都将记录在此。
 
 English: [CHANGELOG.md](CHANGELOG.md)
 
-格式与 npm 包遵循语义化版本。`0.1` 开发草案从未发布；`0.2.0` 是第一条公开版本线。
+格式与 npm 包遵循语义化版本。`0.1` 与 `0.2.0` 均为内部草案，从未发布或存档；`0.3.0` 是第一条公开版本线。
+
+## 0.3.0 - 2026-09-01
+
+### 破坏性变更
+
+- 以根级 `colors`、`typography`、`widths`、`sizes`、`opacities`、`spacing`、`dashes` 和 `elements` 组取代 `tokens` 包装层。
+- 新增 `spacing`、`dashes` 与可复用 `elements`；MapElement 现要求 `geometry` 和至少一个核心样式属性。
+- Typography 增加 `fontStyle`、`textTransform`、`fontFeature` 与 `fontVariation`；新增 `DashPattern`，其解析后成员须为偶数并保持单位一致。
+- 收紧 Dimension 语法：核心尺寸不再接受 `rem` 或 `%`。
+- 以 `{colors.ink}` 等根级引用取代旧引用路径；引用现支持数组索引、禁止元数据根，并进行深度解析。
+- 规范 Markdown 章节由十二个缩减为九个：Overview、Colors、Typography & Labels、Composition & Density、Layering & Depth、Geometry & Symbols、Scale & Generalization、Map Elements 与 Do's and Don'ts。
+- `omitted` 对象改为封闭对象；删除 `locale`、`accessibility` 和 `extensions` 的标准字段地位。取消 contrast pair 的机器校验；对比度与包容性设计指引应写入正文。
+- 发布 schema 改名为 `schema/cartography-front-matter.schema.json`，其 `$id` 为 `urn:cartography-md:schema:front-matter:0.3.0`。
+- 新增覆盖 0.3.0 格式的附录 B 符合性测试集。
+- 本次为破坏性升级：不保留 `0.2.0` 兼容层、字段别名或旧规则 ID。
 
 ## 0.2.0 - 2026-08-29
 

@@ -11,6 +11,6 @@ const schemaDist = path.join(dist, 'schema-json');
 await mkdir(schemaDist, {recursive: true});
 await copyFile(path.join(repositoryRoot, 'docs/spec.md'), path.join(dist, 'spec.md'));
 await copyFile(
-  path.join(repositoryRoot, 'schema/cartography.schema.json'),
-  path.join(schemaDist, 'cartography.schema.json'),
+  path.join(repositoryRoot, 'schema/cartography-front-matter.schema.json'),
+  path.join(schemaDist, 'cartography-front-matter.schema.json'),
 );

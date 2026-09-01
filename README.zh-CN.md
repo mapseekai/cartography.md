@@ -6,38 +6,41 @@
 
 核心包只负责解析、lint、比较和解释这份文档。它仅验证文档结构与可确定的内部关系；当前任务输入、数据检查、目标专属生产和输出评审都在核心验证之外进行。
 
-English: [README.md](README.md) · [规范](docs/spec.zh-CN.md) · [TypeScript API](docs/api.zh-CN.md) · [设计哲学](PHILOSOPHY.zh-CN.md)
+English: [README.md](README.md) · [规范](docs/spec.zh-CN.md) · [TypeScript API](docs/api.zh-CN.md) · [设计哲学](docs/PHILOSOPHY.zh-CN.md)
 
 ## 为什么需要它
 
 制图决策常常消失在一次性实现中：哪些标记应获得注意、层级如何随比例尺变化、标注应该呈现怎样的气质、交互状态如何保留原始含义，以及怎样让结果始终属于同一个可辨识的家族。
 
-`CARTOGRAPHY.md` 让这些判断能够长期保存。prose 承载专业判断，token 提供准确、可复用的值；Agent 因而既能理解视觉系统是什么，也能理解其约束为何重要。
+`CARTOGRAPHY.md` 让这些判断能够长期保存。prose 承载专业判断，根级 token 组提供准确、可复用的值；Agent 因而既能理解视觉系统是什么，也能理解其约束为何重要。
 
 ## 双层格式
 
 每份文档都有两个互补层次：
 
-1. YAML front matter 保存身份、版本、精确 token、显式对比关系、省略项和扩展。
-2. Markdown 章节描述意图、层级、色彩、字体、符号、比例尺行为、构图、状态、无障碍、评审原则以及有约束力的正反例。
+1. YAML front matter 保存身份、版本、可选省略项，以及根级 `colors`、`typography`、`widths`、`sizes`、`opacities`、`spacing`、`dashes` 和 `elements` 组。
+2. Markdown 解释九个规范章节：Overview、Colors、Typography & Labels、Composition & Density、Layering & Depth、Geometry & Symbols、Scale & Generalization、Map Elements 与 Do's and Don'ts。
 
 ```markdown
 ---
-version: "0.2.0"
+version: "0.3.0"
 name: Quiet Atlas
 description: "A restrained editorial atlas family for clear orientation and unhurried reading."
-tokens:
-  colors:
-    paper: "#f8f4f0"
-    water: "#aecfe2"
-    ink: "#000000"
-accessibility:
-  contrastPairs:
-    - id: ink-on-paper
-      foreground: "{tokens.colors.ink}"
-      background: "{tokens.colors.paper}"
-      minimum: 4.5
-      kind: text
+colors:
+  paper: "#f8f4f0"
+  water: "#aecfe2"
+  ink: "#000000"
+widths:
+  route: 2px
+elements:
+  route-primary:
+    geometry: line
+    family: route
+    role: primary
+    state: default
+    layerRole: subject
+    strokeColor: "{colors.ink}"
+    strokeWidth: "{widths.route}"
 ---
 
 ## Overview
@@ -45,13 +48,12 @@ accessibility:
 Quiet Atlas is a restrained editorial map family: warm paper, pale blue water,
 and near-black ink make the page feel calmly printed rather than brightly lit.
 
-## Visual Hierarchy
+## Colors
 
-Paper is the quiet ground. Water establishes context; inked names and the
-reader's active focus carry the strongest attention.
+Use {colors.paper} as the warm canvas and reserve {colors.ink} for essential names.
 ```
 
-当需要确定值时，YAML token 值具有规范性；prose 解释其角色、边界、取舍和例外。两个层次都可以使用 `{tokens.colors.ink}` 这样的 token 引用。
+当需要确定值时，YAML token 值具有规范性；prose 解释其角色、边界、取舍和例外。两个层次都可以使用 `{colors.ink}` 或 `{symbols.facility.fallbacks[0]}` 这样的引用。
 
 ## 快速开始
 
@@ -115,11 +117,12 @@ console.log(changes.values, changes.sections);
 
 核心 lint 检查单份 `CARTOGRAPHY.md` 的可确定属性，包括：
 
-- 安全、无歧义的 YAML；
-- `0.2.0` front matter schema；
-- 规范章节的存在、顺序、省略与重复；
-- 已知 token 类型和 token 引用完整性；
-- 已声明的色彩对比关系；
+- 安全、确定的 YAML 表示层规则；
+- `0.3.0` front matter schema；
+- 九个规范章节的存在、省略、重复与顺序；
+- 完整引用，包括数组索引路径与深度解析；
+- 标准 token 类型、虚线模式与根级组边界；
+- 地图要素的 geometry、必需核心样式和数据绑定边界；
 - 文档大小以及未知或疑似拼写错误的根键。
 
 报告通过只表示文档及其内部关系有效。它不证明当前数据正确、输出满足用户任务、目标专属产物有效，也不代表视觉和无障碍评审已经完成。
@@ -127,17 +130,17 @@ console.log(changes.values, changes.sections);
 ## 仓库结构
 
 ```text
-docs/spec.md                 规范性格式说明
-docs/api.md                  TypeScript API 参考
-schema/cartography.schema.json
-                             生成的编辑器与工具 schema
-packages/cli                 CLI 与 TypeScript 包
-examples/quiet-atlas         自包含设计系统示例
-.agents/skills               可选 Agent 工作流
+docs/spec.md                                  规范性格式说明
+docs/api.md                                   TypeScript API 参考
+docs/PHILOSOPHY.zh-CN.md                     设计哲学
+schema/cartography-front-matter.schema.json  随发布提供的编辑器与工具 schema
+packages/cli                                  CLI 与 TypeScript 包
+examples/quiet-atlas                          自包含设计系统示例
+.agents/skills                                可选 Agent 工作流
 ```
 
 ## 状态与许可证
 
-`0.2.0` 是第一条公开格式版本线。先前的 `0.1` 草案从未发布，也不提供兼容层。
+`0.3.0` 是当前公开格式版本线，且不为 `0.2.0` 提供兼容层。
 
 Apache-2.0，见 [LICENSE](LICENSE)。

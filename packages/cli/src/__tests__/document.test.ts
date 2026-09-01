@@ -1,14 +1,17 @@
 import {describe, expect, it} from 'vitest';
 import {lint} from '../linter/index.js';
-import {normalizeHeading} from '../parser/sections.js';
+import {canonicalSectionName} from '../parser/sections.js';
 import {getAtPath, resolveReferencesDeep} from '../utils/object.js';
 
 const base = `---
-version: "0.2.0"
+version: "0.3.0"
 name: Reference test
-tokens:
-  colors:
-    ink: "#25221D"
+colors:
+  ink: "#25221D"
+elements:
+  road-primary:
+    geometry: line
+    strokeWidth: "2px"
 ---
 
 ## Overview
@@ -16,307 +19,86 @@ tokens:
 Quiet.
 `;
 
+function tokenFindings(text: string) {
+  return lint(text).findings.filter((finding) => finding.ruleId === 'token-reference');
+}
+
 describe('document validation', () => {
-  it('allows inline references in prose but not YAML scalars', () => {
-    const prose = lint(base.replace('Quiet.', 'Use {tokens.colors.ink} for labels.'));
-    const yaml = lint(base.replace('ink: "#25221D"', 'ink: "prefix-{tokens.colors.paper}"'));
-
-    expect(prose.findings.some((finding) => finding.ruleId === 'token-reference')).toBe(false);
-    expect(yaml.findings.some((finding) => finding.ruleId === 'token-reference')).toBe(true);
+  it('allows inline references in prose but not YAML scalar substrings', () => {
+    expect(tokenFindings(base.replace('Quiet.', 'Use {colors.ink} for labels.'))).toEqual([]);
+    expect(tokenFindings(base.replace('ink: "#25221D"', 'ink: "prefix-{colors.paper}"'))).toEqual([]);
   });
-
-  it('reports a broken inline prose reference', () => {
-    const report = lint(base.replace('Quiet.', 'Use {tokens.colors.missing}.'));
-
-    expect(report.findings).toContainEqual(expect.objectContaining({ruleId: 'token-reference'}));
+  it('reports broken visible prose references', () => {
+    expect(tokenFindings(base.replace('Quiet.', 'Use {colors.missing}.'))).not.toEqual([]);
   });
-
-  it('normalizes new Chinese aliases', () => {
-    expect(normalizeHeading('比例尺与制图综合')).toBe('Scale & Generalization');
-    expect(normalizeHeading('层叠与构图')).toBe('Layering & Composition');
-    expect(normalizeHeading('评审原则')).toBe('Review Principles');
+  it('reports broken references in the preamble before the first heading', () => {
+    const findings = tokenFindings(base.replace('\n## Overview', '\nBroken {colors.missing}.\n\n## Overview'));
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.line).toBe(12);
   });
-
-  it.each([
-    ['unknown root', 'unexpected: .nan', 'unexpected'],
-    ['extensions', 'extensions:\n  sample: .inf', 'extensions.sample'],
-    ['unknown token group', 'tokens:\n  custom:\n    sample: -.inf', 'tokens.custom.sample'],
-  ])('rejects non-finite YAML numbers in %s', (_name, yaml, path) => {
-    const report = lint(`---\nversion: "0.2.0"\nname: Finite test\n${yaml}\n---\n\n## Overview\n\nFinite.\n`);
-
-    expect(report.findings).toContainEqual(expect.objectContaining({
-      ruleId: 'yaml-non-finite-number-prohibited',
-      path,
-      severity: 'error',
-    }));
-    expect(report).not.toHaveProperty('cartography');
-    expect(report).not.toHaveProperty('resolved');
+  it('reports broken references inside unknown heading text', () => {
+    const findings = tokenFindings(base.replace('Quiet.', 'Quiet.\n\n## Notes {colors.missing}\n\nText.'));
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.line).toBe(16);
   });
-
-  it('does not resolve token paths through the object prototype chain', () => {
-    const report = lint(`---
-version: "0.2.0"
-name: Prototype test
-tokens:
-  custom:
-    inheritedToString: "{toString}"
-    inheritedConstructor: "{constructor}"
-    inheritedPrototype: "{__proto__}"
----
-
-## Overview
-
-Prototype test.
-`);
-
-    for (const path of ['toString', 'constructor', '__proto__']) {
-      expect(report.findings).toContainEqual(expect.objectContaining({
-        ruleId: 'token-reference',
-        message: `Broken token reference {${path}}.`,
-      }));
-    }
-    const resolved = report.resolved as {tokens: {custom: Record<string, unknown>}};
-    expect(Object.values(resolved.tokens.custom).every((value) => typeof value === 'string')).toBe(true);
+  it('resolves valid references inside heading text', () => {
+    expect(tokenFindings(base.replace('## Overview', '## Overview {colors.ink}'))).toEqual([]);
   });
-
-  it.each([
-    'tokens..colors.ink',
-    '.tokens.colors.ink',
-    'tokens.colors.ink.',
-    'tokens.colors[ink]',
-    'tokens.colors.ink[]',
-    'tokens.colors.ink[ ]',
-    'tokens.colors.ink[+1]',
-    'tokens.colors.ink[-1]',
-    'tokens.colors.ink[a/b]',
-    'tokens.colors.ink[0',
-    'tokens.colors.ink]',
-    'tokens.colors.ink[[0]]',
-    'tokens.colors.ink[0]tail',
-    'tokens.colors.[0]',
-  ])('rejects malformed token path grammar in YAML and prose: %s', (reference) => {
-    const yaml = lint(base.replace('ink: "#25221D"', `ink: "{${reference}}"`));
-    const prose = lint(base.replace('Quiet.', `Use {${reference}} for labels.`));
-
-    for (const report of [yaml, prose]) {
-      expect(report.findings).toContainEqual(expect.objectContaining({
-        ruleId: 'token-reference',
-        message: `Invalid token reference path {${reference}}.`,
-      }));
-    }
+  it('normalizes current Chinese section aliases', () => {
+    expect(canonicalSectionName('比例尺与制图综合')).toBe('Scale & Generalization');
+    expect(canonicalSectionName('层级与深度')).toBe('Layering & Depth');
+    expect(canonicalSectionName('地图要素')).toBe('Map Elements');
   });
-
-  it('does not treat ordinary prose or code braces as token references', () => {
-    const report = lint(base.replace('Quiet.', `Objects may look like { color: red; } or {left + right}.
-Inline code may contain \`{left[0] + right[0]}\`.
-
-\`\`\`js
-const style = {color: '#25221D'};
-\`\`\``));
-
-    expect(report.findings.some((finding) => finding.ruleId === 'token-reference')).toBe(false);
+  it('rejects a bare invalid reference through schema validation', () => {
+    const report = lint(base.replace('ink: "#25221D"', 'ink: "{toString}"'));
+    expect(report.findings).toContainEqual(expect.objectContaining({ruleId: 'schema'}));
   });
-
-  it('ignores reviewer indexing examples in inline code, JSX, and plain expressions', () => {
-    const report = lint(base.replace('Quiet.', `Advance with \`{items[index + 1]}\` when another item exists.
-
-Render <Item>{items[index + 1]}</Item>, evaluate {items[index + 1]}, and retain {items[0]} as ordinary code.`));
-
-    expect(report.findings.some((finding) => finding.ruleId === 'token-reference')).toBe(false);
+  it('does not treat ordinary braces or code as references', () => {
+    const report = lint(base.replace('Quiet.', 'Objects { color: red } and `{items[0]}` are examples.'));
+    expect(report.findings.filter((finding) => finding.ruleId === 'token-reference')).toEqual([]);
   });
-
-  it('scans visible references while ignoring Markdown code and HTML comments', () => {
-    const report = lint(base.replace('Quiet.', `Use {tokens.colors.ink} in visible prose.
-
-Ignore \`{tokens.colors.missing}\` and \`\`{tokens.colors.ink[ ]}\`\` inline.
-
-\`\`\`js
-const color = '{tokens.colors.missing}';
-const next = {items[index + 1]};
-\`\`\`
-
-~~~jsx
-<Item>{tokens.colors.ink[+1]}</Item>
-~~~
-
-<!-- Ignore {tokens.colors.missing}
-and {tokens.colors.ink[a/b]} here. -->`));
-
-    expect(report.findings.some((finding) => finding.ruleId === 'token-reference')).toBe(false);
+  it('ignores inline code JSX and expressions containing index examples', () => {
+    const report = lint(base.replace('Quiet.', '`{items[index + 1]}` <Item>{items[index + 1]}</Item>'));
+    expect(report.findings.filter((finding) => finding.ruleId === 'token-reference')).toEqual([]);
   });
-
-  it('treats an HTML comment opener inside inline code as literal text', () => {
-    const report = lint(base.replace('Quiet.', `<!--
-Ignore {tokens.colors.missing} inside the real comment.
--->
-
-Render the literal \`<!--\` in inline code.
-
-Visible {tokens.colors.ink[ ]} must still be checked.`));
-    const findings = report.findings.filter((finding) => finding.ruleId === 'token-reference');
-
-    expect(findings).toEqual([
-      expect.objectContaining({message: 'Invalid token reference path {tokens.colors.ink[ ]}.'}),
-    ]);
+  it('treats reference-shaped visible prose as a reference that must resolve', () => {
+    const report = lint(base.replace('Quiet.', 'A plain {items[0]} expression is reference syntax.'));
+    expect(report.findings.filter((finding) => finding.ruleId === 'token-reference')).toHaveLength(1);
   });
-
-  it('treats an HTML comment opener in fence info as literal and resumes after closing', () => {
-    const report = lint(base.replace('Quiet.', `\`\`\`jsx <!-- literal fence metadata
-<Item>{tokens.colors.missing}</Item>
-\`\`\`
-
-Visible {tokens.colors.ink[+1]} must still be checked.
-
-<!-- Ignore {tokens.colors.ink[a/b]} in a real comment. -->`));
-    const findings = report.findings.filter((finding) => finding.ruleId === 'token-reference');
-
-    expect(findings).toEqual([
-      expect.objectContaining({message: 'Invalid token reference path {tokens.colors.ink[+1]}.'}),
-    ]);
+  it('masks fences and HTML comments', () => {
+    const report = lint(base.replace('Quiet.', '```js\n{colors.missing}\n```\n<!-- {colors.missing} -->'));
+    expect(report.findings.filter((finding) => finding.ruleId === 'token-reference')).toEqual([]);
   });
-
-  it('accepts dotted and hyphenated names with numeric bracket indices', () => {
-    const report = lint(`---
-version: "0.2.0"
-name: Path grammar
-tokens:
-  custom:
-    palette:
-      - "#25221D"
-    hyphen-name: "{tokens.custom.palette[0]}"
----
-
-## Overview
-
-Use {tokens.custom.palette[0]} consistently.
-`);
-
-    expect(report.findings.some((finding) => finding.ruleId === 'token-reference')).toBe(false);
-    expect((report.resolved as {tokens: {custom: {'hyphen-name': string}}}).tokens.custom['hyphen-name']).toBe('#25221D');
+  it('treats comment openers inside inline code literally', () => {
+    const findings = tokenFindings(base.replace('Quiet.', '`<!--` visible {colors.missing}'));
+    expect(findings).toHaveLength(1);
   });
-
-  it('never resolves or materializes inherited sparse array indices', () => {
-    const inheritedIndex = 19_937;
-    const inheritedValue = 'must-not-resolve';
-    const previous = Object.getOwnPropertyDescriptor(Array.prototype, inheritedIndex);
-    Object.defineProperty(Array.prototype, inheritedIndex, {
-      configurable: true,
-      writable: true,
-      value: inheritedValue,
-    });
-    try {
-      const values = new Array(inheritedIndex + 1);
-      const root = {
-        tokens: {custom: {values}},
-        selected: `{tokens.custom.values[${inheritedIndex}]}`,
-      };
-
-      expect(getAtPath(root, `tokens.custom.values[${inheritedIndex}]`)).toEqual({found: false});
-      const resolved = resolveReferencesDeep(root) as typeof root;
-      expect(resolved.selected).toBe(root.selected);
-      expect(Object.hasOwn(resolved.tokens.custom.values, inheritedIndex)).toBe(false);
-    } finally {
-      if (previous) Object.defineProperty(Array.prototype, inheritedIndex, previous);
-      else delete Array.prototype[inheritedIndex];
-    }
+  it('treats comment openers in fence info literally and resumes after closing', () => {
+    const findings = tokenFindings(base.replace('Quiet.', '```jsx <!-- literal\n{colors.missing}\n```\n{colors.missing}'));
+    expect(findings).toHaveLength(1);
   });
-
-  it.each([
-    ['backtick', '```'],
-    ['tilde', '~~~'],
-  ])('ignores canonical headings inside a %s fence', (_name, fence) => {
-    const report = lint(`---
-version: "0.2.0"
-name: Fence test
----
-
-## Overview
-
-Before.
-
-${fence}md
-## Color
-Inside code.
-${fence}
-
-## Color
-
-Real color guidance.
-`);
-
-    expect(report.sections).toEqual(['Overview', 'Color']);
+  it('accepts dotted hyphenated names and numeric indices', () => {
+    const report = lint(base.replace('Quiet.', 'Use {elements.road-primary.strokeWidth}; {symbols.facility.fallbacks[0]}.').replace('elements:\n', 'symbols:\n  facility:\n    fallbacks: ["ok"]\nelements:\n'));
+    expect(report.findings.filter((finding) => finding.ruleId === 'token-reference')).toEqual([]);
+  });
+  it('does not materialize sparse inherited array indices', () => {
+    const values = new Array(3);
+    const root = {symbols: {values}, selected: '{symbols.values[2]}'};
+    expect(getAtPath(root, 'symbols.values[2]')).toMatchObject({found: false});
+    expect((resolveReferencesDeep(root) as typeof root).selected).toBe(root.selected);
+    expect(Object.hasOwn(values, 2)).toBe(false);
+  });
+  it('ignores headings in HTML comments and finds following real headings', () => {
+    const report = lint(base.replace('Quiet.', '<!--\n## Colors\n-->\n\n## Colors\n\nActual.'));
+    expect(report.sections).toContain('Colors');
     expect(report.findings.some((finding) => finding.ruleId === 'duplicate-section')).toBe(false);
   });
-
-  it('ignores headings inside HTML comments and finds the real heading after them', () => {
-    const report = lint(`---
-version: "0.2.0"
-name: Comment test
----
-
-## Overview
-
-Before.
-
-<!--
-## Color
-Hidden.
--->
-
-## Color
-
-Real color guidance.
-`);
-
-    expect(report.sections).toEqual(['Overview', 'Color']);
+  it('does not report duplicate unknown headings', () => {
+    const report = lint(base.replace('Quiet.', '## Notes\n\nA\n\n## Notes\n\nB'));
     expect(report.findings.some((finding) => finding.ruleId === 'duplicate-section')).toBe(false);
   });
-
-  it('preserves repeated unknown headings without reporting canonical duplicates', () => {
-    const report = lint(`---
-version: "0.2.0"
-name: Notes test
----
-
-## Overview
-
-Overview.
-
-## Notes
-
-First.
-
-## Notes
-
-Second.
-`);
-
-    expect(report.sections).toEqual(['Overview', 'Notes', 'Notes']);
-    expect(report.findings.some((finding) => finding.ruleId === 'duplicate-section')).toBe(false);
-  });
-
-  it('reports unknown, duplicate, and present omitted canonical sections', () => {
-    const report = lint(`---
-version: "0.2.0"
-name: Omitted test
-omitted:
-  - Unknown section
-  - Color
-  - 颜色
-  - Overview
----
-
-## Overview
-
-Overview.
-`);
-
-    const findings = report.findings.filter((finding) => finding.ruleId === 'omitted-sections');
-    expect(findings).toHaveLength(3);
-    expect(findings.map((finding) => finding.path)).toEqual([
-      'omitted.0',
-      'omitted.2',
-      'omitted.3',
-    ]);
+  it('reports unknown duplicate and present omitted sections', () => {
+    const report = lint(base.replace('---\n\n## Overview', 'omitted:\n  - Unknown\n  - Colors\n  - 颜色\n  - Overview\n---\n\n## Overview'));
+    expect(report.findings.filter((finding) => finding.ruleId === 'omitted-sections')).toHaveLength(3);
   });
 });

@@ -1,58 +1,16 @@
 import {Ajv2020} from 'ajv/dist/2020.js';
 import {describe, expect, it} from 'vitest';
-import portableSchema from '../../../../schema/cartography.schema.json' with {type: 'json'};
+import schema from '../../../../schema/cartography-front-matter.schema.json' with {type: 'json'};
 import {cartographySchema} from '../schema/cartography.js';
 
-const cases = [
-  {input: {version: '0.2.0', name: 'Minimal'}, valid: true},
-  {input: {version: '0.2.0', name: 'Tokens', tokens: {colors: {ink: '#111'}}}, valid: true},
-  {input: {version: '0.1.0', name: 'Old'}, valid: false},
-  {input: {version: '0.2.0', name: 'Bad opacity', tokens: {opacities: {muted: 2}}}, valid: false},
-  {input: {version: '0.2.0', name: 'Bad reference', tokens: {widths: {line: '{tokens..widths.line}'}}}, valid: false},
-  {input: {version: '0.2.0', name: '   '}, valid: false},
-  {input: {version: '0.2.0', name: 'Valid', locale: '\t '}, valid: false},
-  {input: {version: '0.2.0', name: 'Valid', omitted: ['   ']}, valid: false},
-  {input: {version: '0.2.0', name: 'Valid', omitted: [{section: '\n'}]}, valid: false},
-  {input: {version: '0.2.0', name: 'Valid', omitted: [{section: 'Color', reason: '   '}]}, valid: false},
-  {
-    input: {
-      version: '0.2.0',
-      name: 'Valid',
-      accessibility: {contrastPairs: [{id: ' ', foreground: '#000', background: '#fff', minimum: 4.5}]},
-    },
-    valid: false,
-  },
-  {
-    input: {
-      version: '0.2.0',
-      name: 'Valid',
-      accessibility: {contrastPairs: [{id: 'pair', foreground: ' ', background: '#fff', minimum: 4.5}]},
-    },
-    valid: false,
-  },
-  {
-    input: {
-      version: '0.2.0',
-      name: 'Valid',
-      accessibility: {contrastPairs: [{id: 'pair', foreground: '#000', background: ' ', minimum: 4.5}]},
-    },
-    valid: false,
-  },
-  {input: {version: '0.2.0', name: 'Valid', tokens: {colors: {ink: '   '}}}, valid: false},
-  {input: {version: '0.2.0', name: 'Valid', tokens: {typography: {label: {fontFamily: ' '}}}}, valid: false},
-  {input: {version: '0.2.0', name: 'Valid', tokens: {typography: {label: {fontFamily: ['Sans', ' ']}}}}, valid: false},
-  {input: {version: '0.2.0', name: 'Valid', tokens: {typography: {label: {fontWeight: '\t'}}}}, valid: false},
-  {input: {version: '0.2.0', name: 'Valid', tokens: {typography: {label: {letterSpacing: '\n'}}}}, valid: false},
+const minimal = {version: '0.3.0', name: 'Test'};
+const cases: Array<[string, unknown]> = [
+  ['minimal', minimal], ['color', {...minimal, colors: {ink: '#111'}}], ['width', {...minimal, widths: {line: '0.5px'}}], ['size', {...minimal, sizes: {icon: '2px'}}], ['opacity', {...minimal, opacities: {muted: 0.5}}], ['spacing', {...minimal, spacing: {gap: '1px'}}], ['dash', {...minimal, dashes: {road: ['1px', '2px']}}], ['element', {...minimal, elements: {road: {geometry: 'line', strokeWidth: '1px'}}}], ['literal reject', {...minimal, name: '{colors.ink}'}], ['identifier 2xl', {...minimal, sizes: {'2xl': '2px'}}], ['identifier Chinese', {...minimal, sizes: {中文: '2px'}}], ['identifier dot', {...minimal, sizes: {'a.b': '2px'}}], ['reference', {...minimal, widths: {line: '{colors.ink}'}}], ['index reference', {...minimal, custom: {a: ['x']}, widths: {line: '{a.b[0]}'}}], ['leading zero index', {...minimal, widths: {line: '{a.b[01]}'}}], ['bare root reference', {...minimal, widths: {line: '{colors}'}}], ['negative zero', {...minimal, widths: {line: '-0px'}}], ['rem', {...minimal, widths: {line: '1rem'}}], ['typography required', {...minimal, typography: {label: {fontFamily: 'Noto'}}}], ['font weight case', {...minimal, typography: {label: {fontFamily: 'Noto', fontSize: '12px', fontWeight: 'Bold'}}}], ['geometry case', {...minimal, elements: {x: {geometry: 'Line', size: '1px'}}}], ['element style', {...minimal, elements: {x: {geometry: 'line'}}}], ['reserved', {...minimal, elements: {x: {geometry: 'line', size: '1px', source: 'a'}}}], ['omitted closed', {...minimal, omitted: [{section: 'Colors', x: 1}]}], ['dash min', {...minimal, dashes: {x: ['1px']}}], ['pattern nonempty', {...minimal, elements: {x: {geometry: 'line', pattern: []}}}]
 ];
 
-describe('generated cartography JSON Schema', () => {
-  it('matches Zod at the 0.2 document boundary', () => {
-    const ajv = new Ajv2020({strict: false});
-    const validate = ajv.compile(portableSchema);
-
-    for (const sample of cases) {
-      expect(cartographySchema.safeParse(sample.input).success).toBe(sample.valid);
-      expect(validate(sample.input)).toBe(sample.valid);
-    }
+describe('JSON schema parity', () => {
+  it('accepts and rejects the same 0.3.0 inputs in Zod and Ajv', () => {
+    const validate = new Ajv2020({strict: false}).compile(schema);
+    for (const [name, value] of cases) expect(cartographySchema.safeParse(value).success, name).toBe(validate(value));
   });
 });

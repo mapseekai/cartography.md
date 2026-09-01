@@ -1,96 +1,57 @@
-import type {Severity} from '../model/types.js';
-
+/** The nine standard sections, in canonical order (§11.1). */
 export const CANONICAL_SECTIONS = [
   'Overview',
-  'Intent & Audience',
-  'Visual Hierarchy',
-  'Color',
+  'Colors',
   'Typography & Labels',
+  'Composition & Density',
+  'Layering & Depth',
   'Geometry & Symbols',
   'Scale & Generalization',
-  'Layering & Composition',
-  'Interaction States',
-  'Accessibility',
-  'Review Principles',
+  'Map Elements',
   "Do's and Don'ts",
 ] as const;
 
-export type CanonicalSection = (typeof CANONICAL_SECTIONS)[number];
-
-export const SECTION_SEVERITY: Record<CanonicalSection, Severity> = {
-  Overview: 'warning',
-  'Intent & Audience': 'warning',
-  'Visual Hierarchy': 'warning',
-  Color: 'info',
-  'Typography & Labels': 'info',
-  'Geometry & Symbols': 'info',
-  'Scale & Generalization': 'warning',
-  'Layering & Composition': 'warning',
-  'Interaction States': 'info',
-  Accessibility: 'info',
-  'Review Principles': 'warning',
-  "Do's and Don'ts": 'info',
+/** Registered aliases per §11.2. */
+const SECTION_ALIASES: Record<string, string[]> = {
+  Overview: ['overview', 'brand & style', 'brand and style', '概述', '品牌与风格'],
+  Colors: ['color', 'colors', '色彩', '颜色'],
+  'Typography & Labels': ['typography', 'labels', 'typography and labels', 'typography & labels', '字体', '标注', '字体与标注'],
+  'Composition & Density': ['composition', 'density', 'composition and density', 'composition & density', '构图', '密度', '构图与密度'],
+  'Layering & Depth': ['layering', 'depth', 'layering and depth', 'layering & depth', '层级', '深度', '层级与深度'],
+  'Geometry & Symbols': ['geometry', 'symbols', 'geometry and symbols', 'geometry & symbols', '几何', '符号', '几何与符号'],
+  'Scale & Generalization': ['scale', 'generalization', 'scale and generalization', 'scale & generalization', '比例尺', '制图综合', '比例尺与制图综合'],
+  'Map Elements': ['elements', 'map elements', 'map components', '地图要素', '地图组件', '要素样式'],
+  "Do's and Don'ts": ["do's and don'ts", 'dos and donts', "dos and don'ts", "do's & don'ts", '应该与不应该', '正反例', '设计禁忌'],
 };
 
-const aliases: Record<string, CanonicalSection> = {
-  overview: 'Overview',
-  purpose: 'Overview',
-  概述: 'Overview',
-  目的: 'Overview',
-  'map intent': 'Intent & Audience',
-  intent: 'Intent & Audience',
-  'intent and audience': 'Intent & Audience',
-  'intent & audience': 'Intent & Audience',
-  '地图意图': 'Intent & Audience',
-  '意图与受众': 'Intent & Audience',
-  hierarchy: 'Visual Hierarchy',
-  'visual hierarchy': 'Visual Hierarchy',
-  '视觉层级': 'Visual Hierarchy',
-  colors: 'Color',
-  color: 'Color',
-  色彩: 'Color',
-  颜色: 'Color',
-  labels: 'Typography & Labels',
-  typography: 'Typography & Labels',
-  'typography and labels': 'Typography & Labels',
-  'typography & labels': 'Typography & Labels',
-  '字体与标注': 'Typography & Labels',
-  标注: 'Typography & Labels',
-  geometry: 'Geometry & Symbols',
-  symbols: 'Geometry & Symbols',
-  'geometry and symbols': 'Geometry & Symbols',
-  'geometry & symbols': 'Geometry & Symbols',
-  '几何与符号': 'Geometry & Symbols',
-  scale: 'Scale & Generalization',
-  generalization: 'Scale & Generalization',
-  'scale and generalization': 'Scale & Generalization',
-  'scale & generalization': 'Scale & Generalization',
-  '比例尺与制图综合': 'Scale & Generalization',
-  layering: 'Layering & Composition',
-  composition: 'Layering & Composition',
-  'layering and composition': 'Layering & Composition',
-  'layering & composition': 'Layering & Composition',
-  '层叠与构图': 'Layering & Composition',
-  states: 'Interaction States',
-  'interaction states': 'Interaction States',
-  '交互状态': 'Interaction States',
-  accessibility: 'Accessibility',
-  '无障碍': 'Accessibility',
-  review: 'Review Principles',
-  'review principles': 'Review Principles',
-  '评审原则': 'Review Principles',
-  "do's and don'ts": "Do's and Don'ts",
-  'dos and donts': "Do's and Don'ts",
-  '正反例': "Do's and Don'ts",
-  '应该与不应该': "Do's and Don'ts",
-};
-
-export function normalizeHeading(heading: string): string {
-  const key = heading
+/**
+ * Heading normalization per §11.3: strip inline markup, NFKC, lowercase
+ * (the NFKC_Casefold approximation used by this implementation), unify curly
+ * apostrophes, then trim and collapse Unicode whitespace.
+ */
+export function normalizeSectionText(text: string): string {
+  return text
+    .replace(/`+([^`]+)`+/g, '$1')
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/<[^>]*>/g, '')
+    .replace(/\*\*|__|~~|\*|_/g, '')
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[''ʼ]/g, "'")
     .trim()
-    .replace(/[：:]+$/, '')
-    .replace(/[’]/g, "'")
-    .replace(/\s+/g, ' ')
-    .toLowerCase();
-  return aliases[key] ?? heading.trim();
+    .replace(/\p{White_Space}+/gu, ' ');
 }
+
+const sectionLookup: Record<string, string> = Object.fromEntries(
+  Object.entries(SECTION_ALIASES).flatMap(([canonical, names]) =>
+    [canonical, ...names].map((name) => [normalizeSectionText(name), canonical]),
+  ),
+);
+
+/** Resolve heading text to a canonical standard section name, or undefined for unknown headings. */
+export function canonicalSectionName(headingText: string): string | undefined {
+  return sectionLookup[normalizeSectionText(headingText)];
+}
+
+/** `omitted.section` uses the same normalization and alias matching as headings (§5.4). */
+export const resolveOmittedSectionName = canonicalSectionName;

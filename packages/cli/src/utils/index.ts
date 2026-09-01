@@ -1,11 +1,13 @@
-export {contrastRatio, parseCssColor, resolveColor} from './color.js';
+export {isCoreColor, parseCssColor, resolveColor} from './color.js';
 export {sortFindings, summarizeFindings} from './findings.js';
 export {FileReadError, formatOutput, formatReportText, readInput} from './io.js';
 export {
   containsValue,
   exactTokenReference,
+  extractTokenReferenceCandidates,
+  extractTokenReferenceMatches,
   extractTokenReferences,
-  flattenLeaves,
+  extractInvalidTokenReferences,
   getAtPath,
   isRecord,
   resolveTokenValue,

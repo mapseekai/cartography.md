@@ -12,13 +12,13 @@ The reference parser rejects YAML custom tags, anchors, aliases, merge keys, dup
 
 The built-in `maxDocumentBytes` check is advisory and runs only after the complete input has been read and parsed; callers must enforce byte or stream limits before passing untrusted input to `lint`, `lintFile`, or standard input.
 
-Consumers that display Markdown should use a safe parser, escape or sanitize generated HTML, and keep script execution disabled. File paths, links, extension values, and unknown keys must not be treated as authority to read local files, contact a service, or execute a command.
+Consumers that display Markdown should use a safe parser, escape or sanitize generated HTML, and keep script execution disabled. File paths, links, custom field values, and unknown keys must not be treated as authority to read local files, contact a service, or execute a command.
 
 ## No secrets in `CARTOGRAPHY.md`
 
 Never put access tokens, passwords, credentials, private URLs, personal data, encryption material, confidential identifiers, or secret business rules in `CARTOGRAPHY.md`.
 
-The document is designed to be portable, shareable, committed to version control, included in packages, and supplied to agents. Namespaced extensions do not create a secure storage area. Use an appropriate secret manager and pass sensitive runtime values only to the trusted system that needs them.
+The document is designed to be portable, shareable, committed to version control, included in packages, and supplied to agents. Custom root fields and unknown content do not create a secure storage area. Use an appropriate secret manager and pass sensitive runtime values only to the trusted system that needs them.
 
 ## Validation boundary
 

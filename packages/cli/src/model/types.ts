@@ -32,6 +32,8 @@ export interface ParsedCartography<TConfig = CartographyConfig> {
   rawFrontmatter: unknown;
   config?: TConfig;
   body: string;
+  /** 1-based absolute line number where the Markdown body begins. */
+  bodyStartLine: number;
   sections: MarkdownSection[];
   findings: Finding[];
 }
@@ -39,7 +41,7 @@ export interface ParsedCartography<TConfig = CartographyConfig> {
 export interface LintContext {
   source: string;
   parsed: ParsedCartography;
-  cartography?: CartographyConfig;
+  cartography: CartographyConfig;
   sourcePath?: string;
   maxDocumentBytes: number;
 }

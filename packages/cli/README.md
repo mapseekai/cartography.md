@@ -2,7 +2,7 @@
 
 Agent-first format and validator for persistent cartographic design systems.
 
-The package parses, lints, resolves, and compares one self-contained `CARTOGRAPHY.md`. YAML front matter supplies exact identity and token values; Markdown prose carries the visual intent, hierarchy, scale behavior, states, accessibility guidance, and review principles.
+The package parses, lints, resolves, and compares one self-contained `CARTOGRAPHY.md`. YAML front matter supplies exact identity and root-level token groups; Markdown prose carries visual intent, color and typography guidance, composition and layering principles, scale behavior, and map element semantics.
 
 ## CLI
 

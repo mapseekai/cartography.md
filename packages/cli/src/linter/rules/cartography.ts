@@ -1,150 +1,225 @@
+import type * as z from 'zod';
 import type {Finding, LintRule} from '../../model/types.js';
-import {dimensionSchema, typographyTokenSchema} from '../../schema/cartography.js';
-import {contrastRatio, resolveColor} from '../../utils/color.js';
 import {
-  containsValue,
-  exactTokenReference,
-  flattenLeaves,
+  absoluteDimensionSchema,
+  nonEmptyString,
+  nonNegativeAbsoluteDimensionSchema,
+  opacitySchema,
+  patternSpecSchema,
+  positiveAbsoluteDimensionSchema,
+  typographySchema,
+} from '../../schema/cartography.js';
+import {isCoreColor} from '../../utils/color.js';
+import {
+  extractTokenReferences,
+  isRecord,
   resolveReferencesDeep,
   resolveTokenValue,
+  walkObject,
 } from '../../utils/object.js';
+import {maskMarkdownReferenceLiterals} from '../../parser/markdown.js';
+
+const STYLE_GROUPS = ['colors', 'typography', 'widths', 'sizes', 'opacities', 'spacing', 'dashes'] as const;
+const DIMENSION_GROUPS = ['widths', 'sizes', 'spacing'] as const;
+const ELEMENT_COLOR_PROPERTIES = new Set(['color', 'fillColor', 'strokeColor', 'outlineColor', 'casingColor', 'haloColor']);
+/** Resolved-type requirement per element style property (§9.6); colors and dash have dedicated rules. */
+const ELEMENT_PROPERTY_TYPES: Record<string, {schema: z.ZodType; label: string}> = {
+  strokeWidth: {schema: nonNegativeAbsoluteDimensionSchema, label: 'a non-negative absolute dimension'},
+  outlineWidth: {schema: nonNegativeAbsoluteDimensionSchema, label: 'a non-negative absolute dimension'},
+  casingWidth: {schema: nonNegativeAbsoluteDimensionSchema, label: 'a non-negative absolute dimension'},
+  haloWidth: {schema: nonNegativeAbsoluteDimensionSchema, label: 'a non-negative absolute dimension'},
+  size: {schema: nonNegativeAbsoluteDimensionSchema, label: 'a non-negative absolute dimension'},
+  spacing: {schema: nonNegativeAbsoluteDimensionSchema, label: 'a non-negative absolute dimension'},
+  offset: {schema: absoluteDimensionSchema, label: 'an absolute dimension'},
+  opacity: {schema: opacitySchema, label: 'an opacity between 0 and 1'},
+  fillOpacity: {schema: opacitySchema, label: 'an opacity between 0 and 1'},
+  strokeOpacity: {schema: opacitySchema, label: 'an opacity between 0 and 1'},
+  typography: {schema: typographySchema, label: 'a valid Typography object'},
+  symbol: {schema: nonEmptyString, label: 'a non-empty string'},
+  pattern: {schema: patternSpecSchema, label: 'a non-empty pattern value'},
+};
+
+/** Resolve a value and, for composite results, every descendant reference; undefined when unresolvable. */
+function resolveFinal(root: unknown, value: unknown): unknown {
+  const result = resolveTokenValue(root, value);
+  return result.resolved ? resolveReferencesDeep(result.value, root) : undefined;
+}
 
 export const colorTokenRule: LintRule = {
   id: 'color-token',
   severity: 'error',
   scope: 'document',
-  description: 'Validates color tokens as generic CSS colors.',
-  run(context) {
-    if (!context.cartography?.tokens?.colors) return [];
+  description: 'Requires resolved color values to be self-contained CSS Color 4 colors.',
+  run({cartography}) {
     const findings: Finding[] = [];
-    for (const [name, value] of Object.entries(context.cartography.tokens.colors)) {
-      const {color, resolved} = resolveColor(context.cartography, value);
-      if (!resolved) continue;
-      if (color) continue;
-      findings.push({
-        ruleId: this.id,
-        severity: this.severity,
-        path: `tokens.colors.${name}`,
-        message: `Color token "${name}" must be a valid CSS color.`,
-        suggestion: 'Use a CSS Color value, such as #1a2b3c, rgb(26 43 60), or oklch(62% 0.18 250).',
-      });
+    const examine = (value: unknown, path: string) => {
+      const finalValue = resolveFinal(cartography, value);
+      if (finalValue !== undefined && (typeof finalValue !== 'string' || !isCoreColor(finalValue))) {
+        findings.push({
+          ruleId: this.id,
+          severity: this.severity,
+          path,
+          message: `The resolved color value at "${path}" is not a self-contained CSS Color 4 color.`,
+        });
+      }
+    };
+    for (const [key, value] of Object.entries(cartography.colors ?? {})) {
+      examine(value, `colors.${key}`);
+    }
+    for (const [element, value] of Object.entries(cartography.elements ?? {})) {
+      if (!isRecord(value)) continue;
+      for (const [key, item] of Object.entries(value)) {
+        if (ELEMENT_COLOR_PROPERTIES.has(key)) examine(item, `elements.${element}.${key}`);
+      }
     }
     return findings;
   },
 };
-
-function resolvedKnownToken(root: unknown, value: unknown): {ready: boolean; value?: unknown} {
-  const resolved = resolveTokenValue(root, value);
-  if (!resolved.resolved) return {ready: false};
-  const deep = resolveReferencesDeep(resolved.value, root);
-  if (containsValue(deep, (candidate) => exactTokenReference(candidate) !== undefined)) {
-    return {ready: false};
-  }
-  return {ready: true, value: deep};
-}
 
 export const knownTokenTypeRule: LintRule = {
   id: 'known-token-type',
   severity: 'error',
   scope: 'document',
-  description: 'Validates resolved width, size, opacity, and typography token values.',
-  run(context) {
-    const tokens = context.cartography?.tokens;
-    if (!context.cartography || !tokens) return [];
+  description: 'Requires resolved token values to satisfy the type of the group or field that uses them.',
+  run({cartography}) {
     const findings: Finding[] = [];
-    const groups: Array<{
-      name: 'widths' | 'sizes' | 'opacities' | 'typography';
-      expected: string;
-      valid(value: unknown): boolean;
-    }> = [
-      {
-        name: 'widths',
-        expected: 'a finite nonnegative number or dimension string',
-        valid: (value) => dimensionSchema.safeParse(value).success,
-      },
-      {
-        name: 'sizes',
-        expected: 'a finite nonnegative number or dimension string',
-        valid: (value) => dimensionSchema.safeParse(value).success,
-      },
-      {
-        name: 'opacities',
-        expected: 'a finite number from 0 through 1',
-        valid: (value) =>
-          typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1,
-      },
-      {
-        name: 'typography',
-        expected: 'a valid typography object',
-        valid: (value) => typographyTokenSchema.safeParse(value).success,
-      },
-    ];
-
-    for (const group of groups) {
-      const values = tokens[group.name];
-      if (!values) continue;
-      for (const [name, value] of Object.entries(values)) {
-        const resolved = resolvedKnownToken(context.cartography, value);
-        if (!resolved.ready || group.valid(resolved.value)) continue;
-        findings.push({
-          ruleId: this.id,
-          severity: this.severity,
-          path: `tokens.${group.name}.${name}`,
-          message: `Resolved ${group.name} token "${name}" must be ${group.expected}.`,
-          suggestion: 'Point the reference at a value valid for the destination token group.',
-        });
+    const report = (path: string, message: string) => {
+      findings.push({ruleId: this.id, severity: this.severity, path, message});
+    };
+    for (const group of DIMENSION_GROUPS) {
+      for (const [key, value] of Object.entries(cartography[group] ?? {})) {
+        const finalValue = resolveFinal(cartography, value);
+        if (finalValue !== undefined && !nonNegativeAbsoluteDimensionSchema.safeParse(finalValue).success) {
+          report(`${group}.${key}`, `The resolved value at "${group}.${key}" is not a non-negative absolute dimension.`);
+        }
+      }
+    }
+    for (const [key, value] of Object.entries(cartography.opacities ?? {})) {
+      const finalValue = resolveFinal(cartography, value);
+      if (finalValue !== undefined && !opacitySchema.safeParse(finalValue).success) {
+        report(`opacities.${key}`, `The resolved value at "opacities.${key}" is not an opacity between 0 and 1.`);
+      }
+    }
+    for (const [key, value] of Object.entries(cartography.typography ?? {})) {
+      const finalValue = resolveFinal(cartography, value);
+      if (finalValue !== undefined && !typographySchema.safeParse(finalValue).success) {
+        report(`typography.${key}`, `The resolved value at "typography.${key}" is not a valid Typography object.`);
+      }
+    }
+    for (const [element, value] of Object.entries(cartography.elements ?? {})) {
+      if (!isRecord(value)) continue;
+      for (const [property, requirement] of Object.entries(ELEMENT_PROPERTY_TYPES)) {
+        if (!Object.hasOwn(value, property)) continue;
+        const finalValue = resolveFinal(cartography, value[property]);
+        if (finalValue !== undefined && !requirement.schema.safeParse(finalValue).success) {
+          report(`elements.${element}.${property}`, `The resolved value at "elements.${element}.${property}" is not ${requirement.label}.`);
+        }
       }
     }
     return findings;
   },
 };
 
-export const contrastPairsRule: LintRule = {
-  id: 'contrast-pairs',
+export const dashPatternRule: LintRule = {
+  id: 'dash-pattern',
   severity: 'error',
   scope: 'document',
-  description: 'Checks declared color pairs against their WCAG 2.1 contrast minimum.',
-  run(context) {
-    const pairs = context.cartography?.accessibility?.contrastPairs;
-    if (!context.cartography || !pairs) return [];
+  description: 'Requires resolved dash patterns to have an even member count, positive absolute dimensions, and one common unit.',
+  run({cartography}) {
     const findings: Finding[] = [];
-    for (const [index, pair] of pairs.entries()) {
-      const foreground = resolveColor(context.cartography, pair.foreground);
-      const background = resolveColor(context.cartography, pair.background);
-      const path = `accessibility.contrastPairs.${index}`;
-      if (!foreground.resolved || !background.resolved) continue;
-      if (!foreground.color || !background.color) {
+    const check = (value: unknown, path: string) => {
+      const dash = resolveFinal(cartography, value);
+      if (
+        !Array.isArray(dash) ||
+        dash.length < 2 ||
+        dash.length % 2 !== 0 ||
+        !dash.every((item) => positiveAbsoluteDimensionSchema.safeParse(resolveFinal(cartography, item)).success)
+      ) {
         findings.push({
           ruleId: this.id,
           severity: this.severity,
           path,
-          message: `Contrast pair "${pair.id}" must resolve to valid CSS colors.`,
-          suggestion: 'Use direct CSS colors or exact references to valid tokens.colors values.',
+          message: `The dash pattern at "${path}" must contain an even number of positive absolute dimensions.`,
         });
-        continue;
+        return;
       }
-      if (foreground.color.alpha !== 1 || background.color.alpha !== 1) {
+      const units = dash.map((item) => /(?:px|pt|mm|cm|in)$/.exec(String(resolveFinal(cartography, item)))?.[0]);
+      if (new Set(units).size > 1) {
         findings.push({
           ruleId: this.id,
           severity: this.severity,
           path,
-          message: `Contrast pair "${pair.id}" must resolve to fully opaque colors; rendered compositing is required before semitransparent colors can be evaluated.`,
-          suggestion: 'Declare an opaque foreground/background pair or evaluate the composited render with a target-specific accessibility tool.',
+          message: `The dash pattern at "${path}" must use one common unit.`,
         });
-        continue;
       }
-      const actual = contrastRatio(foreground.color, background.color);
-      if (actual >= pair.minimum) continue;
-      findings.push({
-        ruleId: this.id,
-        severity: this.severity,
-        path,
-        message: `Contrast pair "${pair.id}" has a WCAG 2.1 ratio of ${actual.toFixed(2)}:1; its minimum is ${pair.minimum}:1.`,
-        suggestion: 'Adjust the foreground or background color to meet the declared minimum contrast ratio.',
-        evidence: {actual, minimum: pair.minimum},
-      });
+    };
+    for (const [key, value] of Object.entries(cartography.dashes ?? {})) {
+      check(value, `dashes.${key}`);
+    }
+    for (const [key, element] of Object.entries(cartography.elements ?? {})) {
+      if (isRecord(element) && Object.hasOwn(element, 'dash')) check(element.dash, `elements.${key}.dash`);
     }
     return findings;
+  },
+};
+
+export const unusedTokenRule: LintRule = {
+  id: 'unused-token',
+  severity: 'info',
+  scope: 'document',
+  description: 'Notes standard-group tokens that neither prose nor other values reference.',
+  run({cartography, parsed}) {
+    const referenced = [
+      ...walkObject(cartography)
+        .filter((entry) => typeof entry.value === 'string')
+        .flatMap((entry) => extractTokenReferences(entry.value as string)),
+      ...extractTokenReferences(maskMarkdownReferenceLiterals(parsed.body)),
+    ];
+    return STYLE_GROUPS.flatMap((group) =>
+      Object.keys(cartography[group] ?? {})
+        .filter((key) => !referenced.includes(`${group}.${key}`))
+        .map((key) => ({
+          ruleId: this.id,
+          severity: this.severity,
+          path: `${group}.${key}`,
+          message: `The token "${group}.${key}" is not referenced.`,
+        })),
+    );
+  },
+};
+
+export const emptyTokenGroupRule: LintRule = {
+  id: 'empty-token-group',
+  severity: 'info',
+  scope: 'document',
+  description: 'Notes standard token groups that are present but empty.',
+  run({cartography}) {
+    return STYLE_GROUPS.filter((group) => isRecord(cartography[group]) && Object.keys(cartography[group]).length === 0).map(
+      (group) => ({
+        ruleId: this.id,
+        severity: this.severity,
+        path: group,
+        message: `The standard token group "${group}" is empty.`,
+      }),
+    );
+  },
+};
+
+export const undocumentedElementRule: LintRule = {
+  id: 'undocumented-element',
+  severity: 'info',
+  scope: 'document',
+  description: 'Notes elements that the Map Elements section does not mention.',
+  run({cartography, parsed}) {
+    const body = parsed.sections.find((section) => section.canonicalHeading === 'Map Elements')?.body ?? '';
+    return Object.keys(cartography.elements ?? {})
+      .filter((key) => !body.includes(key))
+      .map((key) => ({
+        ruleId: this.id,
+        severity: this.severity,
+        path: `elements.${key}`,
+        message: `The element "${key}" is not mentioned in the Map Elements section.`,
+      }));
   },
 };
 
@@ -153,16 +228,17 @@ export const contractSummaryRule: LintRule = {
   severity: 'info',
   scope: 'document',
   description: 'Summarizes loaded token leaves, token groups, and prose sections.',
-  run(context) {
-    const tokens = context.cartography?.tokens;
-    const groups = tokens ? Object.keys(tokens).length : 0;
-    const leaves = tokens ? Object.keys(flattenLeaves(tokens)).length : 0;
-    const sections = context.parsed.sections.length;
+  run({cartography, parsed}) {
+    const active = [...STYLE_GROUPS, 'elements'].filter((group) => isRecord(cartography[group]));
+    const leaves = active.reduce(
+      (count, group) =>
+        count + walkObject(cartography[group]).filter((entry) => !isRecord(entry.value) && !Array.isArray(entry.value)).length,
+      0,
+    );
     return [{
       ruleId: this.id,
       severity: this.severity,
-      path: '$',
-      message: `Loaded ${leaves} token leaves across ${groups} token groups and ${sections} prose sections.`,
+      message: `Loaded ${leaves} token leaves across ${active.length} token groups and ${parsed.sections.length} prose sections.`,
     }];
   },
 };
@@ -170,6 +246,9 @@ export const contractSummaryRule: LintRule = {
 export const CARTOGRAPHY_RULES: LintRule[] = [
   colorTokenRule,
   knownTokenTypeRule,
-  contrastPairsRule,
+  dashPatternRule,
+  unusedTokenRule,
+  emptyTokenGroupRule,
+  undocumentedElementRule,
   contractSummaryRule,
 ];

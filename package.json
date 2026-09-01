@@ -1,6 +1,6 @@
 {
   "name": "cartography.md",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Agent-first format and validator for persistent cartographic design systems.",
   "license": "Apache-2.0",
@@ -12,14 +12,13 @@
     "build": "pnpm --filter @mapseekai/cartography.md run build",
     "test": "pnpm --filter @mapseekai/cartography.md run test",
     "test:data-profile": "pnpm --filter @cartographymd/data-profile-skill test",
+    "test:init": "pnpm --filter @cartographymd/init-skill test",
     "typecheck": "pnpm --filter @mapseekai/cartography.md run typecheck",
     "typecheck:data-profile": "pnpm --filter @cartographymd/data-profile-skill typecheck",
+    "typecheck:init": "pnpm --filter @cartographymd/init-skill typecheck",
     "check": "pnpm run schema:check && pnpm run typecheck && pnpm run typecheck:data-profile && pnpm run test && pnpm run test:data-profile && pnpm run build && pnpm run typecheck:init && pnpm run test:init && pnpm --filter @mapseekai/cartography.md run check-package",
-    "schema:generate": "pnpm --filter @mapseekai/cartography.md run schema:generate",
     "schema:check": "pnpm --filter @mapseekai/cartography.md run schema:check",
     "dev": "pnpm --filter @mapseekai/cartography.md run dev",
-    "lint:example": "pnpm --filter @mapseekai/cartography.md run dev lint ../../examples/quiet-atlas/CARTOGRAPHY.md --format text",
-    "test:init": "pnpm --filter @cartographymd/init-skill test",
-    "typecheck:init": "pnpm --filter @cartographymd/init-skill typecheck"
+    "lint:example": "pnpm --filter @mapseekai/cartography.md run dev lint ../../examples/quiet-atlas/CARTOGRAPHY.md --format text"
   }
 }

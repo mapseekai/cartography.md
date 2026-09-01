@@ -13,7 +13,7 @@ const required = [
   'dist/api.d.ts',
   'dist/cli.js',
   'dist/spec.md',
-  'dist/schema-json/cartography.schema.json',
+  'dist/schema-json/cartography-front-matter.schema.json',
   'README.md',
   'LICENSE',
 ];
@@ -62,9 +62,9 @@ if (staleArtifacts.length > 0) {
 }
 
 const schemaFiles = await readdir(path.join(packageRoot, 'dist/schema-json'));
-if (schemaFiles.length !== 1 || schemaFiles[0] !== 'cartography.schema.json') {
+if (schemaFiles.length !== 1 || schemaFiles[0] !== 'cartography-front-matter.schema.json') {
   throw new Error(
-    `dist/schema-json must contain only cartography.schema.json; found ${schemaFiles.join(', ') || '(empty)'}.`,
+    `dist/schema-json must contain only cartography-front-matter.schema.json; found ${schemaFiles.join(', ') || '(empty)'}.`,
   );
 }
 

@@ -6,38 +6,41 @@
 
 The core package parses, lints, compares, and explains that document. It validates only document structure and deterministic internal relationships. Current task inputs, data inspection, target-specific production, and output review happen outside core validation.
 
-中文版：[README.zh-CN.md](README.zh-CN.md) · [Specification](docs/spec.md) · [TypeScript API](docs/api.md) · [Philosophy](PHILOSOPHY.md)
+中文版：[README.zh-CN.md](README.zh-CN.md) · [Specification](docs/spec.md) · [TypeScript API](docs/api.md) · [Philosophy](docs/PHILOSOPHY.md)
 
 ## Why it exists
 
 Map-making decisions often disappear into a one-off implementation: which marks deserve attention, how hierarchy changes with scale, how labels feel, how interaction states preserve meaning, and what makes the result recognizably part of one family.
 
-`CARTOGRAPHY.md` makes those decisions durable. Prose carries the professional judgment; tokens provide exact reusable values. An agent can understand both what the visual system is and why its constraints matter.
+`CARTOGRAPHY.md` makes those decisions durable. Prose carries the professional judgment; root-level token groups provide exact reusable values. An agent can understand both what the visual system is and why its constraints matter.
 
 ## The two-layer format
 
 Every document has two complementary layers:
 
-1. YAML front matter holds identity, version, exact tokens, explicit contrast pairs, omissions, and extensions.
-2. Markdown sections describe intent, hierarchy, color, typography, symbols, scale behavior, composition, states, accessibility, review principles, and strong positive and negative examples.
+1. YAML front matter holds identity, version, optional omissions, and root-level `colors`, `typography`, `widths`, `sizes`, `opacities`, `spacing`, `dashes`, and `elements` groups.
+2. Markdown explains the nine standard chapters: Overview; Colors; Typography & Labels; Composition & Density; Layering & Depth; Geometry & Symbols; Scale & Generalization; Map Elements; and Do's and Don'ts.
 
 ```markdown
 ---
-version: "0.2.0"
+version: "0.3.0"
 name: Quiet Atlas
 description: "A restrained editorial atlas family for clear orientation and unhurried reading."
-tokens:
-  colors:
-    paper: "#f8f4f0"
-    water: "#aecfe2"
-    ink: "#000000"
-accessibility:
-  contrastPairs:
-    - id: ink-on-paper
-      foreground: "{tokens.colors.ink}"
-      background: "{tokens.colors.paper}"
-      minimum: 4.5
-      kind: text
+colors:
+  paper: "#f8f4f0"
+  water: "#aecfe2"
+  ink: "#000000"
+widths:
+  route: 2px
+elements:
+  route-primary:
+    geometry: line
+    family: route
+    role: primary
+    state: default
+    layerRole: subject
+    strokeColor: "{colors.ink}"
+    strokeWidth: "{widths.route}"
 ---
 
 ## Overview
@@ -45,13 +48,12 @@ accessibility:
 Quiet Atlas is a restrained editorial map family: warm paper, pale blue water,
 and near-black ink make the page feel calmly printed rather than brightly lit.
 
-## Visual Hierarchy
+## Colors
 
-Paper is the quiet ground. Water establishes context; inked names and the
-reader's active focus carry the strongest attention.
+Use {colors.paper} as the warm canvas and reserve {colors.ink} for essential names.
 ```
 
-YAML token values are normative when an exact value is needed. Prose explains their roles, boundaries, tradeoffs, and exceptions. Token references such as `{tokens.colors.ink}` can be used in either layer.
+YAML token values are normative when an exact value is needed. Prose explains their roles, boundaries, tradeoffs, and exceptions. References such as `{colors.ink}` and `{symbols.facility.fallbacks[0]}` can be used in either layer.
 
 ## Quick start
 
@@ -115,11 +117,12 @@ The public API includes parsing, the runtime schema, document linting, reference
 
 Core linting checks deterministic properties of one `CARTOGRAPHY.md`, including:
 
-- safe and unambiguous YAML;
-- the `0.2.0` front-matter schema;
-- canonical section presence, order, omissions, and duplicates;
-- known token types and token-reference integrity;
-- declared color contrast relationships;
+- safe, deterministic YAML representation rules;
+- the `0.3.0` front-matter schema;
+- the nine standard sections, their omissions, duplicates, and order;
+- complete references, including indexed paths and deep resolution;
+- standard token types, dash patterns, and root-level group boundaries;
+- map-element geometry, required core styling, and data-binding boundaries;
 - document size and unknown or likely misspelled root keys.
 
 A passing report means only that the document and its internal relationships are valid. It does not establish that current data is correct, that an output satisfies the user's task, that a target-specific artifact is valid, or that visual and accessibility review is complete.
@@ -127,17 +130,17 @@ A passing report means only that the document and its internal relationships are
 ## Repository map
 
 ```text
-docs/spec.md                 normative format specification
-docs/api.md                  TypeScript API reference
-schema/cartography.schema.json
-                             generated editor and tooling schema
-packages/cli                 CLI and TypeScript package
-examples/quiet-atlas         self-contained design-system example
-.agents/skills               optional agent workflows
+docs/spec.md                                  normative format specification
+docs/api.md                                   TypeScript API reference
+docs/PHILOSOPHY.md                           design philosophy
+schema/cartography-front-matter.schema.json  published editor and tooling schema
+packages/cli                                  CLI and TypeScript package
+examples/quiet-atlas                          self-contained design-system example
+.agents/skills                                optional agent workflows
 ```
 
 ## Status and license
 
-Version `0.2.0` is the first public format line. The earlier `0.1` draft was never released and has no compatibility layer.
+Version `0.3.0` is the current public format line and has no compatibility layer for `0.2.0`.
 
 Apache-2.0. See [LICENSE](LICENSE).

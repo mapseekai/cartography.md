@@ -1,4 +1,5 @@
 import {parseCartography} from '../parser/parse.js';
+import type {CartographyConfig} from '../schema/cartography.js';
 import type {
   Finding,
   LintContext,
@@ -12,10 +13,12 @@ import {sortFindings, summarizeFindings} from '../utils/findings.js';
 import {resolveReferencesDeep} from '../utils/object.js';
 import {DOCUMENT_RULES} from './rules/document.js';
 import {CARTOGRAPHY_RULES} from './rules/cartography.js';
+import {BOUNDARY_RULES} from './rules/boundary.js';
 
 export const DEFAULT_RULES: LintRule[] = [
   ...DOCUMENT_RULES,
   ...CARTOGRAPHY_RULES,
+  ...BOUNDARY_RULES,
 ];
 
 function mergeRules(custom: LintRule[] | undefined): LintRule[] {
@@ -31,12 +34,13 @@ export function lint(source: string, options: LintOptions = {}): LintReport {
   const context: LintContext = {
     source: parsed.source,
     parsed,
-    ...(parsed.config ? {cartography: parsed.config} : {}),
+    cartography: parsed.config as CartographyConfig,
     ...(options.sourcePath ? {sourcePath: options.sourcePath} : {}),
     maxDocumentBytes,
   };
 
   for (const rule of mergeRules(options.rules)) {
+    if (!parsed.config && rule.id !== 'document-size') continue;
     try {
       findings.push(...rule.run(context));
     } catch (error) {

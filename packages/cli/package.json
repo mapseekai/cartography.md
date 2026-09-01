@@ -1,6 +1,6 @@
 {
   "name": "@mapseekai/cartography.md",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Agent-first format and validator for persistent cartographic design systems.",
   "keywords": [
     "cartography.md",
@@ -64,8 +64,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "check-package": "node scripts/check-package.mjs",
-    "schema:generate": "tsx scripts/generate-schema.ts",
-    "schema:check": "tsx scripts/generate-schema.ts --check"
+    "schema:check": "tsx scripts/check-schema.ts"
   },
   "dependencies": {
     "citty": "^0.1.6",

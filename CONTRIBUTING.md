@@ -18,9 +18,9 @@ pnpm lint:example
 ## Repository responsibilities
 
 - `docs/spec.md` is the normative format specification.
-- `packages/cli/src/schema` is the executable structural model and source for the generated JSON Schema.
+- `packages/cli/src/schema` is the executable structural model.
 - `packages/cli/src/linter` contains deterministic document rules.
-- `schema/cartography.schema.json` supports editors and non-TypeScript consumers.
+- `schema/cartography-front-matter.schema.json` is the informational schema published with the specification for editors and non-TypeScript consumers.
 - `examples/*` demonstrate realistic, independently valid documents.
 
 Keep these representations synchronized in the same pull request.
@@ -30,7 +30,7 @@ Keep these representations synchronized in the same pull request.
 A proposal should explain:
 
 1. the enduring cartographic or agent problem;
-2. why existing prose, tokens, sections, omissions, or namespaced extensions cannot express it;
+2. why existing prose, tokens, sections, omissions, or custom root fields cannot express it;
 3. the proposed syntax and semantics;
 4. deterministic document validation, if any;
 5. versioning impact;
@@ -60,7 +60,7 @@ Add tests under `packages/cli/src/__tests__`. Derive expected values independent
 pnpm lint:example
 ```
 
-Schema changes must retain parity between the Zod source and generated JSON Schema. Public product changes must retain the core boundary checks.
+Schema changes must keep the runtime Zod schema and the published informational JSON Schema in parity; parity tests enforce that relationship. The schema is released with the specification rather than generated at runtime. Public product changes must retain the core boundary checks.
 
 ## Documentation style
 

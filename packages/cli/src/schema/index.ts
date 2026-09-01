@@ -1,16 +1,2 @@
-export {
-  cartographySchema,
-  contrastPairSchema,
-  dimensionSchema,
-  omittedSectionSchema,
-  tokenReferenceSchema,
-  typographyTokenSchema,
-} from './cartography.js';
-export type {
-  CartographyConfig,
-  ContrastPair,
-  DimensionToken,
-  OmittedSection,
-  TokenReference,
-  TypographyToken,
-} from './cartography.js';
+export {cartographySchema, tokenReferenceSchema, tokenIdentifierSchema, dimensionSchema, absoluteDimensionSchema, nonNegativeAbsoluteDimensionSchema, positiveAbsoluteDimensionSchema, positiveDimensionSchema, opacitySchema, typographySchema, dashPatternSchema, mapElementSchema, omittedSectionSchema} from './cartography.js';
+export type {CartographyConfig, DimensionToken, OmittedSection, TokenReference, TypographyToken, MapElement} from './cartography.js';

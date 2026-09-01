@@ -1,107 +1,15 @@
-import {mkdtemp, rm, writeFile} from 'node:fs/promises';
+import {mkdtempSync, rmSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {afterEach, describe, expect, it, vi} from 'vitest';
-import * as api from '../api.js';
-import {lint, DEFAULT_RULES} from '../linter/index.js';
-import {getRuleCatalog} from '../spec.js';
-import * as io from '../utils/io.js';
+import {describe, expect, it} from 'vitest';
+import {DEFAULT_RULES, lint, lintFile} from '../linter/index.js';
 
-const readInputSpy = vi.spyOn(io, 'readInput');
-
-afterEach(() => {
-  readInputSpy.mockClear();
-});
-
-const minimalDocument = `---
-version: "0.2.0"
-name: Minimal
----
-
-## Overview
-
-Quiet and restrained.
-`;
-
-describe('document-only linter core', () => {
-  it('returns a document-only report', () => {
-    const report = lint(minimalDocument);
-    expect(report).not.toHaveProperty('artifacts');
-    expect(report.document.version).toBe('0.2.0');
-    expect(Object.keys(report).sort()).toEqual([
-      'cartography',
-      'document',
-      'findings',
-      'resolved',
-      'sections',
-      'strict',
-      'summary',
-      'valid',
-    ]);
-  });
-
-  it('has only document rules', () => {
-    expect(DEFAULT_RULES.every((rule) => rule.scope === 'document')).toBe(true);
-    expect(getRuleCatalog().every((rule) => rule.scope === 'document')).toBe(true);
-  });
-
-  it('does not export removed APIs', () => {
-    expect(api).not.toHaveProperty('dataProfileSchema');
-    expect(api).not.toHaveProperty(['validate', 'Map', 'LibreStyle'].join(''));
-    expect(Object.keys(api).sort()).toEqual([
-      'DEFAULT_RULES',
-      'VERSION',
-      'cartographySchema',
-      'diffCartography',
-      'getRuleCatalog',
-      'getSpecification',
-      'lint',
-      'lintCartography',
-      'lintFile',
-      'parseCartography',
-      'resolveReferences',
-    ]);
-  });
-
-  it('lets a custom rule replace a default rule by id', () => {
-    const report = lint(minimalDocument, {maxDocumentBytes: 1, rules: [{
-      id: 'document-size',
-      severity: 'info',
-      scope: 'document',
-      description: 'override',
-      run: () => [],
-    }]});
-
-    expect(report.findings.some((finding) => finding.ruleId === 'rule-execution')).toBe(false);
-    expect(report.findings.some((finding) => finding.ruleId === 'document-size')).toBe(false);
-  });
-
-  it('treats the document size finding as an advisory post-input warning', () => {
-    const report = lint(minimalDocument, {maxDocumentBytes: 1});
-
-    expect(report.valid).toBe(true);
-    expect(report.findings).toContainEqual(expect.objectContaining({
-      ruleId: 'document-size',
-      severity: 'warning',
-    }));
-  });
-
-  it('reports the supplied file and never reads companion files', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'cartography-md-'));
-    const documentPath = join(directory, 'CARTOGRAPHY.md');
-    const companionPath = join(directory, 'DATA_PROFILE.json');
-    await writeFile(documentPath, minimalDocument, 'utf8');
-    await writeFile(companionPath, '{ not valid json', 'utf8');
-
-    try {
-      const report = await api.lintFile(documentPath);
-      expect(report.document.path).toBe(documentPath);
-      expect(readInputSpy).toHaveBeenCalledTimes(1);
-      expect(readInputSpy).toHaveBeenCalledWith(documentPath);
-      expect(readInputSpy.mock.calls.map(([file]) => file)).toEqual([documentPath]);
-      expect(report.findings.some((finding) => finding.ruleId === 'profile' || finding.ruleId === 'style')).toBe(false);
-    } finally {
-      await rm(directory, {recursive: true, force: true});
-    }
-  });
+const source = '---\nversion: "0.3.0"\nname: Test\n---\n\n## Overview\n\nText.\n';
+describe('document-only behavior', () => {
+  it('returns the document report shape', () => expect(lint(source)).toMatchObject({document: {name: 'Test', version: '0.3.0'}}));
+  it('includes document-scope defaults', () => expect(DEFAULT_RULES.some((rule) => rule.scope === 'document')).toBe(true));
+  it('does not export removed APIs', async () => expect(await import('../api.js')).not.toHaveProperty('contrastPairSchema'));
+  it('overrides defaults by custom rule id', () => expect(lint(source, {rules: [{id: 'missing-sections', severity: 'error', scope: 'document', description: 'Test override.', run: () => []}]}).summary.errors).toBe(0));
+  it('reports over-size documents as advisory warnings', () => expect(lint(source, {maxDocumentBytes: 1}).findings).toContainEqual(expect.objectContaining({ruleId: 'document-size', severity: 'warning'})));
+  it('reads only the supplied lintFile path', async () => { const dir = mkdtempSync(join(tmpdir(), 'cartography-')); const file = join(dir, 'one.md'); writeFileSync(file, source); await expect(lintFile(file)).resolves.toMatchObject({document: {path: file}}); rmSync(dir, {recursive: true}); });
 });

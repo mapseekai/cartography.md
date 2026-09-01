@@ -12,9 +12,15 @@ Generic adjectives are not enough. “Clean and modern” gives an agent almost 
 
 ## Tokens provide exact context
 
-Tokens exist where precision and reuse matter: color values, typography, dimensions, and opacity. They let prose refer to one stable vocabulary and prevent small values from drifting across repeated applications.
+Tokens exist where precision and reuse matter: colors, typography, widths, sizes, opacities, spacing, and dash rhythms. They give prose one stable vocabulary and keep small values from drifting across repeated applications.
 
-Tokens are context for design judgment, not instructions for a particular production target. Exact token references must resolve inside the same document. When an exact value and prose disagree in a way a tool can determine, the token is authoritative and the contradiction should be reported.
+Tokens are context for design judgment, not instructions for a particular production target. Every reference must resolve inside the same document, and resolution must not change a value's type. When an exact value and prose disagree in a way a tool can determine, the token is authoritative and the contradiction should be reported.
+
+## Elements compose tokens into components
+
+A vocabulary alone is not a style. Elements assemble tokens into reusable cartographic components: the primary line, the context label, the quiet area. `family`, `role`, and `state` let one idea keep several coordinated expressions without inventing a new name for every variant.
+
+Elements stay design intent. They never record a dataset field, a layer identifier, or a renderer property; mapping to real data and real targets belongs to external data profiles and adapters, decided per task and per renderer.
 
 ## Identity survives changing content
 
@@ -30,7 +36,7 @@ Composition and layering are therefore described as long-lived relationships, no
 
 ## Scale is progressive disclosure
 
-Scale behavior should describe recognizable stages of reading without encoding target-specific thresholds. At broad distances the design preserves the large spatial story; closer views reveal local structure in a deliberate rhythm. Simplification, clustering, label density, and symbol detail should change while the visual family remains continuous.
+Scale behavior should describe recognizable stages of reading — overview, regional, local, detail — without encoding renderer-specific zoom thresholds. At broad distances the design preserves the large spatial story; closer views reveal local structure in a deliberate rhythm. Simplification, clustering, label density, and symbol detail may change while the visual family remains continuous.
 
 The question is not merely what appears or disappears. It is whether each stage still communicates the same hierarchy and identity.
 
@@ -40,20 +46,20 @@ Hover, selection, alert, invalid, and other temporary states are part of the vis
 
 State distinctions should use more than hue when meaning is critical. Shape, outline, pattern, weight, placement, and wording can create redundant cues and keep alerts distinct from selection.
 
-## Accessibility is a design constraint
+## Inclusive design is a design constraint
 
-Accessibility belongs in the enduring design judgment, not as an afterthought. Explicit contrast pairs can establish deterministic minimums, while prose should cover color redundancy, small-size label legibility, density, and the treatment of critical states.
+Inclusive design belongs to enduring design judgment, not to an afterthought or a machine checklist. Earlier drafts declared contrast pairs for deterministic checking; the current format deliberately keeps contrast and inclusive-design guidance in prose, because the judgments involved — redundant encodings, small-size legibility, density tolerance, critical-state treatment — exceed what a document schema can honestly verify.
 
-Passing declared contrast checks is intentionally narrower than completing accessibility review. Real outputs still require evaluation in their actual context.
+State the ambitions in prose: target contrast ratios, fallback cues beyond hue, and degradation strategies when requirements cannot be met. Passing document validation is intentionally narrower than completing accessibility review; real outputs still require evaluation in their actual context.
 
 ## Preserve what the core does not understand
 
-The format is open to namespaced extensions and unknown content. Parsers and tools should preserve information they do not interpret. Known likely misspellings can receive warnings, but unfamiliar keys must not be silently discarded merely because the current core has no opinion about them.
+The format is open to custom root fields and unknown content, which live beside the standard vocabulary without needing a designated extension point. Parsers and tools should preserve information they do not interpret. Suspected case-only misspellings of standard keys can receive warnings, but unfamiliar content must not be silently discarded merely because the current core has no opinion about it.
 
 This preservation rule lets specialized communities extend the document without forcing every domain concern into the common schema.
 
 ## Validate only deterministic internal facts
 
-Core validation is intentionally document-scoped. It can check safe YAML, the front-matter schema, sections, references, known token types, omissions, and declared contrast relationships. It cannot infer the quality of prose, the truth of current data, task fitness, or the success of a produced artifact.
+Core validation is intentionally document-scoped. It can check the restricted YAML profile, the front-matter schema, section structure, reference resolution, resolved token and element property types, and declared omissions. It cannot infer the quality of prose, the truth of current data, task fitness, or the success of a produced artifact.
 
 That boundary keeps findings honest. Automation should be strict where facts are knowable and explicit about where professional review and runtime context begin.

@@ -1,278 +1,73 @@
-export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-export interface WalkEntry {
-  path: string;
-  value: unknown;
-}
-
+export function isRecord(value: unknown): value is Record<string, unknown> { return typeof value === 'object' && value !== null && !Array.isArray(value); }
+export interface WalkEntry { path: string; value: unknown; }
 export function walkObject(value: unknown, path = '$'): WalkEntry[] {
   const entries: WalkEntry[] = [{path, value}];
-  if (Array.isArray(value)) {
-    for (let index = 0; index < value.length; index += 1) {
-      if (Object.hasOwn(value, index)) entries.push(...walkObject(value[index], `${path}.${index}`));
-    }
-  } else if (isRecord(value)) {
-    for (const [key, child] of Object.entries(value)) {
-      entries.push(...walkObject(child, path === '$' ? key : `${path}.${key}`));
-    }
-  }
+  if (Array.isArray(value)) value.forEach((item, index) => entries.push(...walkObject(item, `${path}[${index}]`)));
+  else if (isRecord(value)) Object.keys(value).forEach((key) => entries.push(...walkObject(value[key], `${path}.${key}`)));
   return entries;
 }
-
-export const REFERENCE_PATH_SOURCE =
-  '[A-Za-z0-9_-]+(?:\\[\\d+\\])*(?:\\.[A-Za-z0-9_-]+(?:\\[\\d+\\])*)*';
-const bracedReferenceCandidatePattern = /\{([^{}\r\n]*)\}/g;
-const referencePathPattern = new RegExp(`^(?:${REFERENCE_PATH_SOURCE})$`);
-const exactReferencePattern = new RegExp(`^\\{(${REFERENCE_PATH_SOURCE})\\}$`);
-
-export interface ExtractTokenReferenceOptions {
-  knownRoots?: ReadonlySet<string>;
-  requireKnownRoot?: boolean;
-}
-
-export function validReferencePath(path: string): boolean {
-  return referencePathPattern.test(path);
-}
-
-function referenceRoot(path: string): string | undefined {
-  return /^\.*([A-Za-z0-9_-]+)/.exec(path)?.[1];
-}
-
-function tokenLikeBracketPayload(payload: string): boolean {
-  return /^\s*$/.test(payload) || /^[A-Za-z0-9_.+\/-]+$/.test(payload);
-}
-
-function malformedReferencePathCandidate(path: string): boolean {
-  let cursor = 0;
-  let hasName = false;
-  let hasPathStructure = false;
-  while (cursor < path.length) {
-    const character = path[cursor]!;
-    if (/[A-Za-z0-9_-]/.test(character)) {
-      hasName = true;
-      cursor += 1;
-      continue;
-    }
-    if (character === '.') {
-      hasPathStructure = true;
-      cursor += 1;
-      continue;
-    }
-    if (character === ']') {
-      hasPathStructure = true;
-      cursor += 1;
-      continue;
-    }
-    if (character !== '[') return false;
-
-    hasPathStructure = true;
-    const payloadStart = cursor + 1;
-    cursor = payloadStart;
-    let depth = 1;
-    let nested = false;
-    while (cursor < path.length && depth > 0) {
-      if (path[cursor] === '[') {
-        nested = true;
-        depth += 1;
-      } else if (path[cursor] === ']') {
-        depth -= 1;
-      }
-      cursor += 1;
-    }
-    const closed = depth === 0;
-    const payloadEnd = closed ? cursor - 1 : path.length;
-    const payload = path.slice(payloadStart, payloadEnd);
-    if (!nested && !tokenLikeBracketPayload(payload)) return false;
-  }
-  return hasName && hasPathStructure;
-}
-
-function referencePathCandidate(
-  path: string,
-  options: ExtractTokenReferenceOptions,
-): boolean {
-  const root = referenceRoot(path);
-  const knownRoot = root !== undefined && options.knownRoots?.has(root) === true;
-  if (validReferencePath(path)) return options.requireKnownRoot !== true || knownRoot;
-  if (!malformedReferencePathCandidate(path)) return false;
-  return options.knownRoots === undefined || knownRoot;
-}
-
-export function normalizeReferencePath(path: string): string {
-  return path.replace(/\[(\d+)\]/g, '.$1').replace(/^\./, '');
-}
-
-export function extractTokenReferences(
-  value: string,
-  options: ExtractTokenReferenceOptions = {},
-): string[] {
-  return extractTokenReferenceCandidates(value, options).filter(validReferencePath);
-}
-
-export function extractTokenReferenceCandidates(
-  value: string,
-  options: ExtractTokenReferenceOptions = {},
-): string[] {
-  return Array.from(value.matchAll(bracedReferenceCandidatePattern), (match) => match[1]).filter(
-    (path): path is string =>
-      path !== undefined && referencePathCandidate(path, options),
-  );
-}
-
-export function extractInvalidTokenReferences(
-  value: string,
-  options: ExtractTokenReferenceOptions = {},
-): string[] {
-  return extractTokenReferenceCandidates(value, options).filter(
-    (path) => !validReferencePath(path),
-  );
-}
-
-export function exactTokenReference(value: unknown): string | undefined {
-  if (typeof value !== 'string') return undefined;
-  const matched = exactReferencePattern.exec(value)?.[1];
-  return matched;
-}
-
-function pathSegments(path: string): string[] | undefined {
+export const TOKEN_IDENTIFIER_SOURCE = '[A-Za-z0-9_-]+';
+export const INDEX_SOURCE = '\\[(?:0|[1-9][0-9]*)\\]';
+export const REFERENCE_PATH_SOURCE = `${TOKEN_IDENTIFIER_SOURCE}(?:(?:\\.${TOKEN_IDENTIFIER_SOURCE})|(?:${INDEX_SOURCE}))+`;
+export const REFERENCE_PATTERN = new RegExp(`^\\{(${REFERENCE_PATH_SOURCE})\\}$`);
+const candidatePattern = /\{([^{}\r\n]*)\}/g;
+const metadataRoots = new Set(['version', 'name', 'description', 'omitted']);
+type Step = {kind: 'key'; name: string} | {kind: 'index'; index: number};
+export function validReferencePath(path: string): boolean { return new RegExp(`^${REFERENCE_PATH_SOURCE}$`).test(path); }
+export function parseReferencePath(path: string): Step[] | undefined {
   if (!validReferencePath(path)) return undefined;
-  const segments: string[] = [];
-  for (const component of path.split('.')) {
-    const name = /^[A-Za-z0-9_-]+/.exec(component)?.[0];
-    if (!name) return undefined;
-    segments.push(name);
-    const brackets = component.slice(name.length);
-    for (const match of brackets.matchAll(/\[(\d+)\]/g)) segments.push(match[1]!);
-  }
-  return segments;
+  const root = /^[A-Za-z0-9_-]+/.exec(path)?.[0]; if (!root) return undefined;
+  const steps: Step[] = [{kind: 'key', name: root}]; let cursor = root.length;
+  const part = /(?:\.([A-Za-z0-9_-]+)|\[([0-9]+)\])/y;
+  while (cursor < path.length) { part.lastIndex = cursor; const match = part.exec(path); if (!match) return undefined; const key = match[1]; const index = match[2]; if (key !== undefined) steps.push({kind: 'key', name: key}); else if (index !== undefined) steps.push({kind: 'index', index: Number(index)}); else return undefined; cursor = part.lastIndex; }
+  return steps;
 }
-
+export function exactTokenReference(value: unknown): string | undefined { if (typeof value !== 'string') return undefined; const match = REFERENCE_PATTERN.exec(value.trim()); return match?.[1]; }
+export function extractTokenReferenceCandidates(value: string): string[] { return [...value.matchAll(candidatePattern)].flatMap((match) => match[1] === undefined ? [] : [match[1]]); }
+export function extractTokenReferences(value: string): string[] { return extractTokenReferenceCandidates(value).filter(validReferencePath); }
+export interface TokenReferenceMatch { path: string; index: number; }
+/** Reference-shaped brace spans with their offsets in the scanned text. */
+export function extractTokenReferenceMatches(value: string): TokenReferenceMatch[] {
+  return [...value.matchAll(candidatePattern)].flatMap((match) => {
+    const path = match[1];
+    return path !== undefined && typeof match.index === 'number' && validReferencePath(path) ? [{path, index: match.index}] : [];
+  });
+}
+export function extractInvalidTokenReferences(value: string): string[] { return extractTokenReferenceCandidates(value).filter((path) => (/^[A-Za-z0-9_-]+(?:\.|\[)/.test(path) || !/\s/u.test(path)) && !validReferencePath(path)); }
 export function getAtPath(root: unknown, path: string): {found: boolean; value?: unknown} {
-  const segments = pathSegments(path);
-  if (!segments) return {found: false};
-  let current: unknown = root;
-  for (const segment of segments) {
-    if (Array.isArray(current)) {
-      const index = Number(segment);
-      if (
-        !Number.isInteger(index) ||
-        index < 0 ||
-        index >= current.length ||
-        !Object.hasOwn(current, index)
-      ) {
-        return {found: false};
-      }
-      current = current[index];
-      continue;
-    }
-    if (!isRecord(current) || !Object.hasOwn(current, segment)) return {found: false};
-    current = current[segment];
-  }
+  const steps = parseReferencePath(path); if (!steps) return {found: false}; let current = root;
+  for (const step of steps) { if (step.kind === 'index') { if (!Array.isArray(current) || step.index >= current.length || !Object.hasOwn(current, step.index)) return {found: false}; current = current[step.index]; } else { if (!isRecord(current) || !Object.prototype.hasOwnProperty.call(current, step.name)) return {found: false}; current = current[step.name]; } }
   return {found: true, value: current};
 }
-
-export function resolveTokenValue(
-  root: unknown,
-  referenceOrValue: unknown,
-  seen = new Set<string>(),
-): {resolved: boolean; value?: unknown; path?: string; cycle?: boolean} {
-  const reference = exactTokenReference(referenceOrValue);
-  if (!reference) return {resolved: true, value: referenceOrValue};
-  if (seen.has(reference)) return {resolved: false, path: reference, cycle: true};
-  const nextSeen = new Set(seen);
-  nextSeen.add(reference);
-  const result = getAtPath(root, reference);
-  if (!result.found) return {resolved: false, path: reference};
-  const nestedReference = exactTokenReference(result.value);
-  if (nestedReference) return resolveTokenValue(root, result.value, nextSeen);
-  return {resolved: true, value: result.value, path: reference};
+export type ResolutionReason = 'broken' | 'illegal-index' | 'traverses-reference' | 'metadata-root' | 'invalid-syntax' | 'cycle' | 'depth-limit';
+export interface Resolution { resolved: boolean; value?: unknown; path?: string; cycle?: boolean; reason?: ResolutionReason; }
+export function resolveTokenReference(root: unknown, path: string): Resolution { return resolvePath(root, path, new Set(), 0); }
+function resolvePath(root: unknown, path: string, seen: Set<string>, depth: number): Resolution {
+  if (depth >= 100) return {resolved: false, reason: 'depth-limit'};
+  const steps = parseReferencePath(path); if (!steps) return {resolved: false, reason: 'invalid-syntax'};
+  const first = steps[0];
+  if (!first || first.kind !== 'key') return {resolved: false, reason: 'invalid-syntax'};
+  if (metadataRoots.has(first.name)) return {resolved: false, reason: 'metadata-root'};
+  let current = root;
+  for (let index = 0; index < steps.length; index += 1) {
+    const step = steps[index];
+    if (!step) return {resolved: false, reason: 'invalid-syntax'};
+    if (index > 0 && exactTokenReference(current)) return {resolved: false, reason: 'traverses-reference'};
+    if (step.kind === 'index') { if (!Array.isArray(current)) return {resolved: false, reason: 'illegal-index'}; if (step.index >= current.length || !Object.hasOwn(current, step.index)) return {resolved: false, reason: 'broken'}; current = current[step.index]; }
+    else { if (!isRecord(current) || !Object.prototype.hasOwnProperty.call(current, step.name)) return {resolved: false, reason: 'broken'}; current = current[step.name]; }
+  }
+  const next = exactTokenReference(current); if (!next) return {resolved: true, value: current, path};
+  if (seen.has(next)) return {resolved: false, path: next, cycle: true, reason: 'cycle'};
+  const nextSeen = new Set(seen); nextSeen.add(path); return resolvePath(root, next, nextSeen, depth + 1);
 }
-
-export function resolveTokenReference(
-  root: unknown,
-  reference: string,
-): {resolved: boolean; value?: unknown; path?: string; cycle?: boolean} {
-  return resolveTokenValue(root, `{${reference}}`);
-}
-
-export function resolveReferencesDeep(
-  value: unknown,
-  root: unknown = value,
-  seen = new Set<string>(),
-): unknown {
-  const exact = exactTokenReference(value);
-  if (exact) {
-    if (seen.has(exact)) return value;
-    const result = getAtPath(root, exact);
-    if (!result.found) return value;
-    const nextSeen = new Set(seen);
-    nextSeen.add(exact);
-    return resolveReferencesDeep(result.value, root, nextSeen);
-  }
-  if (Array.isArray(value)) {
-    const resolved = new Array(value.length);
-    for (let index = 0; index < value.length; index += 1) {
-      if (Object.hasOwn(value, index)) {
-        resolved[index] = resolveReferencesDeep(value[index], root, seen);
-      }
-    }
-    return resolved;
-  }
-  if (isRecord(value)) {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, child]) => [key, resolveReferencesDeep(child, root, seen)]),
-    );
-  }
+export function resolveTokenValue(root: unknown, valueOrRef: unknown): Resolution { const ref = exactTokenReference(valueOrRef); return ref ? resolveTokenReference(root, ref) : {resolved: true, value: valueOrRef}; }
+export function resolveReferencesDeep(value: unknown, root: unknown = value, seen = new Set<string>()): unknown {
+  const ref = exactTokenReference(value); if (ref) { if (seen.has(ref)) return value; const result = resolveTokenReference(root, ref); return result.resolved ? resolveReferencesDeep(result.value, root, new Set([...seen, ref])) : value; }
+  if (Array.isArray(value)) return value.map((item) => resolveReferencesDeep(item, root, seen));
+  if (isRecord(value)) return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, resolveReferencesDeep(item, root, seen)]));
   return value;
 }
-
-export function flattenLeaves(value: unknown, path = '$'): Record<string, unknown> {
-  if (Array.isArray(value)) {
-    const entries: Record<string, unknown>[] = [];
-    for (let index = 0; index < value.length; index += 1) {
-      if (Object.hasOwn(value, index)) entries.push(flattenLeaves(value[index], `${path}.${index}`));
-    }
-    return entries.length === 0 ? {[path]: []} : Object.assign({}, ...entries);
-  }
-  if (isRecord(value)) {
-    const entries = Object.entries(value);
-    if (entries.length === 0) return {[path]: {}};
-    return Object.assign({}, ...entries.map(([key, child]) => flattenLeaves(child, path === '$' ? key : `${path}.${key}`)));
-  }
-  return {[path]: value};
-}
-
-export function valueAtRelativePath(root: unknown, path: string): unknown {
-  return getAtPath(root, path.replace(/^\$\.?/, '')).value;
-}
-
-export function containsValue(value: unknown, predicate: (candidate: unknown) => boolean): boolean {
-  if (predicate(value)) return true;
-  if (Array.isArray(value)) {
-    for (let index = 0; index < value.length; index += 1) {
-      if (Object.hasOwn(value, index) && containsValue(value[index], predicate)) return true;
-    }
-    return false;
-  }
-  if (isRecord(value)) return Object.values(value).some((item) => containsValue(item, predicate));
-  return false;
-}
-
-export function stableStringify(value: unknown): string {
-  if (Array.isArray(value)) {
-    const entries: string[] = [];
-    for (let index = 0; index < value.length; index += 1) {
-      entries.push(Object.hasOwn(value, index) ? stableStringify(value[index]) : 'null');
-    }
-    return `[${entries.join(',')}]`;
-  }
-  if (isRecord(value)) {
-    return `{${Object.keys(value)
-      .sort()
-      .map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
-      .join(',')}}`;
-  }
-  return JSON.stringify(value);
-}
+export function flattenLeaves(value: unknown, path = '$'): Record<string, unknown> { if (Array.isArray(value)) return Object.assign({}, ...value.map((item, index) => flattenLeaves(item, `${path}[${index}]`))); if (isRecord(value)) return Object.assign({}, ...Object.entries(value).map(([key, item]) => flattenLeaves(item, `${path}.${key}`))); return {[path]: value}; }
+export function valueAtRelativePath(root: unknown, path: string): unknown { return getAtPath(root, path.replace(/^\$\.?/, '')).value; }
+export function containsValue(value: unknown, predicate: (candidate: unknown) => boolean): boolean { return walkObject(value).some((entry) => predicate(entry.value)); }
+export function stableStringify(value: unknown): string { if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`; if (isRecord(value)) return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`; return JSON.stringify(value); }

@@ -1,29 +1,126 @@
 ---
-version: "0.2.0"
+version: "0.3.0"
 name: Quiet Atlas
 description: "A restrained editorial atlas family for clear orientation and unhurried reading."
-locale: en
-tokens:
-  colors:
-    paper: "#f8f4f0"
-    water: "#aecfe2"
-    waterway: "#a0c8f0"
-    building: "#dfdbd7"
-    road-warm: "#ffeeaa"
-    road-amber: "#ffcc88"
-    ink: "#000000"
-accessibility:
-  contrastPairs:
-    - id: ink-on-paper
-      foreground: "{tokens.colors.ink}"
-      background: "{tokens.colors.paper}"
-      minimum: 4.5
-      kind: text
-    - id: water-on-paper
-      foreground: "{tokens.colors.water}"
-      background: "{tokens.colors.paper}"
-      minimum: 1.2
-      kind: graphic
+colors:
+  paper: "#F8F4F0"
+  water: "#AECFE2"
+  waterway: "#A0C8F0"
+  building: "#DFDBD7"
+  road-warm: "#FFEEAA"
+  road-amber: "#FFCC88"
+  ink: "#171717"
+  halo: "{colors.paper}"
+widths:
+  hairline: 0.5px
+  road-primary: 2.5px
+  road-secondary: 1.25px
+  label-halo: 1px
+sizes:
+  point-small: 5px
+  point-medium: 8px
+opacities:
+  solid: 1
+  context: 0.58
+spacing:
+  label-gap: 2px
+  symbol-label-gap: 4px
+dashes:
+  boundary: [4px, 2px]
+typography:
+  label-primary:
+    fontFamily: ["Source Serif 4", "Georgia", "serif"]
+    fontSize: 13px
+    fontWeight: 600
+    lineHeight: 1.2
+    letterSpacing: 0.01em
+  label-context:
+    fontFamily: ["Source Sans 3", "Arial", "sans-serif"]
+    fontSize: 11px
+    fontWeight: 400
+    lineHeight: 1.2
+    letterSpacing: 0em
+elements:
+  paper-ground:
+    geometry: background
+    family: atlas-ground
+    role: canvas
+    state: default
+    layerRole: background
+    color: "{colors.paper}"
+  water-area:
+    geometry: polygon
+    family: water
+    role: context
+    state: default
+    layerRole: context
+    fillColor: "{colors.water}"
+    fillOpacity: "{opacities.context}"
+  waterway-line:
+    geometry: line
+    family: water
+    role: detail
+    state: default
+    layerRole: context
+    strokeColor: "{colors.waterway}"
+    strokeWidth: "{widths.road-secondary}"
+  road-primary:
+    geometry: line
+    family: road
+    role: primary
+    state: default
+    layerRole: subject
+    strokeColor: "{colors.road-warm}"
+    strokeWidth: "{widths.road-primary}"
+    casingColor: "{colors.paper}"
+    casingWidth: "{widths.hairline}"
+  road-secondary:
+    geometry: line
+    family: road
+    role: secondary
+    state: default
+    layerRole: context
+    strokeColor: "{colors.road-amber}"
+    strokeWidth: "{widths.road-secondary}"
+    opacity: "{opacities.context}"
+  administrative-boundary:
+    geometry: line
+    family: boundary
+    role: reference
+    state: default
+    layerRole: context
+    strokeColor: "{colors.ink}"
+    strokeWidth: "{widths.hairline}"
+    dash: "{dashes.boundary}"
+    opacity: "{opacities.context}"
+  place-label-primary:
+    geometry: label
+    family: place-label
+    role: primary
+    state: default
+    layerRole: annotation
+    color: "{colors.ink}"
+    haloColor: "{colors.halo}"
+    haloWidth: "{widths.label-halo}"
+    typography: "{typography.label-primary}"
+    spacing: "{spacing.label-gap}"
+  place-label-context:
+    geometry: label
+    family: place-label
+    role: context
+    state: default
+    layerRole: annotation
+    color: "{colors.ink}"
+    typography: "{typography.label-context}"
+    opacity: "{opacities.context}"
+  atlas-point:
+    geometry: point
+    family: atlas-point
+    role: reference
+    state: default
+    layerRole: annotation
+    color: "{colors.ink}"
+    size: "{sizes.point-small}"
 ---
 
 ## Overview
@@ -33,88 +130,74 @@ and near-black ink make the page feel calmly printed rather than brightly
 screen-lit. It favors pauses, generous margins, and a small set of durable
 signals that let a reader settle into an unfamiliar place.
 
-## Intent & Audience
+## Colors
 
-This family supports orientation, place reading, and explanatory storytelling
-for readers who value a composed reference image beneath their own subject
-matter. Its long-lived role is to make geographic context legible without
-turning every available detail into a competing headline.
-
-## Visual Hierarchy
-
-Paper is the quiet ground. Water and built texture establish context; warm
-routes guide movement; inked names and the reader's active focus carry the
-strongest attention. Reserve the deepest contrast for essential names and
-meaningful change, so ordinary context can remain present without becoming
-insistent.
-
-## Color
-
-Use {tokens.colors.paper} as the warm, low-glare canvas and
-{tokens.colors.water} as the dominant cool counterweight. Let
-{tokens.colors.road-warm} and {tokens.colors.road-amber} supply a closely
-related, sparing navigation accent; do not introduce loud unrelated hues.
-{tokens.colors.ink} is precious: it anchors names, key boundaries, and
-decisive editorial marks rather than broad decoration.
+Use {colors.paper} as the low-glare canvas and {colors.water} as its cool,
+quiet counterweight. {colors.building} holds built texture a
+half-step above the canvas. {colors.road-warm} and {colors.road-amber} are
+related, sparing navigation accents; {colors.ink} anchors essential names and
+decisive editorial marks rather than broad decoration. Aim for WCAG 2.2 contrast of at
+least 4.5:1 for ordinary critical text and 3:1 for large text or essential
+non-text marks against their effective backgrounds. Preserve meaning with
+weight, outline, dash, symbol, or placement as well as hue.
 
 ## Typography & Labels
 
-Typography should feel measured, literate, and quietly contemporary. Names
-form a small, consistent hierarchy with sufficient breathing room; prefer
-fewer well-placed names to an unbroken run of text. A light surrounding
-buffer may protect important names over variable context, but never becomes a
-visible badge or a second voice.
+Typography is measured, literate, and quietly contemporary. Use
+{typography.label-primary} for the few names that guide orientation, and
+{typography.label-context} for supporting place reading. Favor fewer,
+well-placed names with {spacing.label-gap} of breathing room,
+and keep {spacing.symbol-label-gap} between a point symbol and its label;
+protect critical labels with the quiet halo in `place-label-primary`, never a
+visible badge.
+
+## Composition & Density
+
+Compose from calm paper through contextual water and built texture to routes
+and names. Protect open paper around important labels and across broad calm
+areas. When density rises, reduce secondary texture and labels before crowding
+the focal marks; breathing room is information design, not unused space.
+
+## Layering & Depth
+
+The conceptual order is paper ground, context, subject, then annotation.
+`paper-ground` stays flat; `water-area`, `waterway-line`, and `road-secondary`
+recede through lighter color and {opacities.context}. `road-primary` and `place-label-primary`
+hold {opacities.solid} and emerge through weight, casing, and contrast without
+making the map theatrical.
 
 ## Geometry & Symbols
 
-Favor slender, deliberate linework; soft, low-contrast areas; and compact
-marks with unambiguous silhouettes. Curves should read as calm gestures, not
-technical traces. Repeated symbols belong to one family of optical weight, and
-texture is used only when it clarifies an area without reducing the paper's
-quiet.
+Favor slender, deliberate linework; soft low-contrast areas; and compact marks
+with unambiguous silhouettes. Point marks step from {sizes.point-small} to
+{sizes.point-medium} only when a place truly earns the extra weight.
+`administrative-boundary` uses {dashes.boundary} only for reference separation.
+Curves should read as calm gestures rather than technical traces; remove
+details that cannot retain their family resemblance at small sizes.
 
 ## Scale & Generalization
 
-At broad reading distances, preserve the large spatial story and remove
-incidental detail. As the reader comes closer, reveal local structure in a
-steady rhythm, simplifying curves, clustering nearby marks, and protecting
-names from collisions. Each stage should feel like the same atlas becoming
-more articulate, never a different visual system.
+At `overview`, preserve the large spatial story and only the strongest names.
+At `regional`, establish major water and route relationships. At `local`, reveal
+supporting routes and contextual labels; at `detail`, add compact reference
+marks selectively. Each stage simplifies before it shrinks and remains the same
+printed atlas rather than a different visual system.
 
-## Layering & Composition
+## Map Elements
 
-Compose the map from a quiet ground through contextual forms to routes, names,
-and active emphasis. Protect open paper around important names and across
-large calm areas. When density rises, reduce secondary texture before crowding
-the focal marks; visual breathing room is part of the information design.
-
-## Interaction States
-
-Hover is a light acknowledgement that preserves the underlying role. Selection
-adds a clear, durable emphasis without erasing surrounding context. Alert and
-invalid states use both shape or pattern and a reserved accent so they remain
-distinguishable without relying on color alone. No temporary state may make a
-routine element appear more important than an active selection.
-
-## Accessibility
-
-Ink-on-paper maintains the declared text contrast, and water-on-paper remains
-perceptible as a broad graphic relationship. Important distinctions are
-repeated through weight, outline, pattern, placement, or wording rather than
-hue alone. Keep essential names readable at small physical sizes and leave
-enough separation for readers with reduced color discrimination.
-
-## Review Principles
-
-Review the family at both distant and close reading distances: first for the
-spatial story, then for names, density, and moments of emphasis. Ask whether
-the palette still feels like one quiet printed world, whether the reader can
-find the focal information quickly, and whether any added detail has earned
-its attention. Treat restraint as a positive decision, not unfinished work.
+`paper-ground` establishes the warm canvas. `water-area` and `waterway-line`
+form the quiet water family, while `road-primary` and `road-secondary` express
+one route family at different roles. `administrative-boundary` is a subdued
+reference line. `place-label-primary` and `place-label-context` use the place
+label family to separate orientation from context. `atlas-point` supplies a
+compact, inked reference mark. These are visual components, not bindings to
+specific datasets, fields, or rendering layers.
 
 ## Do's and Don'ts
 
 Do preserve the paper-water-ink relationship and spend warm accents sparingly.
-Do make active states clear while retaining their original meaning. Don't fill
-every empty area with texture or labels. Don't use pure decorative color,
-heavy outlines, or competing type voices to manufacture energy.
+Do use related family, role, and state values when adding a persistent variant.
+Do retain a second visual channel for important distinctions. Don't fill every
+empty area with texture or labels. Don't use decorative color, heavy outlines,
+or competing type voices to manufacture energy. Don't turn a temporary state
+into a louder hierarchy than the subject it represents.

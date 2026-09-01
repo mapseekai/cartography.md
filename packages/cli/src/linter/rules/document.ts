@@ -1,76 +1,43 @@
 import type {Finding, LintRule} from '../../model/types.js';
 import {maskMarkdownReferenceLiterals} from '../../parser/markdown.js';
-import {CANONICAL_SECTIONS, normalizeHeading, SECTION_SEVERITY} from '../../parser/sections.js';
+import {CANONICAL_SECTIONS, canonicalSectionName} from '../../parser/sections.js';
 import {
   exactTokenReference,
-  extractInvalidTokenReferences,
-  extractTokenReferenceCandidates,
-  extractTokenReferences,
+  extractTokenReferenceMatches,
   resolveTokenReference,
   walkObject,
 } from '../../utils/object.js';
-import {omittedSectionNames} from './helpers.js';
 
-const RECOGNIZED_ROOT_KEYS = new Set([
+const STANDARD_ROOT_KEYS = [
   'version',
   'name',
   'description',
-  'locale',
-  'tokens',
-  'accessibility',
-  'extensions',
   'omitted',
-]);
-const YAML_REFERENCE_OPTIONS = {knownRoots: RECOGNIZED_ROOT_KEYS};
-const MARKDOWN_REFERENCE_OPTIONS = {
-  knownRoots: RECOGNIZED_ROOT_KEYS,
-  requireKnownRoot: true,
-};
+  'colors',
+  'typography',
+  'widths',
+  'sizes',
+  'opacities',
+  'spacing',
+  'dashes',
+  'elements',
+];
 
-function editDistance(left: string, right: string): number {
-  const rows = Array.from({length: left.length + 1}, () => Array<number>(right.length + 1).fill(0));
-  for (let index = 0; index <= left.length; index += 1) rows[index]![0] = index;
-  for (let index = 0; index <= right.length; index += 1) rows[0]![index] = index;
-  for (let row = 1; row <= left.length; row += 1) {
-    for (let column = 1; column <= right.length; column += 1) {
-      const cost = left[row - 1] === right[column - 1] ? 0 : 1;
-      rows[row]![column] = Math.min(
-        rows[row - 1]![column]! + 1,
-        rows[row]![column - 1]! + 1,
-        rows[row - 1]![column - 1]! + cost,
-      );
-    }
-  }
-  return rows[left.length]![right.length]!;
-}
-
-function closestRootKey(key: string): string | undefined {
-  let closest: string | undefined;
-  let score = Number.POSITIVE_INFINITY;
-  for (const candidate of RECOGNIZED_ROOT_KEYS) {
-    const distance = editDistance(key.toLowerCase(), candidate.toLowerCase());
-    if (distance < score) {
-      closest = candidate;
-      score = distance;
-    }
-  }
-  return score <= 3 ? closest : undefined;
+function errorFinding(ruleId: string, message: string, path?: string): Finding {
+  return {ruleId, severity: 'error', message, ...(path ? {path} : {})};
 }
 
 export const documentSizeRule: LintRule = {
   id: 'document-size',
   severity: 'warning',
   scope: 'document',
-  description: 'Keep the contract small enough for reliable agent ingestion.',
-  run(context) {
-    const bytes = Buffer.byteLength(context.source, 'utf8');
-    if (bytes <= context.maxDocumentBytes) return [];
+  description: 'Warns when the document exceeds the configured byte budget for reliable agent ingestion.',
+  run({source, maxDocumentBytes}) {
+    if (Buffer.byteLength(source) <= maxDocumentBytes) return [];
     return [{
       ruleId: this.id,
       severity: this.severity,
-      path: '$',
-      message: `CARTOGRAPHY.md is ${bytes.toLocaleString()} bytes; the configured maximum is ${context.maxDocumentBytes.toLocaleString()} bytes.`,
-      suggestion: 'Move large evidence tables and screenshots to linked files while keeping normative decisions in CARTOGRAPHY.md.',
+      message: `The document exceeds the ${maxDocumentBytes}-byte limit.`,
     }];
   },
 };
@@ -79,88 +46,67 @@ export const omittedSectionsRule: LintRule = {
   id: 'omitted-sections',
   severity: 'error',
   scope: 'document',
-  description: 'Require omitted entries to name distinct absent canonical sections.',
-  run(context) {
-    if (!context.cartography) return [];
-    const canonicalSections = new Set<string>(CANONICAL_SECTIONS);
-    const presentSections = new Set(
-      context.parsed.sections
-        .map((section) => section.canonicalHeading)
-        .filter((heading) => canonicalSections.has(heading)),
-    );
-    const seen = new Set<string>();
+  description: 'Rejects omitted entries that are unknown, duplicated after normalization, or also present in the body.',
+  run({cartography, parsed}) {
     const findings: Finding[] = [];
-
-    for (const [index, item] of (context.cartography.omitted ?? []).entries()) {
+    const seen = new Set<string>();
+    const present = new Set(
+      parsed.sections
+        .map((section) => canonicalSectionName(section.heading))
+        .filter((name): name is string => Boolean(name)),
+    );
+    for (const [index, item] of (cartography.omitted ?? []).entries()) {
       const declared = typeof item === 'string' ? item : item.section;
-      const normalized = normalizeHeading(declared);
+      const canonical = canonicalSectionName(declared);
       const path = `omitted.${index}`;
-      if (!canonicalSections.has(normalized)) {
-        findings.push({
-          ruleId: this.id,
-          severity: this.severity,
-          path,
-          message: `Omitted section "${declared}" is not a canonical heading or recognized alias.`,
-          suggestion: `Use one of: ${CANONICAL_SECTIONS.join(', ')}.`,
-        });
+      if (!canonical) {
+        findings.push(errorFinding(this.id, `The omitted section "${declared}" is not a recognized standard section.`, path));
         continue;
       }
-      if (seen.has(normalized)) {
-        findings.push({
-          ruleId: this.id,
-          severity: this.severity,
-          path,
-          message: `Canonical section "${normalized}" is omitted more than once.`,
-        });
-      } else {
-        seen.add(normalized);
+      if (seen.has(canonical)) {
+        findings.push(errorFinding(this.id, `The omitted section "${canonical}" appears more than once.`, path));
       }
-      if (presentSections.has(normalized)) {
-        findings.push({
-          ruleId: this.id,
-          severity: this.severity,
-          path,
-          message: `Canonical section "${normalized}" cannot be both present and omitted.`,
-          suggestion: 'Remove the omitted entry or remove the Markdown section.',
-        });
+      if (present.has(canonical)) {
+        findings.push(errorFinding(this.id, `The omitted section "${canonical}" also appears in the document body.`, path));
       }
+      seen.add(canonical);
     }
     return findings;
   },
 };
 
-export const requiredSectionsRule: LintRule = {
-  id: 'required-sections',
+export const missingSectionsRule: LintRule = {
+  id: 'missing-sections',
+  severity: 'info',
+  scope: 'document',
+  description: 'Notes standard sections that are absent without an omitted declaration.',
+  run({cartography, parsed}) {
+    const omitted = new Set(
+      (cartography.omitted ?? []).map((item) => canonicalSectionName(typeof item === 'string' ? item : item.section)),
+    );
+    const present = new Set(parsed.sections.map((section) => canonicalSectionName(section.heading)));
+    return CANONICAL_SECTIONS.filter((section) => !present.has(section) && !omitted.has(section)).map((section) => ({
+      ruleId: this.id,
+      severity: this.severity,
+      message: `The standard section "${section}" is missing.`,
+    }));
+  },
+};
+
+export const emptySectionRule: LintRule = {
+  id: 'empty-section',
   severity: 'warning',
   scope: 'document',
-  description: 'Require the canonical prose sections unless explicitly omitted.',
-  run(context) {
-    if (!context.cartography) return [];
-    const present = new Set(context.parsed.sections.map((section) => section.canonicalHeading));
-    const omitted = omittedSectionNames(context.cartography);
-    const findings: Finding[] = [];
-    for (const section of CANONICAL_SECTIONS) {
-      if (present.has(section) || omitted.has(section)) continue;
-      findings.push({
+  description: 'Warns when a recognized standard section has no body content.',
+  run({parsed}) {
+    return parsed.sections
+      .filter((section) => canonicalSectionName(section.heading) && !section.body.trim())
+      .map((section) => ({
         ruleId: this.id,
-        severity: SECTION_SEVERITY[section],
-        path: `sections.${section}`,
-        message: `Canonical section "${section}" is missing.`,
-        suggestion: `Add a "## ${section}" section or list it under omitted with a reason.`,
-      });
-    }
-    for (const section of context.parsed.sections) {
-      if (section.body.length === 0) {
-        findings.push({
-          ruleId: 'empty-section',
-          severity: 'warning',
-          path: `sections.${section.canonicalHeading}`,
-          line: section.line,
-          message: `Section "${section.heading}" is empty.`,
-        });
-      }
-    }
-    return findings;
+        severity: this.severity,
+        line: section.line,
+        message: `The standard section "${section.canonicalHeading}" is empty.`,
+      }));
   },
 };
 
@@ -168,26 +114,23 @@ export const sectionOrderRule: LintRule = {
   id: 'section-order',
   severity: 'warning',
   scope: 'document',
-  description: 'Keep canonical sections in a stable order for human and agent readers.',
-  run(context) {
-    const order = new Map(CANONICAL_SECTIONS.map((section, index) => [section, index]));
-    let previous = -1;
+  description: 'Warns when recognized standard sections appear out of canonical order.',
+  run({parsed}) {
     const findings: Finding[] = [];
-    for (const section of context.parsed.sections) {
-      const index = order.get(section.canonicalHeading as (typeof CANONICAL_SECTIONS)[number]);
-      if (index === undefined) continue;
-      if (index < previous) {
+    let previous = -1;
+    for (const section of parsed.sections) {
+      const canonical = canonicalSectionName(section.heading);
+      if (!canonical) continue;
+      const order = CANONICAL_SECTIONS.indexOf(canonical as (typeof CANONICAL_SECTIONS)[number]);
+      if (order < previous) {
         findings.push({
           ruleId: this.id,
           severity: this.severity,
-          path: `sections.${section.canonicalHeading}`,
           line: section.line,
-          message: `Section "${section.heading}" is out of canonical order.`,
-          suggestion: `Use this order: ${CANONICAL_SECTIONS.join(' → ')}.`,
-          autoFixable: true,
+          message: `The section "${canonical}" is out of canonical order.`,
         });
       }
-      previous = Math.max(previous, index);
+      previous = Math.max(previous, order);
     }
     return findings;
   },
@@ -195,24 +138,39 @@ export const sectionOrderRule: LintRule = {
 
 export const unknownRootKeyRule: LintRule = {
   id: 'unknown-root-key',
-  severity: 'warning',
+  severity: 'info',
   scope: 'document',
-  description: 'Preserve extensions while flagging likely misspellings of standard root keys.',
-  run(context) {
-    if (!context.cartography) return [];
-    const findings: Finding[] = [];
-    for (const key of Object.keys(context.cartography)) {
-      if (RECOGNIZED_ROOT_KEYS.has(key) || key.includes(':') || key.startsWith('x-')) continue;
-      const suggestion = closestRootKey(key);
-      findings.push({
+  description: 'Notes unknown root keys that are preserved as custom content.',
+  run({cartography}) {
+    return Object.keys(cartography)
+      .filter((key) => !STANDARD_ROOT_KEYS.includes(key))
+      .map((key) => ({
         ruleId: this.id,
         severity: this.severity,
         path: key,
-        message: `Unknown root key "${key}" is preserved as an extension.`,
-        ...(suggestion ? {suggestion: `Did you mean "${suggestion}"? Use extensions or a namespaced key for intentional extensions.`} : {}),
-      });
-    }
-    return findings;
+        message: `The root key "${key}" is preserved as unknown content.`,
+      }));
+  },
+};
+
+export const rootKeyCaseConflictRule: LintRule = {
+  id: 'root-key-case-conflict',
+  severity: 'warning',
+  scope: 'document',
+  description: 'Warns when an unknown root key differs from a standard key only by letter case.',
+  run({cartography}) {
+    return Object.keys(cartography)
+      .filter(
+        (key) =>
+          !STANDARD_ROOT_KEYS.includes(key) &&
+          STANDARD_ROOT_KEYS.some((root) => root.toLowerCase() === key.toLowerCase()),
+      )
+      .map((key) => ({
+        ruleId: this.id,
+        severity: this.severity,
+        path: key,
+        message: `The root key "${key}" differs from a standard key only by case.`,
+      }));
   },
 };
 
@@ -220,82 +178,42 @@ export const tokenReferenceRule: LintRule = {
   id: 'token-reference',
   severity: 'error',
   scope: 'document',
-  description: 'Every exact token reference must resolve; embedded references and cycles are forbidden.',
-  run(context) {
-    if (!context.cartography) return [];
+  description: 'Requires every whole-scalar or visible-prose token reference to have valid syntax and resolve without cycles.',
+  run({cartography, parsed}) {
     const findings: Finding[] = [];
-    const root = context.cartography;
-    for (const entry of walkObject(root)) {
+    for (const entry of walkObject(cartography)) {
       if (typeof entry.value !== 'string') continue;
-      const candidates = extractTokenReferenceCandidates(entry.value, YAML_REFERENCE_OPTIONS);
-      if (candidates.length === 0) continue;
-      const invalid = extractInvalidTokenReferences(entry.value, YAML_REFERENCE_OPTIONS);
-      if (invalid.length > 0) {
-        findings.push(...invalid.map((reference) => ({
-          ruleId: this.id,
-          severity: 'error' as const,
-          path: entry.path,
-          message: `Invalid token reference path {${reference}}.`,
-          suggestion: 'Use dot-separated names with optional numeric bracket indices, such as {tokens.colors.ink} or {tokens.custom.palette[0]}.',
-        })));
+      const trimmed = entry.value.trim();
+      if (/^\{[\s\S]*\}$/.test(trimmed) && !exactTokenReference(entry.value)) {
+        findings.push(errorFinding(this.id, `The token reference "${trimmed}" has invalid syntax.`, entry.path));
         continue;
       }
-      const exact = exactTokenReference(entry.value);
-      if (!exact) {
-        findings.push({
-          ruleId: this.id,
-          severity: 'error',
-          path: entry.path,
-          message: 'A YAML token reference must occupy the entire string.',
-          suggestion: 'Move surrounding syntax into a structured value or define a complete token value.',
-        });
-        continue;
-      }
-      const resolved = resolveTokenReference(root, exact);
-      if (!resolved.resolved) {
-        findings.push({
-          ruleId: this.id,
-          severity: 'error',
-          path: entry.path,
-          message: resolved.cycle
-            ? `Token reference cycle detected at {${resolved.path}}.`
-            : `Broken token reference {${resolved.path}}.`,
-          ...(!resolved.cycle ? {suggestion: 'Define the referenced path or correct the reference spelling.'} : {}),
-        });
+      const reference = exactTokenReference(entry.value);
+      if (!reference) continue;
+      const result = resolveTokenReference(cartography, reference);
+      if (!result.resolved) {
+        findings.push(
+          errorFinding(
+            result.reason === 'depth-limit' ? 'resource-limit' : this.id,
+            `The token reference "{${reference}}" cannot be resolved (${result.reason}).`,
+            entry.path,
+          ),
+        );
       }
     }
-    for (const section of context.parsed.sections) {
-      const visibleProse = maskMarkdownReferenceLiterals(section.body);
-      for (const reference of extractInvalidTokenReferences(
-        visibleProse,
-        MARKDOWN_REFERENCE_OPTIONS,
-      )) {
-        findings.push({
-          ruleId: this.id,
-          severity: 'error',
-          path: `sections.${section.canonicalHeading}`,
-          line: section.line,
-          message: `Invalid token reference path {${reference}}.`,
-          suggestion: 'Use dot-separated names with optional numeric bracket indices, such as {tokens.colors.ink} or {tokens.custom.palette[0]}.',
-        });
-      }
-      for (const reference of extractTokenReferences(
-        visibleProse,
-        MARKDOWN_REFERENCE_OPTIONS,
-      )) {
-        const resolved = resolveTokenReference(root, reference);
-        if (resolved.resolved) continue;
-        findings.push({
-          ruleId: this.id,
-          severity: 'error',
-          path: `sections.${section.canonicalHeading}`,
-          line: section.line,
-          message: resolved.cycle
-            ? `Token reference cycle detected at {${resolved.path}}.`
-            : `Broken token reference {${resolved.path}}.`,
-          ...(!resolved.cycle ? {suggestion: 'Define the referenced path or correct the reference spelling.'} : {}),
-        });
-      }
+    // §10.3: scan the whole Markdown body once — preamble, heading text, and
+    // every section — so references outside section bodies are still checked.
+    const masked = maskMarkdownReferenceLiterals(parsed.body);
+    for (const match of extractTokenReferenceMatches(masked)) {
+      const result = resolveTokenReference(cartography, match.path);
+      if (result.resolved) continue;
+      const line = parsed.bodyStartLine + (masked.slice(0, match.index).match(/\n/g)?.length ?? 0);
+      findings.push({
+        ruleId: result.reason === 'depth-limit' ? 'resource-limit' : this.id,
+        severity: this.severity,
+        line,
+        message: `The token reference "{${match.path}}" cannot be resolved (${result.reason}).`,
+      });
     }
     return findings;
   },
@@ -304,8 +222,10 @@ export const tokenReferenceRule: LintRule = {
 export const DOCUMENT_RULES: LintRule[] = [
   documentSizeRule,
   omittedSectionsRule,
-  requiredSectionsRule,
+  missingSectionsRule,
+  emptySectionRule,
   sectionOrderRule,
   unknownRootKeyRule,
+  rootKeyCaseConflictRule,
   tokenReferenceRule,
 ];

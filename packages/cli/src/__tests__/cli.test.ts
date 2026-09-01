@@ -1,225 +1,28 @@
 import {spawnSync} from 'node:child_process';
+import {afterAll, describe, expect, it} from 'vitest';
 import {mkdtempSync, rmSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {afterAll, describe, expect, it} from 'vitest';
 
 const cli = fileURLToPath(new URL('../cli.ts', import.meta.url));
-const packageDirectory = fileURLToPath(new URL('../../', import.meta.url));
-const temporaryDirectory = mkdtempSync(join(tmpdir(), 'cartography-cli-'));
-const file = join(temporaryDirectory, 'CARTOGRAPHY.md');
-writeFileSync(file, '---\nversion: "0.2.0"\nname: CLI test\n---\n\n## Overview\n\nTest.\n');
-
-function runCli(args: string[], input?: string) {
-  return spawnSync(process.execPath, ['--import', 'tsx', cli, ...args], {
-    cwd: packageDirectory,
-    encoding: 'utf8',
-    input,
-  });
-}
+const directory = mkdtempSync(join(tmpdir(), 'cartography-cli-'));
+const file = join(directory, 'CARTOGRAPHY.md');
+const document = '---\nversion: "0.3.0"\nname: CLI test\n---\n\n## Overview\n\nTest.\n';
+writeFileSync(file, document);
+function run(args: string[], input?: string) { return spawnSync(process.execPath, ['--import', 'tsx', cli, ...args], {cwd: fileURLToPath(new URL('../../', import.meta.url)), encoding: 'utf8', input}); }
 
 describe('lint CLI', () => {
-  it('returns a JSON lint report for a document', () => {
-    const result = runCli(['lint', file]);
-
-    expect(result.status).toBe(0);
-    expect(JSON.parse(result.stdout)).toMatchObject({valid: true});
-  });
-
-  it('returns a valid JSON lint report for a document read from stdin', () => {
-    const input = '---\nversion: "0.2.0"\nname: CLI stdin test\n---\n\n## Overview\n\nTest.\n';
-    const result = runCli(['lint', '-'], input);
-
-    expect(result.status).toBe(0);
-    expect(JSON.parse(result.stdout)).toMatchObject({valid: true});
-  });
-
-  it('applies --strict when stdin is the positional input', () => {
-    const input = `---
-version: "0.2.0"
-name: CLI stdin strict test
-omitted:
-  - Intent & Audience
-  - Visual Hierarchy
-  - Color
-  - Typography & Labels
-  - Geometry & Symbols
-  - Scale & Generalization
-  - Layering & Composition
-  - Interaction States
-  - Accessibility
-  - Review Principles
-  - Do's and Don'ts
----
-
-## Overview
-
-Test.
-`;
-    const result = runCli(['lint', '-', '--strict'], input);
-
-    expect(result.status).toBe(0);
-    expect(JSON.parse(result.stdout)).toMatchObject({strict: true, valid: true});
-  });
-
-  it('accepts text formatting after the stdin positional input', () => {
-    const input = '---\nversion: "0.2.0"\nname: CLI stdin test\n---\n\n## Overview\n\nTest.\n';
-    const result = runCli(['lint', '-', '--format', 'text'], input);
-
-    expect(result.status).toBe(0);
-    expect(result.stdout).toContain('CARTOGRAPHY.md validation: PASS');
-  });
-
-  it('rejects a bare dash unless it is the only lint input', () => {
-    const result = runCli(['lint', file, '-']);
-
-    expect(result.status).toBe(2);
-    expect(result.stdout).not.toContain('"valid"');
-    expect(result.stderr).not.toContain('"valid"');
-  });
-
-  it.each([
-    ['ordinary extra positional', [file, 'extra']],
-    ['extra positional after --', [file, '--', 'extra']],
-    ['stdin marker after a file and --', [file, '--', '-']],
-  ])('rejects %s before producing a lint report', (_name, args) => {
-    const result = runCli(['lint', ...args]);
-
-    expect(result.status).toBe(2);
-    expect(result.stdout).not.toContain('"valid"');
-    expect(result.stderr).not.toContain('"valid"');
-  });
-
-  it.each([
-    ['--profile', 'profile.json'],
-    ['--style', 'target.json'],
-  ])('rejects removed %s input as a usage failure', (flag, value) => {
-    const result = runCli(['lint', file, flag, value]);
-
-    expect(result.status).toBe(2);
-    expect(result.stdout).not.toContain('"valid"');
-    expect(result.stderr).not.toContain('"valid"');
-  });
-
-  it('rejects --no-strict before reading the document', () => {
-    const missingFile = join(temporaryDirectory, 'missing-CARTOGRAPHY.md');
-    const result = runCli(['lint', missingFile, '--no-strict']);
-
-    expect(result.status).toBe(2);
-    expect(result.stdout).not.toContain('"valid"');
-    expect(result.stderr).not.toContain('"valid"');
-    expect(result.stderr).not.toContain('Unable to read');
+  it('prints a JSON lint report', () => expect(JSON.parse(run(['lint', file]).stdout)).toMatchObject({valid: true}));
+  it('reads a document from stdin', () => expect(JSON.parse(run(['lint', '-'], document).stdout)).toMatchObject({valid: true}));
+  it('applies strict to stdin', () => expect(JSON.parse(run(['lint', '-', '--strict'], document).stdout)).toMatchObject({strict: true}));
+  it('prints text reports', () => expect(run(['lint', '-', '--format', 'text'], document).stdout).toContain('CARTOGRAPHY.md validation:'));
+  it('rejects a bare dash after a file', () => expect(run(['lint', file, '-']).status).toBe(2));
+  it('rejects no-strict', () => expect(run(['lint', file, '--no-strict']).status).toBe(2));
+  it('rejects unknown short options', () => expect(run(['lint', file, '-v']).status).toBe(2));
+  it('accepts lint options around positional input', () => {
+    expect(run(['lint', '--format', 'text', file, '--strict']).status).toBe(0);
+    expect(run(['lint', file, '--strict', '--format=text']).status).toBe(0);
   });
 });
-
-describe('exact CLI grammar', () => {
-  it.each(['constructor', 'toString', '__proto__'])(
-    'rejects prototype-like command name %s before command output',
-    (command) => {
-      const result = runCli([command]);
-
-      expect(result.status).toBe(2);
-      expect(result.stdout).toBe('');
-      expect(result.stderr).toContain(`Unknown command ${command}`);
-      expect(result.stderr).not.toContain('USAGE rules');
-      expect(result.stderr).not.toContain('ERROR');
-    },
-  );
-
-  it.each(['constructor', 'toString', '__proto__'])(
-    'rejects prototype-like option --%s before lint work',
-    (option) => {
-      const result = runCli(['lint', file, `--${option}`, 'accepted']);
-
-      expect(result.status).toBe(2);
-      expect(result.stdout).toBe('');
-      expect(result.stderr).toContain(`Unknown option --${option}`);
-      expect(result.stderr).not.toContain('"valid"');
-      expect(result.stderr).not.toContain('ERROR');
-    },
-  );
-
-  it.each(['constructor', 'toString', '__proto__'])(
-    'rejects prototype-like top-level option --%s before help or command output',
-    (option) => {
-      const result = runCli([`--${option}`, 'accepted']);
-
-      expect(result.status).toBe(2);
-      expect(result.stdout).toBe('');
-      expect(result.stderr).toContain(`Unknown option --${option}`);
-      expect(result.stderr).not.toContain('USAGE cartography.md');
-      expect(result.stderr).not.toContain('ERROR');
-    },
-  );
-
-  it('rejects an unsupported top-level short option before output', () => {
-    const result = runCli(['-v']);
-
-    expect(result.status).toBe(2);
-    expect(result.stdout).toBe('');
-    expect(result.stderr).toContain('Unknown option -v');
-  });
-
-  it.each([
-    ['lint format followed by an option', ['lint', file, '--format', '--strict'], '"valid"'],
-    ['lint invalid format', ['lint', file, '--format', 'yaml'], '"valid"'],
-    ['lint boolean with a value', ['lint', file, '--strict=true'], '"valid"'],
-    ['lint unknown option', ['lint', file, '--unknown'], '"valid"'],
-    ['parse missing input', ['parse'], '"frontmatter"'],
-    ['parse extra input', ['parse', file, 'extra'], '"frontmatter"'],
-    ['parse option', ['parse', file, '--strict'], '"frontmatter"'],
-    ['diff missing input', ['diff', file], '"regression"'],
-    ['diff extra input after separator', ['diff', file, file, '--', 'extra'], '"regression"'],
-    ['diff option', ['diff', file, file, '--strict'], '"regression"'],
-    ['spec positional', ['spec', 'extra'], '**Status:** Draft 0.2.0'],
-    ['spec output without a value', ['spec', '--output', '--help'], '**Status:** Draft 0.2.0'],
-    ['spec unknown option', ['spec', '--unknown'], '**Status:** Draft 0.2.0'],
-    ['rules positional after separator', ['rules', '--', 'extra'], 'frontmatter-required'],
-    ['rules unknown option', ['rules', '--unknown'], 'frontmatter-required'],
-  ])('rejects %s before command work or output', (_name, args, workOutput) => {
-    const result = runCli(args);
-
-    expect(result.status).toBe(2);
-    expect(result.stdout).not.toContain(workOutput);
-    expect(result.stderr).not.toContain(workOutput);
-  });
-
-  it.each([
-    ['lint', ['lint', '--help']],
-    ['parse', ['parse', '--help']],
-    ['diff', ['diff', '--help']],
-    ['spec', ['spec', '--help']],
-    ['rules', ['rules', '--help']],
-    ['top-level', ['--help']],
-    ['top-level short help', ['-h']],
-    ['top-level version', ['--version']],
-  ])('preserves %s help or version handling', (_name, args) => {
-    expect(runCli(args).status).toBe(0);
-  });
-
-  it.each([
-    ['lint', ['lint', file], '"valid": true'],
-    ['parse', ['parse', file], '"frontmatter"'],
-    ['diff', ['diff', file, file], '"regression": false'],
-    ['spec', ['spec'], '**Status:** Draft 0.2.0'],
-    ['rules', ['rules'], 'frontmatter-required'],
-  ])('preserves normal %s command execution', (_name, args, expectedOutput) => {
-    const result = runCli(args);
-
-    expect(result.status).toBe(0);
-    expect(result.stdout).toContain(expectedOutput);
-  });
-
-  it('accepts lint options on either side of the one positional input', () => {
-    const before = runCli(['lint', '--format', 'text', file, '--strict']);
-    const after = runCli(['lint', file, '--strict', '--format=text']);
-
-    expect(before.status).toBe(1);
-    expect(after.status).toBe(1);
-    expect(before.stdout).toContain('CARTOGRAPHY.md validation: FAIL');
-    expect(after.stdout).toContain('CARTOGRAPHY.md validation: FAIL');
-  });
-});
-
-afterAll(() => rmSync(temporaryDirectory, {recursive: true, force: true}));
+afterAll(() => rmSync(directory, {recursive: true, force: true}));

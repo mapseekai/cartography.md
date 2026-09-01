@@ -1,39 +1,37 @@
 import {describe, expect, it} from 'vitest';
 import {cartographySchema} from '../schema/cartography.js';
+import {lint} from '../linter/index.js';
 
-const minimal = {version: '0.2.0', name: 'Quiet Atlas'};
+const parse = (value: unknown) => cartographySchema.safeParse(value).success;
+const base = {version: '0.3.0', name: ' Test '};
 
-describe('cartographySchema 0.2', () => {
-  it('accepts the minimal prose-first document', () => {
-    expect(cartographySchema.safeParse(minimal).success).toBe(true);
-  });
+describe('cartography schema', () => {
+  it('accepts the minimal document', () => expect(parse(base)).toBe(true));
+  it('accepts standard groups and references', () => expect(parse({...base, colors: {ink: '#111'}, widths: {line: '{sizes.road}'}, sizes: {road: '2px'}})).toBe(true));
+  it('preserves non-empty strings with surrounding whitespace', () => expect(parse({...base, name: ' name '})).toBe(true));
+  it.each(['0.5px', '1px'])('accepts valid widths: %s', (dimension) => expect(parse({...base, widths: {line: dimension}})).toBe(true));
+  it.each(['-0px', '1rem', '+1px', '.5px'])('rejects invalid dimensions: %s', (dimension) => expect(parse({...base, widths: {line: dimension}})).toBe(false));
+  it('accepts negative em where a Dimension is valid', () => expect(parse({...base, typography: {label: {fontFamily: 'Noto', fontSize: '12px', letterSpacing: '-0.02em'}}})).toBe(true));
+  it('requires typography fontFamily and fontSize', () => expect(parse({...base, typography: {label: {fontFamily: 'Noto'}}})).toBe(false));
+  it('accepts typography references', () => expect(parse({...base, typography: {label: '{symbols.type}'}, symbols: {type: {fontFamily: 'Noto', fontSize: '12px'}}})).toBe(true));
+  it('reports reserved MapElement properties', () => expect(lint(`---
+version: "0.3.0"
+name: Reserved
+elements:
+  road:
+    geometry: line
+    strokeWidth: "1px"
+    source: x
+---
 
-  it('accepts known token groups and exact references', () => {
-    const result = cartographySchema.safeParse({
-      ...minimal,
-      tokens: {
-        colors: {ink: '#25221D', label: '{tokens.colors.ink}'},
-        typography: {label: {fontFamily: 'Noto Sans', fontSize: 12, fontWeight: 400}},
-        widths: {hairline: 0.5},
-        sizes: {symbol: '8px'},
-        opacities: {context: 0.55},
-      },
-    });
-    expect(result.success).toBe(true);
-  });
+## Overview
 
-  it('preserves surrounding whitespace in a non-empty string', () => {
-    const result = cartographySchema.safeParse({...minimal, name: '  Quiet Atlas  '});
-
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.data.name).toBe('  Quiet Atlas  ');
-  });
-
-  it.each([
-    [{...minimal, version: '0.1.0'}, 'version'],
-    [{...minimal, tokens: {opacities: {context: 1.1}}}, 'opacities'],
-    [{...minimal, name: '   '}, 'name'],
-  ])('rejects invalid input %j at %s', (input, _path) => {
-    expect(cartographySchema.safeParse(input).success).toBe(false);
+Text.
+`).findings).toContainEqual(expect.objectContaining({ruleId: 'element-reserved-property'})));
+  it('requires omitted objects to be closed', () => expect(parse({...base, omitted: [{section: 'Colors', extra: true}]})).toBe(false));
+  it('requires patterns to be non-empty', () => expect(parse({...base, elements: {water: {geometry: 'polygon', pattern: []}}})).toBe(false));
+  it('requires exact lowercase geometry and fontWeight literals', () => {
+    expect(parse({...base, typography: {label: {fontFamily: 'Noto', fontSize: '12px', fontWeight: 'Bold'}}})).toBe(false);
+    expect(parse({...base, elements: {road: {geometry: 'Line', strokeWidth: '1px'}}})).toBe(false);
   });
 });

@@ -1,5 +1,9 @@
+import Database from 'better-sqlite3';
+import { mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { parseLyrx } from '../src/adapters/arcgis.js';
+import { parseLyrx, parseStylx } from '../src/adapters/arcgis.js';
 import { cimSymbolToStyle } from '../src/adapters/cim.js';
 import { loadFixture } from './helpers.js';
 
@@ -62,5 +66,58 @@ describe('parseLyrx', () => {
     });
 
     expect(result?.skippedReasons).toContain('CIM yoffset not migrated: IR offset only supports one axis');
+  });
+});
+
+function makeStylx(items: Array<{ category: string; name: string; content: string }> = [{
+  category: 'Symbols',
+  name: 'major-road',
+  content: JSON.stringify({
+    type: 'CIMLineSymbol',
+    symbolLayers: [{ type: 'CIMSolidStroke', color: { type: 'CIMRGBColor', values: [51, 136, 255] }, width: 1.5 }],
+  }),
+}]): Buffer {
+  const dir = mkdtempSync(path.join(tmpdir(), 'stylx-'));
+  const file = path.join(dir, 'test.stylx');
+  const db = new Database(file);
+  db.exec('CREATE TABLE ITEMS (ID INTEGER PRIMARY KEY, CLASS INTEGER, CATEGORY TEXT, NAME TEXT, TAGS TEXT, CONTENT BLOB, KEY TEXT)');
+  const insert = db.prepare('INSERT INTO ITEMS (CLASS, CATEGORY, NAME, CONTENT) VALUES (?, ?, ?, ?)');
+  for (const item of items) insert.run(3, item.category, item.name, Buffer.from(item.content, 'utf8'));
+  db.close();
+  return readFileSync(file);
+}
+
+function makeEmptyStylx(): Buffer {
+  const dir = mkdtempSync(path.join(tmpdir(), 'stylx-'));
+  const file = path.join(dir, 'empty.stylx');
+  const db = new Database(file);
+  db.close();
+  return readFileSync(file);
+}
+
+describe('parseStylx', () => {
+  it('extracts named symbols from a stylx sqlite file', () => {
+    const ir = parseStylx(makeStylx(), 'test.stylx');
+
+    expect(ir.source.kind).toBe('stylx');
+    const element = ir.elements.find((candidate) => candidate.name === 'major-road');
+    expect(element?.style.strokeColor).toBe('#3388ff');
+    expect(element?.style.strokeWidth).toEqual({ value: 1.5, unit: 'pt' });
+  });
+
+  it('skips malformed and unsupported category items', () => {
+    const ir = parseStylx(makeStylx([
+      { category: 'Symbols', name: 'broken', content: '{' },
+      { category: 'Other', name: 'ignored', content: '{}' },
+    ]), 'test.stylx');
+
+    expect(ir.skipped).toEqual(expect.arrayContaining([
+      expect.objectContaining({ source: 'stylx', layer: 'broken' }),
+      expect.objectContaining({ source: 'stylx', layer: 'ignored' }),
+    ]));
+  });
+
+  it('rejects a database without an ITEMS table', () => {
+    expect(() => parseStylx(makeEmptyStylx(), 'empty.stylx')).toThrow('ITEMS table');
   });
 });

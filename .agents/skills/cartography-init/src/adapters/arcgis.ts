@@ -1,3 +1,7 @@
+import Database from 'better-sqlite3';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { unzipSync } from 'fflate';
 import { cimSymbolToStyle } from './cim.js';
 import { emptyExtracted, type ExtractedElement, type ExtractedStyle } from '../ir.js';
@@ -10,6 +14,51 @@ export function parseLyrx(buffer: Buffer, fileName: string): ExtractedStyle {
   if (!document) return extracted;
   for (const layer of nodes(document.layerDefinitions)) extractLayer(layer, extracted);
   return extracted;
+}
+
+export function parseStylx(buffer: Buffer, fileName: string): ExtractedStyle {
+  const directory = mkdtempSync(path.join(tmpdir(), 'cartography-stylx-'));
+  const file = path.join(directory, 'input.stylx');
+  writeFileSync(file, buffer);
+
+  let database: Database.Database | undefined;
+  try {
+    database = new Database(file, { readonly: true, fileMustExist: true });
+    const itemsTable = database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'ITEMS'").get();
+    if (!itemsTable) throw new Error('.stylx database does not contain an ITEMS table');
+
+    const extracted = emptyExtracted({ kind: 'stylx', name: fileName });
+    const items = database.prepare('SELECT NAME AS name, CATEGORY AS category, CONTENT AS content FROM ITEMS').all() as StylxItem[];
+    for (const item of items) extractStylxItem(item, extracted);
+    return extracted;
+  } finally {
+    database?.close();
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+type StylxItem = {
+  name: unknown;
+  category: unknown;
+  content: unknown;
+};
+
+function extractStylxItem(item: StylxItem, extracted: ExtractedStyle): void {
+  const name = stringOf(item.name) ?? 'Unnamed symbol';
+  const category = stringOf(item.category);
+  if (!category || !['Symbols', 'Colors', 'Labels'].includes(category)) {
+    extracted.skipped.push({ source: 'stylx', layer: name, reason: `Unsupported .stylx category: ${category ?? 'unknown'}` });
+    return;
+  }
+
+  let symbol: unknown;
+  try {
+    symbol = JSON.parse(Buffer.isBuffer(item.content) ? item.content.toString('utf8') : String(item.content));
+  } catch {
+    extracted.skipped.push({ source: 'stylx', layer: name, reason: 'Invalid .stylx item JSON' });
+    return;
+  }
+  extractElement(node(symbol), name, category, undefined, extracted, 'stylx');
 }
 
 function parseDocument(buffer: Buffer): CimNode | undefined {
@@ -95,17 +144,17 @@ function extractClassBreaks(renderer: CimNode, layerName: string, extracted: Ext
   }
 }
 
-function extractElement(symbol: CimNode | undefined, name: string, family: string | undefined, roleHint: ExtractedElement['roleHint'] | undefined, extracted: ExtractedStyle): ExtractedElement | undefined {
+function extractElement(symbol: CimNode | undefined, name: string, family: string | undefined, roleHint: ExtractedElement['roleHint'] | undefined, extracted: ExtractedStyle, source: 'lyrx' | 'stylx' = 'lyrx'): ExtractedElement | undefined {
   const styleAndGeometry = symbol && cimSymbolToStyle(symbol);
   if (!styleAndGeometry) {
-    extracted.skipped.push({ source: 'lyrx', layer: name, reason: `Unsupported CIM symbol: ${stringOf(symbol?.type) ?? 'unknown'}` });
+    extracted.skipped.push({ source, layer: name, reason: `Unsupported CIM symbol: ${stringOf(symbol?.type) ?? 'unknown'}` });
     return undefined;
   }
   const element: ExtractedElement = { name, geometry: styleAndGeometry.geometry, style: styleAndGeometry.style, scaleHints: [] };
   if (family) element.family = family;
   if (roleHint) element.roleHint = roleHint;
   extracted.elements.push(element);
-  for (const reason of styleAndGeometry.skippedReasons) extracted.skipped.push({ source: 'lyrx', layer: name, reason });
+  for (const reason of styleAndGeometry.skippedReasons) extracted.skipped.push({ source, layer: name, reason });
   collectFacts(element, extracted);
   return element;
 }

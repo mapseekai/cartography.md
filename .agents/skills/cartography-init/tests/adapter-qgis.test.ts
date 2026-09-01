@@ -14,6 +14,13 @@ describe('parseQgis', () => {
     expect(ir.datasources.some((d) => d.identity.includes('ogr'))).toBe(true);
   });
 
+  it('skips QGIS units outside the allowed mapping table', () => {
+    const cmProject = loadFixture('qgis-min.qgs').toString('utf8').replace('v="MM"', 'v="CM"');
+    const ir = parseQgis(Buffer.from(cmProject), 'qgis-cm.qgs');
+    expect(ir.elements[0]?.style.strokeWidth).toBeUndefined();
+    expect(ir.skipped).toContainEqual(expect.objectContaining({ layer: 'roads', reason: expect.stringContaining('CM') }));
+  });
+
   it('unpacks QGZ archives identified by their ZIP signature', () => {
     const ir = parseQgis(Buffer.from(zipSync({ 'project.qgs': loadFixture('qgis-min.qgs') })), 'project.qgz');
     expect(ir.elements).toHaveLength(1);

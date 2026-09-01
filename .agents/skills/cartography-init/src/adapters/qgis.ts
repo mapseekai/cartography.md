@@ -14,7 +14,7 @@ import {
 type XmlNode = Record<string, unknown>;
 
 const units: Readonly<Record<string, DimensionUnit>> = {
-  MM: 'mm', Points: 'pt', Pixels: 'px', Inches: 'in', CM: 'cm', Centimeters: 'cm',
+  MM: 'mm', Points: 'pt', Pixels: 'px', Inches: 'in',
 };
 
 export function parseQgis(buffer: Buffer, fileName: string): ExtractedStyle {

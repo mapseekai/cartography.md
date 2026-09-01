@@ -47,6 +47,29 @@ describe('runCli end-to-end', () => {
     });
   }
 
+  it('detects style.json whose "layers" key lies beyond the first 4 KiB', async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'init-e2e-'));
+    const base = JSON.parse(readFileSync(path.join(fixturesDir, 'style-min.json'), 'utf8')) as {
+      version: number;
+      name: string;
+      sources: unknown;
+      layers: unknown;
+    };
+    const padded = Buffer.from(JSON.stringify({
+      version: base.version,
+      name: base.name,
+      metadata: { pad: 'x'.repeat(8192) },
+      sources: base.sources,
+      layers: base.layers,
+    }));
+    expect(padded.indexOf('"layers"')).toBeGreaterThan(4096);
+    const source = path.join(dir, 'big.style.json');
+    writeFileSync(source, padded);
+    const out = path.join(dir, 'CARTOGRAPHY.md');
+    const code = await runCli(['--input', source, '--output', out]);
+    expect(code).toBe(0);
+    expect(readFileSync(out, 'utf8')).toContain('version: "0.3.0"');
+  });
   it('refuses to write on unrecognised input', async () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'init-e2e-'));
     const out = path.join(dir, 'CARTOGRAPHY.md');

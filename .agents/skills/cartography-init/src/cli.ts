@@ -86,7 +86,7 @@ export async function runCli(argv: string[]): Promise<number> {
   try {
     const input = readFileSync(parsed.input);
     const fileName = basename(parsed.input);
-    const ir = parseInput(detectSource(parsed.input, input.subarray(0, 4096)), input, fileName);
+    const ir = parseInput(detectSource(parsed.input, input), input, fileName);
     const result = initializeDocument(
       ir,
       parsed.name ? { name: parsed.name, sourceFile: fileName } : { sourceFile: fileName },

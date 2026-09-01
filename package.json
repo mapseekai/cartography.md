@@ -11,6 +11,7 @@
   "scripts": {
     "build": "pnpm --filter @mapseekai/cartography.md run build",
     "test": "pnpm --filter @mapseekai/cartography.md run test",
+    "test:release": "node --test scripts/release-metadata.test.mjs",
     "test:data-profile": "pnpm --filter @cartographymd/data-profile-skill test",
     "test:init": "pnpm --filter @cartographymd/init-skill test",
     "typecheck": "pnpm --filter @mapseekai/cartography.md run typecheck",

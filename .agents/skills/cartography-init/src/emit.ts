@@ -2,13 +2,20 @@ import type { Consolidated, ConsolidatedElement, TypographyToken } from './conso
 import type { Dimension, ExtractedStyle } from './ir.js';
 
 type YamlScalar = string | number;
-type YamlValue = YamlScalar | YamlValue[] | { [key: string]: YamlValue };
+interface YamlDimension {
+  kind: 'dimension';
+  value: string;
+}
+type YamlValue = YamlScalar | YamlDimension | YamlValue[] | { [key: string]: YamlValue };
 
 const tokenReference = /^\{[A-Za-z0-9_.\-[\]]+\}$/;
-const dimension = /^\d+(?:\.\d+)?(?:px|pt|mm|cm|in)$/;
 
-function formatDimension({ value, unit }: Dimension): string {
-  return `${value}${unit}`;
+function formatDimension({ value, unit }: Dimension): YamlDimension {
+  return { kind: 'dimension', value: `${value}${unit}` };
+}
+
+function isDimension(value: YamlValue): value is YamlDimension {
+  return typeof value === 'object' && value !== null && !Array.isArray(value) && value.kind === 'dimension';
 }
 
 function quoted(value: string): string {
@@ -17,14 +24,16 @@ function quoted(value: string): string {
 
 function scalar(value: YamlScalar, inArray = false): string {
   if (typeof value === 'number') return String(value);
-  return inArray || value === '0.3.0' || dimension.test(value) || tokenReference.test(value) || /[:#{}"']/.test(value)
+  return inArray || value === '0.3.0' || tokenReference.test(value) || /[:#{}"']/.test(value)
     ? quoted(value)
     : value;
 }
 
 /** Emits the intentionally small YAML subset used by CARTOGRAPHY.md front matter. */
 function emitYaml(value: YamlValue, indent = 0): string[] {
+  if (isDimension(value)) return [quoted(value.value)];
   if (Array.isArray(value)) return [`[${value.map(item => {
+    if (isDimension(item)) return quoted(item.value);
     if (typeof item === 'object' && item !== null) throw new Error('YAML arrays only support scalars');
     return scalar(item as YamlScalar, true);
   }).join(', ')}]`];
@@ -33,7 +42,7 @@ function emitYaml(value: YamlValue, indent = 0): string[] {
   const lines: string[] = [];
   for (const [key, child] of Object.entries(value)) {
     const prefix = `${' '.repeat(indent)}${key}:`;
-    if (typeof child === 'object' && child !== null && !Array.isArray(child)) {
+    if (typeof child === 'object' && child !== null && !Array.isArray(child) && !isDimension(child)) {
       lines.push(prefix, ...emitYaml(child, indent + 2));
     } else {
       lines.push(`${prefix} ${emitYaml(child, indent)[0]}`);
@@ -88,7 +97,7 @@ function section(title: string, body: string[]): string {
  * Produces a self-contained CARTOGRAPHY.md draft from consolidated visual facts.
  * Runtime bindings and datasource identities deliberately remain out of the document.
  */
-export function emitDocument(c: Consolidated, ir: ExtractedStyle, opts: { name: string }): string {
+export function emitDocument(c: Consolidated, ir: ExtractedStyle, opts: { name: string; sourceFile: string }): string {
   const tokens: Record<string, YamlValue> = {};
   if (Object.keys(c.tokens.colors).length) tokens.colors = c.tokens.colors;
   if (Object.keys(c.tokens.widths).length) {
@@ -108,7 +117,7 @@ export function emitDocument(c: Consolidated, ir: ExtractedStyle, opts: { name: 
     ...tokens,
     elements: Object.fromEntries(c.elements.map(element => [element.name, elementYaml(element)])),
   };
-  const sourceName = ir.source.name ?? opts.name;
+  const sourceName = opts.sourceFile;
   const lineElements = c.elements.filter(element => element.geometry === 'line');
   const primaryLine = lineElements[0];
   const lineStyle = primaryLine?.style;

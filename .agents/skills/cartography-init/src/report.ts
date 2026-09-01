@@ -1,12 +1,19 @@
 import { readFileSync } from 'node:fs';
 import type {
   BindingItem,
+  BindingTriage,
   DatasourceItem,
   ExtractedStyle,
   SkippedItem,
   UnresolvedItem,
 } from './ir.js';
 import type { Consolidated } from './consolidate.js';
+
+const triageDecisions: Record<BindingTriage['decision'], true> = {
+  prose: true,
+  runtime: true,
+  discard: true,
+};
 
 /**
  * INIT_REPORT.json schema:
@@ -100,7 +107,7 @@ export function renderReportMarkdown(ir: ExtractedStyle, c: Consolidated): strin
 export function checkReportTriage(jsonPath: string): { ok: boolean; pending: string[] } {
   const report = JSON.parse(readFileSync(jsonPath, 'utf8')) as Pick<InitReport, 'bindings'>;
   const pending = report.bindings
-    .filter(binding => !binding.triage?.decision)
+    .filter(binding => !binding.triage || triageDecisions[binding.triage.decision] !== true)
     .map(binding => `${binding.layer}+${binding.expression}`);
 
   return { ok: pending.length === 0, pending };

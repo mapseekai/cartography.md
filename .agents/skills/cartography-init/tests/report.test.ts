@@ -45,18 +45,28 @@ describe('report', () => {
     expect(md).toContain('补写');
   });
 
-  it('checkReportTriage fails on untriaged bindings and passes after triage', () => {
+  it.each(['prose', 'runtime', 'discard'])('checkReportTriage accepts the %s decision', decision => {
     const dir = mkdtempSync(path.join(tmpdir(), 'report-'));
     const file = path.join(dir, 'INIT_REPORT.json');
     const ir = sampleIr();
-    writeFileSync(file, renderReportJson(ir, consolidate(ir)));
-    expect(checkReportTriage(file).ok).toBe(false);
-
     const triaged = JSON.parse(renderReportJson(ir, consolidate(ir)));
-    triaged.bindings[0].triage = { decision: 'prose', note: '主干道强调色' };
+    triaged.bindings[0].triage = { decision, note: '已分诊' };
     writeFileSync(file, JSON.stringify(triaged, null, 2));
-    const res = checkReportTriage(file);
-    expect(res.ok).toBe(true);
-    expect(res.pending).toEqual([]);
+
+    expect(checkReportTriage(file)).toEqual({ ok: true, pending: [] });
+  });
+
+  it('checkReportTriage keeps bindings with an invalid decision pending', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'report-'));
+    const file = path.join(dir, 'INIT_REPORT.json');
+    const ir = sampleIr();
+    const triaged = JSON.parse(renderReportJson(ir, consolidate(ir)));
+    triaged.bindings[0].triage = { decision: 'anything', note: '垃圾值' };
+    writeFileSync(file, JSON.stringify(triaged, null, 2));
+
+    expect(checkReportTriage(file)).toEqual({
+      ok: false,
+      pending: ['roads+"highway" = \'primary\''],
+    });
   });
 });

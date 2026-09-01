@@ -21,11 +21,16 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm schema:check
       - run: pnpm typecheck
-      - run: pnpm test
       - run: pnpm build
+      - run: pnpm test
       - run: pnpm --filter @mapseekai/cartography.md check-package
       - run: pnpm lint:example
       - name: Typecheck data-profile Skill
         run: pnpm typecheck:data-profile
       - name: Test data-profile Skill
         run: pnpm test:data-profile
+      - name: Typecheck cartography-init skill
+        run: pnpm --filter @cartographymd/init-skill typecheck
+
+      - name: Run cartography-init skill tests
+        run: pnpm --filter @cartographymd/init-skill test

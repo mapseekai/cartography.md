@@ -69,3 +69,25 @@ Use precise language. Normative sections use MUST, MUST NOT, SHOULD, SHOULD NOT,
 ## Pull requests
 
 Keep changes focused. Include the motivation, affected document behavior, test evidence, bilingual documentation updates where applicable, and versioning notes for breaking format changes.
+
+## Publishing releases
+
+The `Publish` GitHub Actions workflow publishes `@mapseekai/cartography.md` through npm Trusted Publishing. Do not create an `NPM_TOKEN` repository secret.
+
+Before the first automated release, configure the package on npmjs.com with a GitHub Actions Trusted Publisher:
+
+- organization or user: `mapseekai`
+- repository: `cartography.md`
+- workflow filename: `publish.yml`
+- environment: leave empty
+
+Set the same version in root `package.json`, `packages/cli/package.json`, and `packages/cli/src/version.ts`, update both changelogs, and merge a green CI commit to `main`. Push an annotated tag matching that version:
+
+```bash
+git tag -a v0.4.0 -m "cartography.md v0.4.0"
+git push origin v0.4.0
+```
+
+Stable tags publish to npm `latest`. Tags containing a SemVer prerelease suffix, such as `v0.4.0-rc.1`, publish to `next` and create a GitHub prerelease.
+
+To retry an existing tag without moving it, run the `Publish` workflow manually and provide the exact tag. The workflow never overwrites an existing npm version or GitHub Release. A release is complete only after the workflow installs the public registry package and verifies `cartographymd --version`.

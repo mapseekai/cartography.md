@@ -356,9 +356,9 @@ describe('GitHub workflows', () => {
     expect(contract).toContain('@mapseekai/cartography.md');
     expect(contract).toContain('rootManifest.version');
     expect(contract).toContain('cliManifest.version');
-    expect(contract).toContain('const compiledMatch =');
-    expect(contract).toContain('sourceMappingURL');
-    expect(contract).toContain('const compiledVersion = compiledMatch?.[2]');
+    expect(contract).toContain('const compiledMatches =');
+    expect(contract).toContain('compiledMatches.length === 1');
+    expect(contract).toContain('const compiledVersion =');
     expect(contract).toContain('compiledVersion !== releaseVersion');
     expect(contract).toContain('dist/version.js must export a literal VERSION equal to RELEASE_VERSION');
     expect(contract).toContain('RELEASE_VERSION');
@@ -371,6 +371,25 @@ describe('GitHub workflows', () => {
     const source = await workflowSource('publish.yml');
     expect((source.match(/npm pack \.\/packages\/cli/g) ?? []).length).toBe(1);
     expect(source).not.toContain('check-package');
+  });
+
+  it('accepts the built version module with distinct package and format exports', async () => {
+    const publish = await workflow('publish.yml');
+    const pack = namedRun(publish.jobs.package, 'Pack publishable tarball once');
+    const contract = namedRun(publish.jobs.package, 'Validate packed tarball contract');
+    const runnerTemp = await mkdtemp(join(tmpdir(), 'cartography-version-contract-'));
+    try {
+      const packResult = runBash(pack, {RUNNER_TEMP: runnerTemp});
+      expect({status: packResult.status, stderr: packResult.stderr}).toEqual({status: 0, stderr: ''});
+
+      const contractResult = runBash(contract, {
+        RELEASE_VERSION: '0.3.1-rc.1',
+        RUNNER_TEMP: runnerTemp,
+      });
+      expect({status: contractResult.status, stderr: contractResult.stderr}).toEqual({status: 0, stderr: ''});
+    } finally {
+      await rm(runnerTemp, {recursive: true, force: true});
+    }
   });
 
   it('accepts existing versions and duplicate races only for exact tarball integrity', async () => {

@@ -232,8 +232,10 @@ jobs:
             const cliManifest = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
             const compiledSource = fs.readFileSync(process.argv[4], "utf8");
             const releaseVersion = process.argv[5];
-            const compiledMatch = /^\s*export\s+const\s+VERSION\s*=\s*(["\x27])([^"\x27\\\r\n]+)\1;\s*(?:\/\/# sourceMappingURL=version\.js\.map\s*)?$/.exec(compiledSource);
-            const compiledVersion = compiledMatch?.[2];
+            const compiledMatches = [...compiledSource.matchAll(
+              /^\s*export\s+const\s+VERSION\s*=\s*(["\x27])([^"\x27\\\r\n]+)\1;[ \t]*$/gm,
+            )];
+            const compiledVersion = compiledMatches.length === 1 ? compiledMatches[0][2] : undefined;
             if (compiledVersion !== releaseVersion) {
               throw new Error(
                 "dist/version.js must export a literal VERSION equal to RELEASE_VERSION; found " +

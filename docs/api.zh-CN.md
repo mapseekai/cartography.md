@@ -1,6 +1,7 @@
 # TypeScript API
 
-**版本：** 0.3.0  
+**包版本：** 0.3.1-rc.1  
+**格式版本：** 0.3.0  
 **包：** `@mapseekai/cartography.md`  
 **English:** [api.md](api.md)
 
@@ -11,6 +12,7 @@
 ```ts
 import {
   DEFAULT_RULES,
+  FORMAT_VERSION,
   VERSION,
   cartographySchema,
   diffCartography,
@@ -32,7 +34,8 @@ import {
 | 导出 | 签名 | 用途 |
 |---|---|---|
 | `DEFAULT_RULES` | `LintRule[]` | 没有同 ID 自定义覆盖时，`lint` 使用的内置 document rule。 |
-| `VERSION` | `"0.3.0"` | 包版本与受支持的 CARTOGRAPHY.md 格式版本。 |
+| `VERSION` | `"0.3.1-rc.1"` | npm 包与 CLI 发布版本。 |
+| `FORMAT_VERSION` | `"0.3.0"` | 受支持的 CARTOGRAPHY.md front matter 与 schema 版本。 |
 | `parseCartography` | `(source: string) => ParsedCartography<CartographyConfig>` | 解析 front matter 和 Markdown 章节，并返回 parser finding。 |
 | `cartographySchema` | Zod schema | 校验 0.3.0 front-matter 值。 |
 | `lint` | `(source: string, options?: LintOptions) => LintReport` | 对源码字符串运行 parser 检查和 document rule。 |

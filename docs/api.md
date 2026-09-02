@@ -1,6 +1,7 @@
 # TypeScript API
 
-**Version:** 0.3.0  
+**Package version:** 0.3.1-rc.1  
+**Format version:** 0.3.0  
 **Package:** `@mapseekai/cartography.md`  
 **中文版:** [api.zh-CN.md](api.zh-CN.md)
 
@@ -11,6 +12,7 @@ The public API parses, validates, resolves, and compares one `CARTOGRAPHY.md` do
 ```ts
 import {
   DEFAULT_RULES,
+  FORMAT_VERSION,
   VERSION,
   cartographySchema,
   diffCartography,
@@ -32,7 +34,8 @@ import {
 | Export | Signature | Purpose |
 |---|---|---|
 | `DEFAULT_RULES` | `LintRule[]` | Built-in document rules used by `lint` when no same-ID custom override is supplied. |
-| `VERSION` | `"0.3.0"` | Package and supported CARTOGRAPHY.md format version. |
+| `VERSION` | `"0.3.1-rc.1"` | npm package and CLI release version. |
+| `FORMAT_VERSION` | `"0.3.0"` | Supported CARTOGRAPHY.md front-matter and schema version. |
 | `parseCartography` | `(source: string) => ParsedCartography<CartographyConfig>` | Parse front matter and Markdown sections and return parser findings. |
 | `cartographySchema` | Zod schema | Validate the 0.3.0 front-matter value. |
 | `lint` | `(source: string, options?: LintOptions) => LintReport` | Run parser checks and document rules against a source string. |

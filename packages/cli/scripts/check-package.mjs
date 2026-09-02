@@ -82,9 +82,9 @@ for (const [name, relative] of Object.entries(manifest.bin ?? {})) {
 }
 
 const rootManifest = JSON.parse(await readFile(path.join(packageRoot, '../../package.json'), 'utf8'));
-const declaredVersion = /VERSION\s*=\s*["']([^"']+)["']/.exec(
-  await readFile(path.join(packageRoot, 'dist/version.js'), 'utf8'),
-)?.[1];
+const versionSource = await readFile(path.join(packageRoot, 'dist/version.js'), 'utf8');
+const versionMatches = [...versionSource.matchAll(/^\s*export\s+const\s+VERSION\s*=\s*(["'])([^"'\\\r\n]+)\1;[ \t]*$/gm)];
+const declaredVersion = versionMatches.length === 1 ? versionMatches[0]?.[2] : undefined;
 if (manifest.version !== rootManifest.version || declaredVersion !== manifest.version) {
   throw new Error(
     `Version mismatch: root package.json ${rootManifest.version}, package.json ${manifest.version}, dist/version.js ${declaredVersion}.`,

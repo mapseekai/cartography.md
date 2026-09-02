@@ -59,13 +59,16 @@ on:
 The workflow uses one concurrency group per release tag and does not cancel an
 in-progress publication. It contains these jobs:
 
-1. `validate` calls the reusable CI workflow at the tagged commit.
-2. `publish` checks out the same tag, derives the version/channel, rebuilds the
-   publishable package, performs an npm dry-run, and publishes through OIDC.
-3. The same job polls the public npm packument with a fixed attempt limit and
-   executes `cartographymd --version` through a clean temporary cache.
-4. Only after registry verification does the job create the GitHub Release with
-   the preinstalled `gh` CLI. An existing release is left unchanged.
+1. `resolve` reads release policy from the default branch, resolves the requested
+   tag to an immutable commit SHA, and derives the version/channel.
+2. `validate` calls the reusable CI workflow at that commit.
+3. `package` builds with read-only repository permission, packs one tarball,
+   validates that exact artifact, and transfers it as a workflow artifact.
+4. `publish` has OIDC but no repository write permission. It compares exact npm
+   integrity, publishes only for tag-push events, and polls the public registry
+   until a clean CLI installation succeeds.
+5. `release` has repository write permission but no OIDC. It verifies or creates
+   the matching GitHub Release only after npm installation verification.
 
 ## npm Trusted Publisher
 
@@ -79,12 +82,22 @@ The package is configured on npmjs.com with these exact claims:
 | Workflow filename | `publish.yml` |
 | Environment | empty |
 
-The workflow grants only the permissions required by its jobs:
+The workflow starts with no permissions and grants each job only what it needs:
 
 ```yaml
-permissions:
-  contents: write
-  id-token: write
+permissions: {}
+
+jobs:
+  package:
+    permissions:
+      contents: read
+  publish:
+    permissions:
+      contents: read
+      id-token: write
+  release:
+    permissions:
+      contents: write
 ```
 
 `id-token: write` lets npm exchange the GitHub OIDC assertion for a short-lived
@@ -100,10 +113,12 @@ Node 20 or newer; the newer Node version is only the release toolchain.
 
 - If metadata validation fails, no registry or GitHub mutation occurs.
 - If CI fails, publication does not start.
-- Before publishing, the job checks whether the exact npm version exists. If it
-  exists, upload is skipped and public installation verification still runs.
-- If `npm publish` reports that the version already exists, the workflow treats
-  it as a retry only after registry lookup confirms the same version.
+- Before dry-run or publishing, the job compares the exact local and registry
+  tarball integrity. An exact existing version is verified and skipped; an
+  integrity mismatch fails closed.
+- Manual dispatch is verification and GitHub Release recovery only. Missing npm
+  uploads are retried by rerunning the original tag-push workflow so provenance
+  remains bound to the release tag rather than the default branch.
 - Registry propagation is polled with a bounded retry loop. Exhaustion fails the
   workflow and prevents GitHub Release creation.
 - npm `404` immediately after publication is treated as propagation delay only
@@ -115,12 +130,45 @@ Node 20 or newer; the newer Node version is only the release toolchain.
 - The workflow never force-moves tags, unpublishes npm versions, or overwrites
   an existing version.
 
+## Package and format version semantics
+
+Package releases and document-format revisions are distinct contracts.
+`@mapseekai/cartography.md` may receive implementation-only patch or prerelease
+updates without invalidating conforming `CARTOGRAPHY.md` documents.
+
+- `VERSION` is the npm package and CLI version. It must equal the root manifest,
+  CLI manifest, and `v`-prefixed release tag.
+- `FORMAT_VERSION` is the accepted `CARTOGRAPHY.md` front-matter version. It
+  controls the runtime schema, published JSON Schema, schema `$id`, and format
+  specification.
+- The public API exports both constants so consumers do not have to infer one
+  contract from the other.
+- `check-schema` compares the JSON Schema document version to `FORMAT_VERSION`,
+  not to the npm package version.
+
+The first validation release uses:
+
+```text
+VERSION = 0.3.1-rc.1
+FORMAT_VERSION = 0.3.0
+npm dist-tag = next
+GitHub Release = prerelease
+```
+
+The 0.3.1 prerelease contains release automation and version-semantic changes;
+it does not change the 0.3.0 document grammar, schema `$id`, examples, or
+conformance fixtures.
+
 ## Files
 
 - Modify `.github/workflows/ci.yml` to add `workflow_call`.
 - Create `.github/workflows/publish.yml` for tag/manual release orchestration.
 - Modify `packages/cli/package.json` to add `publishConfig.access`.
 - Modify `CONTRIBUTING.md` with release and npm Trusted Publisher setup.
+- Modify root/CLI manifests and `packages/cli/src/version.ts` for the first
+  prerelease package version while retaining format version 0.3.0.
+- Modify schema checks, API exports, version tests, and bilingual changelogs to
+  make the two version contracts explicit.
 
 ## Verification
 
@@ -138,10 +186,11 @@ Repository verification after pushing:
 
 1. Confirm GitHub parses and lists `publish.yml`.
 2. Configure the npm Trusted Publisher with the exact table above.
-3. Run `workflow_dispatch` for the existing `v0.3.0` tag as an idempotency test.
-4. Confirm the workflow either verifies the existing npm version or fails
-   without creating contradictory GitHub state.
-5. Use a future prerelease tag to prove the OIDC upload and `next` channel path.
+3. Run `workflow_dispatch` for `v0.3.0`. The historical bootstrap version may
+   fail exact-integrity verification because it was published manually; that
+   failure must not mutate npm or GitHub state.
+4. Push protected tag `v0.3.1-rc.1` to prove OIDC upload, provenance, `next`,
+   public CLI installation, and GitHub prerelease creation.
 
 ## Acceptance criteria
 
@@ -153,3 +202,5 @@ Repository verification after pushing:
   duplicate the GitHub Release.
 - Registry propagation delay cannot produce a false-success workflow.
 - Existing pull-request and main-branch CI behavior remains intact.
+- Package version 0.3.1-rc.1 is installable while valid documents and JSON
+  Schema remain on format version 0.3.0.

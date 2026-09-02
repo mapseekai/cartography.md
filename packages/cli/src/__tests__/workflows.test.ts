@@ -144,6 +144,7 @@ describe('GitHub workflows', () => {
       'dist/cli.js',
       'dist/spec.md',
       'dist/schema-json/cartography-front-matter.schema.json',
+      'dist/version.js',
       'package.json',
     ]) {
       expect(contract).toContain(required);
@@ -151,11 +152,17 @@ describe('GitHub workflows', () => {
     expect(contract).toContain('tar -tzf "$tarball"');
     expect(contract).toContain('tar -xOzf "$tarball" package/package.json');
     expect(contract).toContain('tar -xOzf "$tarball" package/dist/cli.js');
+    expect(contract).toContain('tar -xOzf "$tarball" package/dist/version.js');
     expect(contract).toContain('dist/schema-json must contain only cartography-front-matter.schema.json');
     expect(contract).toContain('#!/usr/bin/env node');
     expect(contract).toContain('@mapseekai/cartography.md');
     expect(contract).toContain('rootManifest.version');
     expect(contract).toContain('cliManifest.version');
+    expect(contract).toContain('const compiledMatch =');
+    expect(contract).toContain('sourceMappingURL');
+    expect(contract).toContain('const compiledVersion = compiledMatch?.[2]');
+    expect(contract).toContain('compiledVersion !== releaseVersion');
+    expect(contract).toContain('dist/version.js must export a literal VERSION equal to RELEASE_VERSION');
     expect(contract).toContain('RELEASE_VERSION');
     expect(contract).toContain('cartography.md');
     expect(contract).toContain('cartographymd');

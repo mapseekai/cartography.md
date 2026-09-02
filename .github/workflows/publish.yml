@@ -147,6 +147,7 @@ jobs:
           tar_manifest="$RUNNER_TEMP/package-files.txt"
           tar_package_json="$RUNNER_TEMP/tar-package.json"
           tar_cli="$RUNNER_TEMP/tar-cli.js"
+          tar_version="$RUNNER_TEMP/tar-version.js"
           tar -tzf "$tarball" > "$tar_manifest"
           node -e '
             const fs = require("node:fs");
@@ -164,6 +165,7 @@ jobs:
               "dist/cli.js",
               "dist/spec.md",
               "dist/schema-json/cartography-front-matter.schema.json",
+              "dist/version.js",
               "package.json",
             ];
             for (const relative of required) {
@@ -189,6 +191,7 @@ jobs:
           ' "$tar_manifest"
           tar -xOzf "$tarball" package/package.json > "$tar_package_json"
           tar -xOzf "$tarball" package/dist/cli.js > "$tar_cli"
+          tar -xOzf "$tarball" package/dist/version.js > "$tar_version"
           IFS= read -r cli_first_line < "$tar_cli"
           if [ "$cli_first_line" != '#!/usr/bin/env node' ]; then
             echo "dist/cli.js is missing its executable shebang." >&2
@@ -199,7 +202,16 @@ jobs:
             const manifest = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
             const rootManifest = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
             const cliManifest = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
-            const releaseVersion = process.argv[4];
+            const compiledSource = fs.readFileSync(process.argv[4], "utf8");
+            const releaseVersion = process.argv[5];
+            const compiledMatch = /^\s*export\s+const\s+VERSION\s*=\s*(["\x27])([^"\x27\\\r\n]+)\1;\s*(?:\/\/# sourceMappingURL=version\.js\.map\s*)?$/.exec(compiledSource);
+            const compiledVersion = compiledMatch?.[2];
+            if (compiledVersion !== releaseVersion) {
+              throw new Error(
+                "dist/version.js must export a literal VERSION equal to RELEASE_VERSION; found " +
+                  (compiledVersion ?? "(missing or non-literal)") + ".",
+              );
+            }
             if (manifest.name !== "@mapseekai/cartography.md" || cliManifest.name !== manifest.name) {
               throw new Error("Tarball package name does not match @mapseekai/cartography.md.");
             }
@@ -224,7 +236,7 @@ jobs:
             ) {
               throw new Error("Tarball bin contract must expose cartography.md and cartographymd at ./dist/cli.js.");
             }
-          ' "$tar_package_json" package.json packages/cli/package.json "$RELEASE_VERSION"
+          ' "$tar_package_json" package.json packages/cli/package.json "$tar_version" "$RELEASE_VERSION"
           npm publish "$tarball" --dry-run --access public --tag "$NPM_TAG"
       - uses: actions/upload-artifact@v4
         with:

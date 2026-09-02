@@ -21,6 +21,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      EVENT_NAME: ${{ github.event_name }}
+      EVENT_REF: ${{ github.ref }}
+      REQUESTED_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      TRIGGER_SHA: ${{ github.sha }}
     outputs:
       sha: ${{ steps.release.outputs.sha }}
       tag: ${{ steps.release.outputs.tag }}
@@ -30,25 +36,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 24.15.0
       - name: Resolve immutable release metadata
         id: release
         shell: bash
-        env:
-          REQUESTED_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
         run: |
           set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$EVENT_REF" != "refs/heads/$DEFAULT_BRANCH" ]; then
+            echo "Manual publication must be dispatched from refs/heads/$DEFAULT_BRANCH." >&2
+            exit 1
+          fi
+
           helper="$RUNNER_TEMP/release-metadata.mjs"
+          metadata="$RUNNER_TEMP/release-metadata.out"
           cp scripts/release-metadata.mjs "$helper"
           git fetch --force --tags origin
           sha="$(git rev-parse --verify "refs/tags/${REQUESTED_TAG}^{commit}")"
+          if [ "$EVENT_NAME" = "push" ] && [ "$sha" != "$TRIGGER_SHA" ]; then
+            echo "Tag $REQUESTED_TAG resolves to $sha, not push SHA $TRIGGER_SHA." >&2
+            exit 1
+          fi
+
           git checkout --detach "$sha"
+          node "$helper" "$REQUESTED_TAG" > "$metadata"
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
           echo "tag=$REQUESTED_TAG" >> "$GITHUB_OUTPUT"
-          node "$helper" "$REQUESTED_TAG" >> "$GITHUB_OUTPUT"
+          cat "$metadata" >> "$GITHUB_OUTPUT"
 
   validate:
     needs: resolve
@@ -58,24 +76,22 @@ jobs:
     with:
       ref: ${{ needs.resolve.outputs.sha }}
 
-  publish:
+  package:
     needs: [resolve, validate]
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      id-token: write
+      contents: read
     env:
       RELEASE_SHA: ${{ needs.resolve.outputs.sha }}
       RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
-      RELEASE_VERSION: ${{ needs.resolve.outputs.version }}
       NPM_TAG: ${{ needs.resolve.outputs.npm_tag }}
-      PRERELEASE: ${{ needs.resolve.outputs.prerelease }}
-      PACKAGE_NAME: '@mapseekai/cartography.md'
+      REMOTE_URL: https://github.com/${{ github.repository }}.git
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.resolve.outputs.sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -87,54 +103,198 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm build
-          pnpm --filter @mapseekai/cartography.md check-package
-          npm publish ./packages/cli --dry-run --access public --tag "$NPM_TAG"
+      - name: Recheck release tag before packaging
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_refs="$(git ls-remote --tags "$REMOTE_URL" "refs/tags/$RELEASE_TAG" "refs/tags/$RELEASE_TAG^{}")"
+          remote_sha="$(printf '%s\n' "$remote_refs" | awk '$2 ~ /\^\{\}$/ {peeled=$1} END {if (peeled != "") print peeled; else if (NR == 1) print $1}')"
+          if [ -z "$remote_sha" ]; then
+            echo "Remote tag $RELEASE_TAG does not exist." >&2
+            exit 1
+          fi
+          if [ "$remote_sha" != "$RELEASE_SHA" ]; then
+            echo "Remote tag $RELEASE_TAG moved from $RELEASE_SHA to $remote_sha." >&2
+            exit 1
+          fi
+      - name: Pack publishable tarball once
+        shell: bash
+        run: |
+          set -euo pipefail
+          pack_json="$RUNNER_TEMP/npm-pack.json"
+          npm pack ./packages/cli --json --pack-destination "$RUNNER_TEMP" > "$pack_json"
+          tarball_name="$(node -e 'const fs=require("node:fs"); const [item]=JSON.parse(fs.readFileSync(process.argv[1], "utf8")); process.stdout.write(item?.filename ?? "")' "$pack_json")"
+          local_integrity="$(node -e 'const fs=require("node:fs"); const [item]=JSON.parse(fs.readFileSync(process.argv[1], "utf8")); process.stdout.write(item?.integrity ?? "")' "$pack_json")"
+          if [ -z "$tarball_name" ] || [ -z "$local_integrity" ]; then
+            echo "npm pack did not report a tarball and integrity." >&2
+            exit 1
+          fi
+          case "$tarball_name" in
+            */*|*..*)
+              echo "npm pack returned an unsafe tarball name: $tarball_name" >&2
+              exit 1
+              ;;
+          esac
+          tarball="$RUNNER_TEMP/package.tgz"
+          mv "$RUNNER_TEMP/$tarball_name" "$tarball"
+          printf '%s\n' "$local_integrity" > "$RUNNER_TEMP/package.integrity"
+          npm publish "$tarball" --dry-run --access public --tag "$NPM_TAG"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-package
+          path: |
+            ${{ runner.temp }}/package.tgz
+            ${{ runner.temp }}/package.integrity
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: [resolve, package]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RELEASE_SHA: ${{ needs.resolve.outputs.sha }}
+      RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
+      RELEASE_VERSION: ${{ needs.resolve.outputs.version }}
+      NPM_TAG: ${{ needs.resolve.outputs.npm_tag }}
+      PACKAGE_NAME: '@mapseekai/cartography.md'
+      REMOTE_URL: https://github.com/${{ github.repository }}.git
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.15.0
+      - name: Pin npm release client
+        run: npm install --global npm@12.0.2
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-package
+          path: ${{ runner.temp }}/npm-package
+      - name: Verify artifact and release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          tarball="$RUNNER_TEMP/npm-package/package.tgz"
+          integrity_file="$RUNNER_TEMP/npm-package/package.integrity"
+          local_integrity="$(tr -d '\r\n' < "$integrity_file")"
+          computed_integrity="$(node -e 'const crypto=require("node:crypto"); const fs=require("node:fs"); process.stdout.write("sha512-" + crypto.createHash("sha512").update(fs.readFileSync(process.argv[1])).digest("base64"))' "$tarball")"
+          if [ "$computed_integrity" != "$local_integrity" ]; then
+            echo "Artifact integrity does not match package.integrity." >&2
+            exit 1
+          fi
+
+          remote_refs="$(git ls-remote --tags "$REMOTE_URL" "refs/tags/$RELEASE_TAG" "refs/tags/$RELEASE_TAG^{}")"
+          remote_sha="$(printf '%s\n' "$remote_refs" | awk '$2 ~ /\^\{\}$/ {peeled=$1} END {if (peeled != "") print peeled; else if (NR == 1) print $1}')"
+          if [ -z "$remote_sha" ]; then
+            echo "Remote tag $RELEASE_TAG does not exist." >&2
+            exit 1
+          fi
+          if [ "$remote_sha" != "$RELEASE_SHA" ]; then
+            echo "Remote tag $RELEASE_TAG moved from $RELEASE_SHA to $remote_sha." >&2
+            exit 1
+          fi
       - name: Publish through npm Trusted Publishing
         shell: bash
         run: |
           set -euo pipefail
+          tarball="$RUNNER_TEMP/npm-package/package.tgz"
+          local_integrity="$(tr -d '\r\n' < "$RUNNER_TEMP/npm-package/package.integrity")"
           package_spec="${PACKAGE_NAME}@${RELEASE_VERSION}"
-          if npm view "$package_spec" version --prefer-online >/dev/null 2>&1; then
-            echo "$package_spec already exists; upload skipped."
-            exit 0
+          registry_integrity="$(npm view "$package_spec" dist.integrity --prefer-online --cache "$RUNNER_TEMP/npm-existing" 2>/dev/null || true)"
+          if [ -n "$registry_integrity" ]; then
+            if [ "$registry_integrity" = "$local_integrity" ]; then
+              echo "$package_spec already exists with the exact tarball; upload skipped."
+              exit 0
+            fi
+            echo "Registry integrity collision for $package_spec: expected $local_integrity, found $registry_integrity." >&2
+            exit 1
           fi
+
           set +e
-          output="$(npm publish ./packages/cli --access public --tag "$NPM_TAG" --provenance 2>&1)"
-          status=$?
+          output="$(npm publish "$tarball" --access public --tag "$NPM_TAG" --provenance 2>&1)"
+          publish_status=$?
           set -e
           printf '%s\n' "$output"
-          if [ "$status" -ne 0 ] && ! grep -Eq 'previously published|cannot publish over|E403' <<<"$output"; then
-            exit "$status"
+          if [ "$publish_status" -ne 0 ]; then
+            for race_attempt in $(seq 1 6); do
+              cache="$RUNNER_TEMP/npm-publish-race-$race_attempt"
+              registry_integrity="$(npm view "$package_spec" dist.integrity --prefer-online --cache "$cache" 2>/dev/null || true)"
+              if [ "$registry_integrity" = "$local_integrity" ]; then
+                echo "$package_spec appeared with the exact tarball after the publish race."
+                exit 0
+              fi
+              if [ -n "$registry_integrity" ]; then
+                echo "Registry integrity collision for $package_spec: expected $local_integrity, found $registry_integrity." >&2
+                break
+              fi
+              if [ "$race_attempt" -lt 6 ]; then
+                sleep 5
+              fi
+            done
+            echo "Publish failed and registry did not expose matching integrity for $package_spec." >&2
+            exit "$publish_status"
           fi
       - name: Verify public registry and installed CLI
         shell: bash
         run: |
           set -euo pipefail
+          local_integrity="$(tr -d '\r\n' < "$RUNNER_TEMP/npm-package/package.integrity")"
           package_spec="${PACKAGE_NAME}@${RELEASE_VERSION}"
           for attempt in $(seq 1 18); do
             cache="$RUNNER_TEMP/npm-registry-$attempt"
-            published="$(npm view "$package_spec" version --prefer-online --cache "$cache" 2>/dev/null || true)"
-            if [ "$published" = "$RELEASE_VERSION" ]; then
-              cli_version="$(npx --yes --cache "$RUNNER_TEMP/npm-cli-$attempt" --package="$package_spec" cartographymd --version)"
-              if [ "$cli_version" = "$RELEASE_VERSION" ]; then
-                exit 0
+            registry_integrity="$(npm view "$package_spec" dist.integrity --prefer-online --cache "$cache" 2>/dev/null || true)"
+            if [ "$registry_integrity" = "$local_integrity" ]; then
+              if cli_version="$(npx --yes --cache "$RUNNER_TEMP/npm-cli-$attempt" --package="$package_spec" cartographymd --version 2>/dev/null)"; then
+                if [ "$cli_version" = "$RELEASE_VERSION" ]; then
+                  exit 0
+                fi
               fi
+            elif [ -n "$registry_integrity" ]; then
+              echo "Registry integrity collision for $package_spec: expected $local_integrity, found $registry_integrity." >&2
+              exit 1
             fi
             sleep 10
           done
-          echo "npm registry did not expose an installable $package_spec within 180 seconds." >&2
+          echo "npm registry did not expose an installable exact tarball for $package_spec within 180 seconds." >&2
           exit 1
-      - name: Create GitHub Release if absent
+
+  release:
+    needs: [resolve, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PRERELEASE: ${{ needs.resolve.outputs.prerelease }}
+      RELEASE_SHA: ${{ needs.resolve.outputs.sha }}
+      RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
+      REMOTE_URL: https://github.com/${{ github.repository }}.git
+      REPOSITORY: ${{ github.repository }}
+    steps:
+      - name: Recheck release tag before GitHub Release
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+          remote_refs="$(git ls-remote --tags "$REMOTE_URL" "refs/tags/$RELEASE_TAG" "refs/tags/$RELEASE_TAG^{}")"
+          remote_sha="$(printf '%s\n' "$remote_refs" | awk '$2 ~ /\^\{\}$/ {peeled=$1} END {if (peeled != "") print peeled; else if (NR == 1) print $1}')"
+          if [ -z "$remote_sha" ]; then
+            echo "Remote tag $RELEASE_TAG does not exist." >&2
+            exit 1
+          fi
+          if [ "$remote_sha" != "$RELEASE_SHA" ]; then
+            echo "Remote tag $RELEASE_TAG moved from $RELEASE_SHA to $remote_sha." >&2
+            exit 1
+          fi
+      - name: Create GitHub Release if absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" --repo "$REPOSITORY" >/dev/null 2>&1; then
             echo "GitHub Release $RELEASE_TAG already exists; creation skipped."
             exit 0
           fi
-          args=(release create "$RELEASE_TAG" --verify-tag --generate-notes --title "cartography.md $RELEASE_TAG")
+          args=(release create "$RELEASE_TAG" --repo "$REPOSITORY" --verify-tag --generate-notes --title "cartography.md $RELEASE_TAG")
           if [ "$PRERELEASE" = "true" ]; then
             args+=(--prerelease)
           fi

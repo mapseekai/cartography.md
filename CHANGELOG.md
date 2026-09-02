@@ -6,6 +6,21 @@ All notable changes to cartography.md will be documented here.
 
 The format and npm package follow semantic versioning. `0.1` and `0.2.0` were internal drafts that were never published or archived; `0.3.0` is the first public version line.
 
+## 0.3.1-rc.1 - 2026-09-02
+
+### Added
+
+- Added tag-driven npm Trusted Publishing with OIDC, exact-tarball validation, bounded registry verification, and idempotent GitHub prerelease creation.
+- Added protected release tags and stable/prerelease channel selection for `latest` and `next`.
+
+### Changed
+
+- Separated the npm/CLI `VERSION` from the `FORMAT_VERSION`, allowing package-only releases while the CARTOGRAPHY.md and JSON Schema contract remains at 0.3.0.
+
+### Fixed
+
+- Hardened manual retry, tag-SHA binding, npm integrity collision handling, historical-tag CI, and npm 12 pack compatibility.
+
 ## 0.3.0 - 2026-09-01
 
 ### Breaking changes

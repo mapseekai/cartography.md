@@ -6,6 +6,21 @@ English: [CHANGELOG.md](CHANGELOG.md)
 
 格式与 npm 包遵循语义化版本。`0.1` 与 `0.2.0` 均为内部草案，从未发布或存档；`0.3.0` 是第一条公开版本线。
 
+## 0.3.1-rc.1 - 2026-09-02
+
+### 新增
+
+- 新增由标签触发的 npm OIDC Trusted Publishing、精确 tarball 校验、有界 registry 验证和幂等 GitHub 预发布创建。
+- 新增受保护的发布标签，以及正式版 `latest`、预发布版 `next` 的通道选择。
+
+### 变更
+
+- 将 npm/CLI 的 `VERSION` 与 `FORMAT_VERSION` 分离，使包实现可以独立发布，同时 CARTOGRAPHY.md 与 JSON Schema 格式契约继续保持 0.3.0。
+
+### 修复
+
+- 加固手动重试、标签 SHA 绑定、npm integrity 冲突处理、历史标签 CI 和 npm 12 pack 兼容性。
+
 ## 0.3.0 - 2026-09-01
 
 ### 破坏性变更

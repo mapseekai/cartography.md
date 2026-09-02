@@ -1,6 +1,6 @@
 {
   "name": "cartography.md",
-  "version": "0.3.0",
+  "version": "0.3.1-rc.1",
   "private": true,
   "description": "Agent-first format and validator for persistent cartographic design systems.",
   "license": "Apache-2.0",

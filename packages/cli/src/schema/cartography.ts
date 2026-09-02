@@ -1,4 +1,5 @@
 import * as z from 'zod';
+import {FORMAT_VERSION} from '../version.js';
 
 export const NO_LINE_TERMINATOR = /[\r\n\u2028\u2029]/;
 
@@ -170,7 +171,7 @@ const tokenGroup = <T extends z.ZodType>(value: T) => z.record(tokenIdentifierSc
 
 export const cartographySchema = z
   .looseObject({
-    version: z.literal('0.3.0'),
+    version: z.literal(FORMAT_VERSION),
     name: literalNonEmptyString,
     description: literalNonEmptyString.optional(),
     omitted: z.array(omittedSectionSchema).optional(),

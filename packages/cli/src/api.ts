@@ -12,4 +12,4 @@ export {getRuleCatalog, getSpecification} from './spec.js';
 export type * from './model/index.js';
 export type * from './schema/index.js';
 
-export {VERSION} from './version.js';
+export {FORMAT_VERSION, VERSION} from './version.js';

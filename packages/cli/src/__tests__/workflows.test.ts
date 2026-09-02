@@ -125,6 +125,49 @@ describe('GitHub workflows', () => {
     );
   });
 
+  it('validates the exact packed tarball contract before artifact upload', async () => {
+    const publish = await workflow('publish.yml');
+    const packageSteps = publish.jobs.package.steps as Array<{name?: string; uses?: string; run?: string}>;
+    const packIndex = packageSteps.findIndex((step) => step.name === 'Pack publishable tarball once');
+    const contractIndex = packageSteps.findIndex((step) => step.name === 'Validate packed tarball contract');
+    const uploadIndex = packageSteps.findIndex((step) => step.uses === 'actions/upload-artifact@v4');
+    expect(packIndex).toBeGreaterThan(-1);
+    expect(contractIndex).toBeGreaterThan(packIndex);
+    expect(uploadIndex).toBeGreaterThan(contractIndex);
+
+    const contract = packageSteps[contractIndex]?.run ?? '';
+    for (const required of [
+      'LICENSE',
+      'README.md',
+      'dist/api.js',
+      'dist/api.d.ts',
+      'dist/cli.js',
+      'dist/spec.md',
+      'dist/schema-json/cartography-front-matter.schema.json',
+      'package.json',
+    ]) {
+      expect(contract).toContain(required);
+    }
+    expect(contract).toContain('tar -tzf "$tarball"');
+    expect(contract).toContain('tar -xOzf "$tarball" package/package.json');
+    expect(contract).toContain('tar -xOzf "$tarball" package/dist/cli.js');
+    expect(contract).toContain('dist/schema-json must contain only cartography-front-matter.schema.json');
+    expect(contract).toContain('#!/usr/bin/env node');
+    expect(contract).toContain('@mapseekai/cartography.md');
+    expect(contract).toContain('rootManifest.version');
+    expect(contract).toContain('cliManifest.version');
+    expect(contract).toContain('RELEASE_VERSION');
+    expect(contract).toContain('cartography.md');
+    expect(contract).toContain('cartographymd');
+    expect(contract).toContain('./dist/cli.js');
+    expect(contract).toContain('data-profile|profile|style');
+    expect(contract).toContain('Publishable stale 0.1 artifacts found');
+
+    const source = await workflowSource('publish.yml');
+    expect((source.match(/npm pack \.\/packages\/cli/g) ?? []).length).toBe(1);
+    expect(source).not.toContain('check-package');
+  });
+
   it('accepts existing versions and duplicate races only for exact tarball integrity', async () => {
     const source = await workflowSource('publish.yml');
     expect((source.match(/dist\.integrity/g) ?? []).length).toBeGreaterThanOrEqual(3);

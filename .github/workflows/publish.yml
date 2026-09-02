@@ -84,6 +84,7 @@ jobs:
     env:
       RELEASE_SHA: ${{ needs.resolve.outputs.sha }}
       RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
+      RELEASE_VERSION: ${{ needs.resolve.outputs.version }}
       NPM_TAG: ${{ needs.resolve.outputs.npm_tag }}
       REMOTE_URL: https://github.com/${{ github.repository }}.git
     steps:
@@ -138,6 +139,92 @@ jobs:
           tarball="$RUNNER_TEMP/package.tgz"
           mv "$RUNNER_TEMP/$tarball_name" "$tarball"
           printf '%s\n' "$local_integrity" > "$RUNNER_TEMP/package.integrity"
+      - name: Validate packed tarball contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          tarball="$RUNNER_TEMP/package.tgz"
+          tar_manifest="$RUNNER_TEMP/package-files.txt"
+          tar_package_json="$RUNNER_TEMP/tar-package.json"
+          tar_cli="$RUNNER_TEMP/tar-cli.js"
+          tar -tzf "$tarball" > "$tar_manifest"
+          node -e '
+            const fs = require("node:fs");
+            const entries = fs.readFileSync(process.argv[1], "utf8").trimEnd().split(/\r?\n/).filter(Boolean);
+            if (entries.some((entry) => !entry.startsWith("package/"))) {
+              throw new Error("Tarball contains an entry outside package/.");
+            }
+            const files = entries.map((entry) => entry.slice("package/".length));
+            const publishableSet = new Set(files);
+            const required = [
+              "LICENSE",
+              "README.md",
+              "dist/api.js",
+              "dist/api.d.ts",
+              "dist/cli.js",
+              "dist/spec.md",
+              "dist/schema-json/cartography-front-matter.schema.json",
+              "package.json",
+            ];
+            for (const relative of required) {
+              if (!publishableSet.has(relative)) throw new Error("Required tarball file is missing: " + relative);
+            }
+            const schemaFiles = files.filter(
+              (relative) => relative.startsWith("dist/schema-json/") && relative !== "dist/schema-json/",
+            );
+            if (schemaFiles.length !== 1 || schemaFiles[0] !== "dist/schema-json/cartography-front-matter.schema.json") {
+              throw new Error(
+                "dist/schema-json must contain only cartography-front-matter.schema.json; found " +
+                  (schemaFiles.join(", ") || "(empty)"),
+              );
+            }
+            const staleArtifacts = files.filter(
+              (relative) =>
+                relative.startsWith("dist/") &&
+                /(?:^|\/)(?:data-profile|profile|style)(?:\.|\/|$)/.test(relative),
+            );
+            if (staleArtifacts.length > 0) {
+              throw new Error("Publishable stale 0.1 artifacts found: " + staleArtifacts.join(", ") + ".");
+            }
+          ' "$tar_manifest"
+          tar -xOzf "$tarball" package/package.json > "$tar_package_json"
+          tar -xOzf "$tarball" package/dist/cli.js > "$tar_cli"
+          IFS= read -r cli_first_line < "$tar_cli"
+          if [ "$cli_first_line" != '#!/usr/bin/env node' ]; then
+            echo "dist/cli.js is missing its executable shebang." >&2
+            exit 1
+          fi
+          node -e '
+            const fs = require("node:fs");
+            const manifest = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+            const rootManifest = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+            const cliManifest = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+            const releaseVersion = process.argv[4];
+            if (manifest.name !== "@mapseekai/cartography.md" || cliManifest.name !== manifest.name) {
+              throw new Error("Tarball package name does not match @mapseekai/cartography.md.");
+            }
+            if (
+              manifest.version !== releaseVersion ||
+              rootManifest.version !== releaseVersion ||
+              cliManifest.version !== releaseVersion
+            ) {
+              throw new Error(
+                "Version mismatch: release " + releaseVersion + ", root " + rootManifest.version +
+                  ", CLI " + cliManifest.version + ", tarball " + manifest.version + ".",
+              );
+            }
+            const bin = manifest.bin ?? {};
+            const binKeys = Object.keys(bin).sort();
+            if (
+              binKeys.length !== 2 ||
+              binKeys[0] !== "cartography.md" ||
+              binKeys[1] !== "cartographymd" ||
+              bin["cartography.md"] !== "./dist/cli.js" ||
+              bin.cartographymd !== "./dist/cli.js"
+            ) {
+              throw new Error("Tarball bin contract must expose cartography.md and cartographymd at ./dist/cli.js.");
+            }
+          ' "$tar_package_json" package.json packages/cli/package.json "$RELEASE_VERSION"
           npm publish "$tarball" --dry-run --access public --tag "$NPM_TAG"
       - uses: actions/upload-artifact@v4
         with:

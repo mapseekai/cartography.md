@@ -90,4 +90,6 @@ git push origin v0.4.0
 
 Stable tags publish to npm `latest`. Tags containing a SemVer prerelease suffix, such as `v0.4.0-rc.1`, publish to `next` and create a GitHub prerelease.
 
-To retry an existing tag without moving it, run the `Publish` workflow manually and provide the exact tag. The workflow never overwrites an existing npm version or GitHub Release. A release is complete only after the workflow installs the public registry package and verifies `cartographymd --version`.
+Manual `Publish` dispatch is verification-only: provide an existing tag whose npm version is already published with the exact expected integrity. It may verify or create the matching GitHub Release, but it fails without uploading when the npm version is absent. The workflow never overwrites an existing npm version or edits an existing GitHub Release.
+
+If a tag-triggered npm upload fails, use GitHub's **Re-run jobs** action on that original tag event. Do not use manual dispatch to retry an upload. A release is complete only after the workflow installs the public registry package and verifies `cartographymd --version`.

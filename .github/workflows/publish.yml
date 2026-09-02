@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing v-prefixed Git tag to publish or verify
+        description: Existing v-prefixed Git tag to verify
         required: true
         type: string
 
@@ -48,7 +48,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$EVENT_REF" != "refs/heads/$DEFAULT_BRANCH" ]; then
-            echo "Manual publication must be dispatched from refs/heads/$DEFAULT_BRANCH." >&2
+            echo "Manual verification must be dispatched from refs/heads/$DEFAULT_BRANCH." >&2
             exit 1
           fi
 
@@ -123,9 +123,37 @@ jobs:
         run: |
           set -euo pipefail
           pack_json="$RUNNER_TEMP/npm-pack.json"
+          pack_fields_file="$RUNNER_TEMP/npm-pack.fields"
           npm pack ./packages/cli --json --pack-destination "$RUNNER_TEMP" > "$pack_json"
-          tarball_name="$(node -e 'const fs=require("node:fs"); const [item]=JSON.parse(fs.readFileSync(process.argv[1], "utf8")); process.stdout.write(item?.filename ?? "")' "$pack_json")"
-          local_integrity="$(node -e 'const fs=require("node:fs"); const [item]=JSON.parse(fs.readFileSync(process.argv[1], "utf8")); process.stdout.write(item?.integrity ?? "")' "$pack_json")"
+          node -e '
+            const fs = require("node:fs");
+            const parsed = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+            const results = Array.isArray(parsed)
+              ? parsed
+              : parsed && typeof parsed === "object"
+                ? Object.values(parsed)
+                : [];
+            if (results.length !== 1) {
+              throw new Error("npm pack --json must contain exactly one package result; found " + results.length + ".");
+            }
+            const [item] = results;
+            if (
+              !item ||
+              typeof item !== "object" ||
+              typeof item.filename !== "string" ||
+              typeof item.integrity !== "string"
+            ) {
+              throw new Error("npm pack --json result must contain string filename and integrity fields.");
+            }
+            process.stdout.write(item.filename + "\n" + item.integrity + "\n");
+          ' "$pack_json" > "$pack_fields_file"
+          pack_field_count="$(wc -l < "$pack_fields_file" | tr -d ' ')"
+          if [ "$pack_field_count" -ne 2 ]; then
+            echo "npm pack did not report exactly one tarball and integrity." >&2
+            exit 1
+          fi
+          tarball_name="$(sed -n '1p' "$pack_fields_file")"
+          local_integrity="$(sed -n '2p' "$pack_fields_file")"
           if [ -z "$tarball_name" ] || [ -z "$local_integrity" ]; then
             echo "npm pack did not report a tarball and integrity." >&2
             exit 1
@@ -237,7 +265,6 @@ jobs:
               throw new Error("Tarball bin contract must expose cartography.md and cartographymd at ./dist/cli.js.");
             }
           ' "$tar_package_json" package.json packages/cli/package.json "$tar_version" "$RELEASE_VERSION"
-          npm publish "$tarball" --dry-run --access public --tag "$NPM_TAG"
       - uses: actions/upload-artifact@v4
         with:
           name: npm-package
@@ -254,6 +281,7 @@ jobs:
       contents: read
       id-token: write
     env:
+      EVENT_NAME: ${{ github.event_name }}
       RELEASE_SHA: ${{ needs.resolve.outputs.sha }}
       RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
       RELEASE_VERSION: ${{ needs.resolve.outputs.version }}
@@ -300,15 +328,62 @@ jobs:
           tarball="$RUNNER_TEMP/npm-package/package.tgz"
           local_integrity="$(tr -d '\r\n' < "$RUNNER_TEMP/npm-package/package.integrity")"
           package_spec="${PACKAGE_NAME}@${RELEASE_VERSION}"
-          registry_integrity="$(npm view "$package_spec" dist.integrity --prefer-online --cache "$RUNNER_TEMP/npm-existing" 2>/dev/null || true)"
-          if [ -n "$registry_integrity" ]; then
+
+          lookup_registry_integrity() {
+            local cache="$1"
+            local error_file="$2"
+            local lookup_status
+            registry_integrity=""
+            if registry_integrity="$(npm view "$package_spec" dist.integrity --prefer-online --cache "$cache" 2>"$error_file")"; then
+              registry_integrity="$(printf '%s' "$registry_integrity" | tr -d '\r\n')"
+              if [ -z "$registry_integrity" ]; then
+                echo "npm view returned an empty dist.integrity for $package_spec without a 404." >&2
+                return 2
+              fi
+              return 0
+            else
+              lookup_status=$?
+              if grep -Eq '(^|[[:space:]])E404([[:space:]]|$)|404 Not Found' "$error_file"; then
+                return 4
+              fi
+              cat "$error_file" >&2
+              return "$lookup_status"
+            fi
+          }
+
+          registry_state="absent"
+          for lookup_attempt in $(seq 1 3); do
+            if lookup_registry_integrity \
+              "$RUNNER_TEMP/npm-existing-$lookup_attempt" \
+              "$RUNNER_TEMP/npm-existing-$lookup_attempt.err"; then
+              registry_state="present"
+              break
+            else
+              lookup_status=$?
+              if [ "$lookup_status" -ne 4 ]; then
+                exit "$lookup_status"
+              fi
+            fi
+            if [ "$lookup_attempt" -lt 3 ]; then
+              sleep 2
+            fi
+          done
+
+          if [ "$registry_state" = "present" ]; then
             if [ "$registry_integrity" = "$local_integrity" ]; then
-              echo "$package_spec already exists with the exact tarball; upload skipped."
+              echo "$package_spec already exists with the exact tarball; dry-run and upload skipped."
               exit 0
             fi
             echo "Registry integrity collision for $package_spec: expected $local_integrity, found $registry_integrity." >&2
             exit 1
           fi
+
+          if [ "$EVENT_NAME" != "push" ]; then
+            echo "Manual dispatch can only verify an already-published exact-integrity version; $package_spec is absent." >&2
+            exit 1
+          fi
+
+          npm publish "$tarball" --dry-run --access public --tag "$NPM_TAG"
 
           set +e
           output="$(npm publish "$tarball" --access public --tag "$NPM_TAG" --provenance 2>&1)"
@@ -318,14 +393,18 @@ jobs:
           if [ "$publish_status" -ne 0 ]; then
             for race_attempt in $(seq 1 6); do
               cache="$RUNNER_TEMP/npm-publish-race-$race_attempt"
-              registry_integrity="$(npm view "$package_spec" dist.integrity --prefer-online --cache "$cache" 2>/dev/null || true)"
-              if [ "$registry_integrity" = "$local_integrity" ]; then
-                echo "$package_spec appeared with the exact tarball after the publish race."
-                exit 0
-              fi
-              if [ -n "$registry_integrity" ]; then
+              if lookup_registry_integrity "$cache" "$cache.err"; then
+                if [ "$registry_integrity" = "$local_integrity" ]; then
+                  echo "$package_spec appeared with the exact tarball after the publish race."
+                  exit 0
+                fi
                 echo "Registry integrity collision for $package_spec: expected $local_integrity, found $registry_integrity." >&2
-                break
+                exit 1
+              else
+                lookup_status=$?
+                if [ "$lookup_status" -ne 4 ]; then
+                  break
+                fi
               fi
               if [ "$race_attempt" -lt 6 ]; then
                 sleep 5
@@ -389,9 +468,37 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if gh release view "$RELEASE_TAG" --repo "$REPOSITORY" >/dev/null 2>&1; then
-            echo "GitHub Release $RELEASE_TAG already exists; creation skipped."
+          release_error="$RUNNER_TEMP/github-release-view.err"
+          if release_state="$(gh release view "$RELEASE_TAG" \
+            --repo "$REPOSITORY" \
+            --json tagName,isDraft,isPrerelease \
+            --jq '[.tagName, (.isDraft | tostring), (.isPrerelease | tostring)] | @tsv' \
+            2>"$release_error")"; then
+            IFS=$'\t' read -r existing_tag existing_draft existing_prerelease <<< "$release_state"
+            metadata_mismatch=0
+            if [ "$existing_tag" != "$RELEASE_TAG" ]; then
+              echo "Existing GitHub Release tagName mismatch: expected $RELEASE_TAG, found ${existing_tag:-<empty>}." >&2
+              metadata_mismatch=1
+            fi
+            if [ "$existing_draft" != "false" ]; then
+              echo "Existing GitHub Release isDraft mismatch: expected false, found ${existing_draft:-<empty>}." >&2
+              metadata_mismatch=1
+            fi
+            if [ "$existing_prerelease" != "$PRERELEASE" ]; then
+              echo "Existing GitHub Release isPrerelease mismatch: expected $PRERELEASE, found ${existing_prerelease:-<empty>}." >&2
+              metadata_mismatch=1
+            fi
+            if [ "$metadata_mismatch" -ne 0 ]; then
+              exit 1
+            fi
+            echo "GitHub Release $RELEASE_TAG already exists with matching immutable metadata; creation skipped."
             exit 0
+          else
+            view_status=$?
+            if ! grep -qi 'release not found' "$release_error"; then
+              cat "$release_error" >&2
+              exit "$view_status"
+            fi
           fi
           args=(release create "$RELEASE_TAG" --repo "$REPOSITORY" --verify-tag --generate-notes --title "cartography.md $RELEASE_TAG")
           if [ "$PRERELEASE" = "true" ]; then

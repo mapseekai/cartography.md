@@ -26,6 +26,22 @@ test('rejects numeric prerelease identifiers with leading zeroes', () => {
   }), /valid v-prefixed SemVer/);
 });
 
+test('rejects leading zeroes after a hyphenated prerelease identifier', () => {
+  assert.throws(() => resolveReleaseMetadata('v1.2.3-alpha-beta.01', {
+    root: '1.2.3-alpha-beta.01',
+    cli: '1.2.3-alpha-beta.01',
+    source: '1.2.3-alpha-beta.01',
+  }), /valid v-prefixed SemVer/);
+});
+
+test('accepts zero, dotted, and hyphenated nonnumeric prerelease identifiers', () => {
+  for (const version of ['1.2.3-0', '1.2.3-rc.1', '1.2.3-alpha-beta']) {
+    assert.deepEqual(resolveReleaseMetadata(`v${version}`, {
+      root: version, cli: version, source: version,
+    }), {version, npmTag: 'next', prerelease: true});
+  }
+});
+
 test('rejects version drift', () => {
   assert.throws(() => resolveReleaseMetadata('v0.4.0', {...versions, cli: '0.4.1'}), /version mismatch/);
 });

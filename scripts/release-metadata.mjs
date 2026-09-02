@@ -12,7 +12,8 @@ export function extractSourceVersion(source) {
 export function resolveReleaseMetadata(tag, versions) {
   if (!TAG_PATTERN.test(tag)) throw new Error(`Release tag ${tag} is not a valid v-prefixed SemVer.`);
   const version = tag.slice(1);
-  const prereleasePart = version.split('-')[1];
+  const prereleaseSeparator = version.indexOf('-');
+  const prereleasePart = prereleaseSeparator === -1 ? undefined : version.slice(prereleaseSeparator + 1);
   if (prereleasePart?.split('.').some((identifier) => /^\d+$/.test(identifier) && identifier.length > 1 && identifier.startsWith('0'))) {
     throw new Error(`Release tag ${tag} is not a valid v-prefixed SemVer.`);
   }

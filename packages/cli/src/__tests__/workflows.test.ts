@@ -1,8 +1,13 @@
-import {readFile} from 'node:fs/promises';
+import {spawnSync} from 'node:child_process';
+import {chmod, mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {describe, expect, it} from 'vitest';
 import {parse} from 'yaml';
 
 const repositoryRoot = new URL('../../../..', import.meta.url);
+const repositoryRootPath = fileURLToPath(repositoryRoot);
 async function workflowSource(name: string) {
   return readFile(new URL(`.github/workflows/${name}`, repositoryRoot), 'utf8');
 }
@@ -15,6 +20,134 @@ function jobRuns(job: {steps?: Array<{run?: string}>}): string[] {
   return (job.steps ?? []).flatMap((step) => (typeof step.run === 'string' ? [step.run] : []));
 }
 
+function namedRun(job: {steps?: Array<{name?: string; run?: string}>}, name: string): string {
+  const run = job.steps?.find((step) => step.name === name)?.run;
+  if (!run) throw new Error(`Workflow step ${name} has no run block.`);
+  return run;
+}
+
+async function writeExecutable(path: string, source: string) {
+  await writeFile(path, `${source}\n`);
+  await chmod(path, 0o755);
+}
+
+function runBash(source: string, env: NodeJS.ProcessEnv) {
+  return spawnSync('bash', ['-c', source], {
+    cwd: repositoryRootPath,
+    encoding: 'utf8',
+    env: {...process.env, ...env},
+  });
+}
+
+async function runPublishScenario(source: string, scenario: string, eventName: 'push' | 'workflow_dispatch') {
+  const root = await mkdtemp(join(tmpdir(), 'cartography-publish-test-'));
+  try {
+    const fakeBin = join(root, 'bin');
+    const runnerTemp = join(root, 'runner');
+    const artifactDir = join(runnerTemp, 'npm-package');
+    const callsPath = join(root, 'npm-calls');
+    const statePath = join(root, 'npm-state');
+    await mkdir(fakeBin);
+    await mkdir(artifactDir, {recursive: true});
+    await writeFile(join(artifactDir, 'package.tgz'), 'fixture tarball');
+    await writeFile(join(artifactDir, 'package.integrity'), 'sha512-local\n');
+    await writeExecutable(join(fakeBin, 'sleep'), [
+      '#!/usr/bin/env bash',
+      'exit 0',
+    ].join('\n'));
+    await writeExecutable(join(fakeBin, 'npm'), [
+      '#!/usr/bin/env bash',
+      'set -euo pipefail',
+      'printf \'%s\\n\' "$*" >> "$NPM_CALL_LOG"',
+      'case "$1" in',
+      '  view)',
+      '    count=0',
+      '    if [ -f "$NPM_STATE" ]; then IFS= read -r count < "$NPM_STATE"; fi',
+      '    count=$((count + 1))',
+      '    printf \'%s\\n\' "$count" > "$NPM_STATE"',
+      '    case "$NPM_SCENARIO" in',
+      '      exact) printf \'%s\\n\' "$LOCAL_INTEGRITY" ;;',
+      '      mismatch) printf \'%s\\n\' \'sha512-remote\' ;;',
+      '      transient-mismatch)',
+      '        if [ "$count" -eq 1 ]; then',
+      '          echo \'npm error code E404 - 404 Not Found\' >&2',
+      '          exit 1',
+      '        fi',
+      '        printf \'%s\\n\' \'sha512-remote\'',
+      '        ;;',
+      '      absent)',
+      '        echo \'npm error code E404 - 404 Not Found\' >&2',
+      '        exit 1',
+      '        ;;',
+      '      *) echo "unexpected npm scenario: $NPM_SCENARIO" >&2; exit 2 ;;',
+      '    esac',
+      '    ;;',
+      '  publish) exit 0 ;;',
+      '  *) echo "unexpected npm command: $*" >&2; exit 2 ;;',
+      'esac',
+    ].join('\n'));
+
+    const result = runBash(source, {
+      EVENT_NAME: eventName,
+      LOCAL_INTEGRITY: 'sha512-local',
+      NPM_CALL_LOG: callsPath,
+      NPM_SCENARIO: scenario,
+      NPM_STATE: statePath,
+      NPM_TAG: 'latest',
+      PACKAGE_NAME: '@mapseekai/cartography.md',
+      PATH: `${fakeBin}:${process.env.PATH ?? ''}`,
+      RELEASE_VERSION: '0.3.0',
+      RUNNER_TEMP: runnerTemp,
+    });
+    const calls = await readFile(callsPath, 'utf8').catch(() => '');
+    return {calls, status: result.status, stderr: result.stderr, stdout: result.stdout};
+  } finally {
+    await rm(root, {recursive: true, force: true});
+  }
+}
+
+async function runReleaseScenario(source: string, scenario: string) {
+  const root = await mkdtemp(join(tmpdir(), 'cartography-release-test-'));
+  try {
+    const fakeBin = join(root, 'bin');
+    const callsPath = join(root, 'gh-calls');
+    await mkdir(fakeBin);
+    await writeExecutable(join(fakeBin, 'gh'), [
+      '#!/usr/bin/env bash',
+      'set -euo pipefail',
+      'printf \'%s\\n\' "$*" >> "$GH_CALL_LOG"',
+      'if [ "$1" = "release" ] && [ "$2" = "view" ]; then',
+      '  case "$GH_SCENARIO" in',
+      '    correct) printf \'v0.3.0\\tfalse\\tfalse\\n\' ;;',
+      '    wrong-tag) printf \'v9.9.9\\tfalse\\tfalse\\n\' ;;',
+      '    draft) printf \'v0.3.0\\ttrue\\tfalse\\n\' ;;',
+      '    wrong-prerelease) printf \'v0.3.0\\tfalse\\ttrue\\n\' ;;',
+      '    absent) echo \'release not found\' >&2; exit 1 ;;',
+      '    *) echo "unexpected gh scenario: $GH_SCENARIO" >&2; exit 2 ;;',
+      '  esac',
+      '  exit 0',
+      'fi',
+      'if [ "$1" = "release" ] && [ "$2" = "create" ]; then exit 0; fi',
+      'echo "unexpected gh command: $*" >&2',
+      'exit 2',
+    ].join('\n'));
+
+    const result = runBash(source, {
+      GH_CALL_LOG: callsPath,
+      GH_SCENARIO: scenario,
+      PATH: `${fakeBin}:${process.env.PATH ?? ''}`,
+      PRERELEASE: 'false',
+      RELEASE_TAG: 'v0.3.0',
+      REPOSITORY: 'mapseekai/cartography.md',
+      RUNNER_TEMP: root,
+    });
+    const calls = await readFile(callsPath, 'utf8').catch(() => '');
+    return {calls, status: result.status, stderr: result.stderr, stdout: result.stdout};
+  } finally {
+    await rm(root, {recursive: true, force: true});
+  }
+}
+
 describe('GitHub workflows', () => {
   it('keeps CI triggers and exposes a reusable ref input', async () => {
     const ci = await workflow('ci.yml');
@@ -22,6 +155,15 @@ describe('GitHub workflows', () => {
     expect(ci.on).toHaveProperty('pull_request');
     expect(ci.on.workflow_call.inputs.ref).toMatchObject({required: false, type: 'string'});
     expect(ci.jobs.test.strategy.matrix['node-version']).toEqual([20, 22]);
+  });
+
+  it('runs release metadata tests only when the checked-out ref contains them', async () => {
+    const ci = await workflow('ci.yml');
+    const releaseTest = ci.jobs.test.steps.find((step: {run?: string}) => step.run === 'pnpm test:release');
+    expect(releaseTest).toMatchObject({
+      if: "${{ hashFiles('scripts/release-metadata.test.mjs') != '' }}",
+      run: 'pnpm test:release',
+    });
   });
 
   it('defines release triggers and immutable per-tag concurrency', async () => {
@@ -125,6 +267,62 @@ describe('GitHub workflows', () => {
     );
   });
 
+  it('parses both npm 12 keyed and legacy array pack results and requires exactly one package', async () => {
+    const publish = await workflow('publish.yml');
+    const pack = namedRun(publish.jobs.package, 'Pack publishable tarball once');
+    const root = await mkdtemp(join(tmpdir(), 'cartography-pack-test-'));
+    try {
+      const fakeBin = join(root, 'bin');
+      await mkdir(fakeBin);
+      await writeExecutable(join(fakeBin, 'npm'), [
+        '#!/usr/bin/env bash',
+        'set -euo pipefail',
+        'if [ "$1" != "pack" ]; then echo "expected npm pack" >&2; exit 2; fi',
+        'shift',
+        'destination=""',
+        'while [ "$#" -gt 0 ]; do',
+        '  case "$1" in',
+        '    --pack-destination) destination="$2"; shift 2 ;;',
+        '    *) shift ;;',
+        '  esac',
+        'done',
+        'filename="mapseekai-cartography.md-0.3.0.tgz"',
+        'printf \'fixture-%s\' "$PACK_SHAPE" > "$destination/$filename"',
+        'case "$PACK_SHAPE" in',
+        '  array) printf \'[{"filename":"%s","integrity":"sha512-fixture"}]\\n\' "$filename" ;;',
+        '  keyed) printf \'{"@mapseekai/cartography.md@0.3.0":{"filename":"%s","integrity":"sha512-fixture"}}\\n\' "$filename" ;;',
+        '  multiple) printf \'[{"filename":"%s","integrity":"sha512-fixture"},{"filename":"other.tgz","integrity":"sha512-other"}]\\n\' "$filename" ;;',
+        '  *) echo "unexpected pack shape: $PACK_SHAPE" >&2; exit 2 ;;',
+        'esac',
+      ].join('\n'));
+
+      for (const shape of ['array', 'keyed']) {
+        const runnerTemp = join(root, shape);
+        await mkdir(runnerTemp);
+        const result = runBash(pack, {
+          PACK_SHAPE: shape,
+          PATH: `${fakeBin}:${process.env.PATH ?? ''}`,
+          RUNNER_TEMP: runnerTemp,
+        });
+        expect({status: result.status, stderr: result.stderr}).toEqual({status: 0, stderr: ''});
+        expect(await readFile(join(runnerTemp, 'package.tgz'), 'utf8')).toBe(`fixture-${shape}`);
+        expect(await readFile(join(runnerTemp, 'package.integrity'), 'utf8')).toBe('sha512-fixture\n');
+      }
+
+      const runnerTemp = join(root, 'multiple');
+      await mkdir(runnerTemp);
+      const result = runBash(pack, {
+        PACK_SHAPE: 'multiple',
+        PATH: `${fakeBin}:${process.env.PATH ?? ''}`,
+        RUNNER_TEMP: runnerTemp,
+      });
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('exactly one package result');
+    } finally {
+      await rm(root, {recursive: true, force: true});
+    }
+  });
+
   it('validates the exact packed tarball contract before artifact upload', async () => {
     const publish = await workflow('publish.yml');
     const packageSteps = publish.jobs.package.steps as Array<{name?: string; uses?: string; run?: string}>;
@@ -185,6 +383,78 @@ describe('GitHub workflows', () => {
     expect(source).toContain('$RUNNER_TEMP/npm-publish-race-$race_attempt');
     expect(source).toContain('exit "$publish_status"');
     expect(source).not.toContain("grep -Eq 'previously published|cannot publish over|E403'");
+  });
+
+  it('skips every publish command for an existing exact-integrity version', async () => {
+    const publish = await workflow('publish.yml');
+    const result = await runPublishScenario(
+      namedRun(publish.jobs.publish, 'Publish through npm Trusted Publishing'),
+      'exact',
+      'workflow_dispatch',
+    );
+    expect({status: result.status, stderr: result.stderr}).toEqual({status: 0, stderr: ''});
+    expect(result.stdout).toContain('already exists with the exact tarball');
+    expect(result.calls).not.toMatch(/^publish /m);
+  });
+
+  it('retries a transient 404 and rejects a later integrity mismatch before dry-run', async () => {
+    const publish = await workflow('publish.yml');
+    const result = await runPublishScenario(
+      namedRun(publish.jobs.publish, 'Publish through npm Trusted Publishing'),
+      'transient-mismatch',
+      'push',
+    );
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('Registry integrity collision');
+    expect(result.calls.match(/^view /gm)).toHaveLength(2);
+    expect(result.calls).not.toMatch(/^publish /m);
+  });
+
+  it('keeps manual dispatch verify-only when the npm version is absent', async () => {
+    const publish = await workflow('publish.yml');
+    const result = await runPublishScenario(
+      namedRun(publish.jobs.publish, 'Publish through npm Trusted Publishing'),
+      'absent',
+      'workflow_dispatch',
+    );
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('Manual dispatch can only verify an already-published exact-integrity version');
+    expect(result.calls).not.toMatch(/^publish /m);
+  });
+
+  it('dry-runs an absent version before allowing a tag-push upload', async () => {
+    const publish = await workflow('publish.yml');
+    const result = await runPublishScenario(
+      namedRun(publish.jobs.publish, 'Publish through npm Trusted Publishing'),
+      'absent',
+      'push',
+    );
+    expect({status: result.status, stderr: result.stderr}).toEqual({status: 0, stderr: ''});
+    const publishes = result.calls.split('\n').filter((call) => call.startsWith('publish '));
+    expect(publishes).toHaveLength(2);
+    expect(publishes[0]).toContain('--dry-run');
+    expect(publishes[1]).not.toContain('--dry-run');
+    expect(publishes[1]).toContain('--provenance');
+  });
+
+  it('strictly verifies immutable existing GitHub Release metadata', async () => {
+    const publish = await workflow('publish.yml');
+    const release = namedRun(publish.jobs.release, 'Create GitHub Release if absent');
+    const correct = await runReleaseScenario(release, 'correct');
+    expect({status: correct.status, stderr: correct.stderr}).toEqual({status: 0, stderr: ''});
+    expect(correct.stdout).toContain('already exists with matching immutable metadata');
+    expect(correct.calls).not.toContain('release create');
+
+    for (const [scenario, field] of [
+      ['wrong-tag', 'tagName'],
+      ['draft', 'isDraft'],
+      ['wrong-prerelease', 'isPrerelease'],
+    ] as const) {
+      const mismatch = await runReleaseScenario(release, scenario);
+      expect(mismatch.status).not.toBe(0);
+      expect(mismatch.stderr).toContain(field);
+      expect(mismatch.calls).not.toContain('release create');
+    }
   });
 
   it('keeps shell expressions indirect and retries failed clean-cache CLI installs within the bound', async () => {

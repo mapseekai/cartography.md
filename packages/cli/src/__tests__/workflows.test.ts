@@ -392,6 +392,28 @@ describe('GitHub workflows', () => {
     }
   });
 
+  it('validates installed CLI versions with plain or CI reporter output, rejecting mismatches', async () => {
+    const publish = await workflow('publish.yml');
+    const verify = namedRun(publish.jobs.publish, 'Verify public registry and installed CLI');
+    const root = await mkdtemp(join(tmpdir(), 'cartography-installed-cli-'));
+    try {
+      const bin = join(root, 'bin');
+      await mkdir(bin);
+      await mkdir(join(root, 'npm-package'));
+      await writeFile(join(root, 'npm-package', 'package.integrity'), 'sha512-exact\n');
+      await writeExecutable(join(bin, 'npm'), '#!/usr/bin/env bash\nprintf "%s\\n" "sha512-exact"');
+      await writeExecutable(join(bin, 'npx'), '#!/usr/bin/env bash\nprintf "%s\\n" "$CLI_OUTPUT"');
+      await writeExecutable(join(bin, 'sleep'), '#!/usr/bin/env bash\nexit 0');
+      for (const [output, status] of [['0.4.0', 0], ['[log] 0.4.0', 0], ['[log] 0.3.0', 1], ['0.4.0\nunexpected', 1]] as const) {
+        const result = runBash(verify, {PATH: `${bin}:${process.env.PATH ?? ''}`, RUNNER_TEMP: root,
+          PACKAGE_NAME: '@mapseekai/cartography.md', RELEASE_VERSION: '0.4.0', CLI_OUTPUT: output});
+        expect(result.status, output).toBe(status);
+      }
+    } finally {
+      await rm(root, {recursive: true, force: true});
+    }
+  });
+
   it('accepts existing versions and duplicate races only for exact tarball integrity', async () => {
     const source = await workflowSource('publish.yml');
     expect((source.match(/dist\.integrity/g) ?? []).length).toBeGreaterThanOrEqual(3);

@@ -426,7 +426,8 @@ jobs:
             registry_integrity="$(npm view "$package_spec" dist.integrity --prefer-online --cache "$cache" 2>/dev/null || true)"
             if [ "$registry_integrity" = "$local_integrity" ]; then
               if cli_version="$(npx --yes --cache "$RUNNER_TEMP/npm-cli-$attempt" --package="$package_spec" cartographymd --version 2>/dev/null)"; then
-                if [ "$cli_version" = "$RELEASE_VERSION" ]; then
+                # citty/consola uses a [log] prefix with the GitHub Actions CI reporter.
+                if [ "$cli_version" = "$RELEASE_VERSION" ] || [ "$cli_version" = "[log] $RELEASE_VERSION" ]; then
                   exit 0
                 fi
               fi

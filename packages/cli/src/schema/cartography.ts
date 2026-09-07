@@ -189,5 +189,15 @@ export type TokenReference = z.infer<typeof tokenReferenceSchema>;
 export type DimensionToken = z.infer<typeof dimensionSchema>;
 export type TypographyToken = z.infer<typeof typographySchema>;
 export type OmittedSection = z.infer<typeof omittedSectionSchema>;
+/**
+ * Independent base expression; family/role/state imply no inheritance or merging.
+ * strokeWidth is the full body stroke; casingWidth adds thickness on each side.
+ * size is the body's pre-rotation bounding-box long side (circle diameter).
+ * outlineWidth/haloWidth extend outward and do not change nominal body size.
+ * Specific color fields override color. Color alpha and part opacity are retained;
+ * opacity applies after internal component composition.
+ * Nonzero offset requires reference/direction/sign prose; spacing requires a gap convention.
+ * Tokens remain stable; prose defines scale substitutions and state conflict priorities.
+ */
 export type MapElement = z.infer<typeof mapElementSchema>;
 export type CartographyConfig = z.infer<typeof cartographySchema>;

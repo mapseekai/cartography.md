@@ -24,7 +24,7 @@ export const RULE_CATALOG: RuleDescriptor[] = [
   descriptor('yaml-reference-unquoted', 'error', 'Rejects unquoted token references that YAML parses as flow mappings.'),
   descriptor('yaml-hex-color-unquoted', 'error', 'Rejects unquoted hexadecimal colors that YAML parses as comments.'),
   descriptor('reference-as-mapping-key', 'error', 'Rejects token reference syntax used as a mapping key.'),
-  descriptor('schema', 'error', 'Validates the 0.3.0 front matter against the runtime schema.'),
+  descriptor('schema', 'error', 'Validates the 0.4.0 front matter against the runtime schema.'),
   descriptor('duplicate-section', 'error', 'Rejects duplicate standard Markdown sections, including alias duplicates.'),
   descriptor('omitted-sections', 'error', 'Rejects omitted entries that are unknown, duplicated, or also present in the body.'),
   descriptor('token-reference', 'error', 'Requires every token reference to have valid syntax and resolve without cycles.'),

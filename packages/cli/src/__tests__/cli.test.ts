@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 const cli = fileURLToPath(new URL('../cli.ts', import.meta.url));
 const directory = mkdtempSync(join(tmpdir(), 'cartography-cli-'));
 const file = join(directory, 'CARTOGRAPHY.md');
-const document = '---\nversion: "0.3.0"\nname: CLI test\n---\n\n## Overview\n\nTest.\n';
+const document = '---\nversion: "0.4.0"\nname: CLI test\n---\n\n## Overview\n\nTest.\n';
 writeFileSync(file, document);
 function run(args: string[], input?: string) { return spawnSync(process.execPath, ['--import', 'tsx', cli, ...args], {cwd: fileURLToPath(new URL('../../', import.meta.url)), encoding: 'utf8', input}); }
 

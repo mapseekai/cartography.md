@@ -96,7 +96,7 @@ async function runPublishScenario(source: string, scenario: string, eventName: '
       NPM_TAG: 'latest',
       PACKAGE_NAME: '@mapseekai/cartography.md',
       PATH: `${fakeBin}:${process.env.PATH ?? ''}`,
-      RELEASE_VERSION: '0.3.0',
+      RELEASE_VERSION: '0.4.0',
       RUNNER_TEMP: runnerTemp,
     });
     const calls = await readFile(callsPath, 'utf8').catch(() => '');
@@ -118,10 +118,10 @@ async function runReleaseScenario(source: string, scenario: string) {
       'printf \'%s\\n\' "$*" >> "$GH_CALL_LOG"',
       'if [ "$1" = "release" ] && [ "$2" = "view" ]; then',
       '  case "$GH_SCENARIO" in',
-      '    correct) printf \'v0.3.0\\tfalse\\tfalse\\n\' ;;',
+      '    correct) printf \'v0.4.0\\tfalse\\tfalse\\n\' ;;',
       '    wrong-tag) printf \'v9.9.9\\tfalse\\tfalse\\n\' ;;',
-      '    draft) printf \'v0.3.0\\ttrue\\tfalse\\n\' ;;',
-      '    wrong-prerelease) printf \'v0.3.0\\tfalse\\ttrue\\n\' ;;',
+      '    draft) printf \'v0.4.0\\ttrue\\tfalse\\n\' ;;',
+      '    wrong-prerelease) printf \'v0.4.0\\tfalse\\ttrue\\n\' ;;',
       '    absent) echo \'release not found\' >&2; exit 1 ;;',
       '    *) echo "unexpected gh scenario: $GH_SCENARIO" >&2; exit 2 ;;',
       '  esac',
@@ -137,7 +137,7 @@ async function runReleaseScenario(source: string, scenario: string) {
       GH_SCENARIO: scenario,
       PATH: `${fakeBin}:${process.env.PATH ?? ''}`,
       PRERELEASE: 'false',
-      RELEASE_TAG: 'v0.3.0',
+      RELEASE_TAG: 'v0.4.0',
       REPOSITORY: 'mapseekai/cartography.md',
       RUNNER_TEMP: root,
     });
@@ -286,11 +286,11 @@ describe('GitHub workflows', () => {
         '    *) shift ;;',
         '  esac',
         'done',
-        'filename="mapseekai-cartography.md-0.3.0.tgz"',
+        'filename="mapseekai-cartography.md-0.4.0.tgz"',
         'printf \'fixture-%s\' "$PACK_SHAPE" > "$destination/$filename"',
         'case "$PACK_SHAPE" in',
         '  array) printf \'[{"filename":"%s","integrity":"sha512-fixture"}]\\n\' "$filename" ;;',
-        '  keyed) printf \'{"@mapseekai/cartography.md@0.3.0":{"filename":"%s","integrity":"sha512-fixture"}}\\n\' "$filename" ;;',
+        '  keyed) printf \'{"@mapseekai/cartography.md@0.4.0":{"filename":"%s","integrity":"sha512-fixture"}}\\n\' "$filename" ;;',
         '  multiple) printf \'[{"filename":"%s","integrity":"sha512-fixture"},{"filename":"other.tgz","integrity":"sha512-other"}]\\n\' "$filename" ;;',
         '  *) echo "unexpected pack shape: $PACK_SHAPE" >&2; exit 2 ;;',
         'esac',
@@ -383,7 +383,7 @@ describe('GitHub workflows', () => {
       expect({status: packResult.status, stderr: packResult.stderr}).toEqual({status: 0, stderr: ''});
 
       const contractResult = runBash(contract, {
-        RELEASE_VERSION: '0.3.1-rc.1',
+        RELEASE_VERSION: '0.4.0',
         RUNNER_TEMP: runnerTemp,
       });
       expect({status: contractResult.status, stderr: contractResult.stderr}).toEqual({status: 0, stderr: ''});

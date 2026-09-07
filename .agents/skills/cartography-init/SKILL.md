@@ -27,6 +27,8 @@ pnpm --filter @cartographymd/init-skill init -- \
 
 可用 `--name "地图名称"` 覆盖草稿名称。支持的输入格式由文件内容和扩展名识别：`style.json`、`.qgs`、`.qgz`、`.lyrx`、`.stylx`、`.sld`。
 
+未指定名称时使用中性占位名 Imported cartographic design；输入文件名保留在报告中，不充当设计系统名称。
+
 检查已完成分诊的报告：
 
 ```bash
@@ -54,6 +56,14 @@ pnpm --filter @cartographymd/init-skill init -- \
 | 显式丢弃 | binding 只是历史样式的偶然细节、无效条件或不再需要的实现噪音 | 旧供应商字段 `legacy_rank` 的过时过滤条件，记录丢弃原因后不迁移 |
 
 ## 限制
+
+- 0.4.0 草稿默认保留完整九章，以 Do's and Don'ts 结束；Data & Legend 只能作为附加章节。
+- 来源、提取统计、跳过项、具体 zoom/比例尺和转换证据只进入两份 INIT_REPORT。缺少设计意图时保留 TODO(agent)，不得编造理由。
+- 核查 widths / sizes / spacing 分组；offset 保持字面值或扩展，明确非零偏移参照、方向和正负含义。size 是旋转前主体包围盒长边（圆形直径）；casingWidth 是每侧厚度。目标不等价时报告替代和损失。
+- 不按 family 数量、排列、名称后缀或颜色推断 role/state；无证据时省略。组合状态必须显式定义，语义状态优先于操作反馈。
+- 相同数值只是共享 Token 候选，不是语义等价证据。审查报告中的候选后才确认共享；Typography 比较全部核心字段，并保留未知扩展。
+- 补写尺度基础阶段、允许变化与不变量，保留精确 Token 定义。只为当前目标所作适配不得自动变成永久组件。
+- 格式校验、设计评审、目标验证和视觉评审分别报告；lint 通过不能替代后三者。
 
 - 数据绑定绝不进入 CARTOGRAPHY.md：不得写入 `source-layer`、字段名、过滤表达式、数据画像或其他运行时数据契约。
 - 不支持的 CIM 或符号层必须保留在报告的 `skipped` 中；不要伪造等价设计或静默吞掉它们。

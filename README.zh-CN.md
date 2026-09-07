@@ -23,7 +23,7 @@ English: [README.md](README.md) · [规范](docs/spec.zh-CN.md) · [TypeScript A
 
 ```markdown
 ---
-version: "0.3.0"
+version: "0.4.0"
 name: Quiet Atlas
 description: "A restrained editorial atlas family for clear orientation and unhurried reading."
 colors:
@@ -118,7 +118,7 @@ console.log(changes.values, changes.sections);
 核心 lint 检查单份 `CARTOGRAPHY.md` 的可确定属性，包括：
 
 - 安全、确定的 YAML 表示层规则；
-- `0.3.0` front matter schema；
+- `0.4.0` front matter schema；
 - 九个规范章节的存在、省略、重复与顺序；
 - 完整引用，包括数组索引路径与深度解析；
 - 标准 token 类型、虚线模式与根级组边界；
@@ -141,6 +141,6 @@ examples/quiet-atlas                          自包含设计系统示例
 
 ## 状态与许可证
 
-`0.3.0` 是当前公开格式版本线，且不为 `0.2.0` 提供兼容层。
+`0.4.0` 明确视觉属性语义、稳定 Token 的尺度应用、状态保真与 Agent 适配边界，不会静默重解释旧文件。参见 [0.3 → 0.4 迁移](docs/migrations/0.3-to-0.4.zh-CN.md)、[编写指南](docs/authoring.zh-CN.md)、[技术网络](examples/technical-network/CARTOGRAPHY.md)和[统计专题](examples/thematic-map/CARTOGRAPHY.md)示例。
 
 Apache-2.0，见 [LICENSE](LICENSE)。

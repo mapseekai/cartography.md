@@ -23,7 +23,7 @@ Every document has two complementary layers:
 
 ```markdown
 ---
-version: "0.3.0"
+version: "0.4.0"
 name: Quiet Atlas
 description: "A restrained editorial atlas family for clear orientation and unhurried reading."
 colors:
@@ -118,7 +118,7 @@ The public API includes parsing, the runtime schema, document linting, reference
 Core linting checks deterministic properties of one `CARTOGRAPHY.md`, including:
 
 - safe, deterministic YAML representation rules;
-- the `0.3.0` front-matter schema;
+- the `0.4.0` front-matter schema;
 - the nine standard sections, their omissions, duplicates, and order;
 - complete references, including indexed paths and deep resolution;
 - standard token types, dash patterns, and root-level group boundaries;
@@ -141,6 +141,6 @@ examples/quiet-atlas                          self-contained design-system examp
 
 ## Status and license
 
-Version `0.3.0` is the current public format line and has no compatibility layer for `0.2.0`.
+Version `0.4.0` defines precise visual semantics, stable token application across scales, state preservation, and agent-safe adaptation. Older files are not silently reinterpreted. See the [0.3 → 0.4 migration guide](docs/migrations/0.3-to-0.4.md), [authoring guide](docs/authoring.md), [technical network](examples/technical-network/CARTOGRAPHY.md), and [thematic map](examples/thematic-map/CARTOGRAPHY.md).
 
 Apache-2.0. See [LICENSE](LICENSE).

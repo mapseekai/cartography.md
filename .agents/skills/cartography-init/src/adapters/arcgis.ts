@@ -175,9 +175,12 @@ function collectFacts(element: ExtractedElement, extracted: ExtractedStyle): voi
   for (const color of [element.style.color, element.style.fillColor, element.style.strokeColor, element.style.haloColor]) {
     if (color) extracted.colors.push({ value: color, nameHint: element.name, usedBy: [element.name] });
   }
-  for (const width of [element.style.strokeWidth, element.style.haloWidth, element.style.size, element.style.offset]) {
+  for (const width of [element.style.strokeWidth, element.style.haloWidth, element.style.outlineWidth, element.style.casingWidth]) {
     if (width) extracted.widths.push({ value: width, nameHint: element.name, usedBy: [element.name] });
   }
+  if (element.style.size) extracted.sizes.push({ value: element.style.size, nameHint: element.name, usedBy: [element.name] });
+  if (element.style.spacing) extracted.spacing.push({ value: element.style.spacing, nameHint: element.name, usedBy: [element.name] });
+  if (element.style.offset?.value) extracted.unresolved.push({ topic: 'offset', detail: `${element.name}: confirm reference, axis and signed direction before completing the design prose` });
   if (element.style.dash) extracted.dashes.push({ pattern: element.style.dash, nameHint: element.name, usedBy: [element.name] });
 }
 
@@ -187,7 +190,7 @@ function symbolFor(renderer: CimNode): CimNode | undefined {
 }
 
 function roleFor(index: number): ExtractedElement['roleHint'] {
-  return index === 0 ? 'primary' : index === 1 ? 'secondary' : 'context';
+  return undefined; // Class order does not establish a design role.
 }
 
 function nodes(value: unknown): CimNode[] {

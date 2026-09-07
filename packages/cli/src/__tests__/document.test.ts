@@ -4,7 +4,7 @@ import {canonicalSectionName} from '../parser/sections.js';
 import {getAtPath, resolveReferencesDeep} from '../utils/object.js';
 
 const base = `---
-version: "0.3.0"
+version: "0.4.0"
 name: Reference test
 colors:
   ink: "#25221D"

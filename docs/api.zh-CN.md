@@ -1,13 +1,15 @@
 # TypeScript API
 
-**包版本：** 0.3.1-rc.1  
-**格式版本：** 0.3.0  
+**包版本：** 0.4.0\
+**格式版本：** 0.4.0\
 **包：** `@mapseekai/cartography.md`  
 **English:** [api.md](api.md)
 
 公共 API 解析、校验、解析引用并比较一份 `CARTOGRAPHY.md` 文档。普通文档无效会以结构化 finding 返回。
 
 ## 导入
+
+0.4.0 保留核心结构和未知扩展。MapElement 的 size 为旋转前主体长边（圆形直径），casingWidth 为每侧厚度，outlineWidth/haloWidth 从外缘向外扩展。保留颜色 Alpha 和局部透明度，内部绘制后施加整体 opacity。Token 是稳定基础表达，正文定义尺度替换和显式组合状态，不引入继承。不支持的版本返回 version 路径的 schema 诊断，不会隐式升级 0.3.0；参见[迁移说明](migrations/0.3-to-0.4.zh-CN.md)。
 
 ```ts
 import {
@@ -34,10 +36,10 @@ import {
 | 导出 | 签名 | 用途 |
 |---|---|---|
 | `DEFAULT_RULES` | `LintRule[]` | 没有同 ID 自定义覆盖时，`lint` 使用的内置 document rule。 |
-| `VERSION` | `"0.3.1-rc.1"` | npm 包与 CLI 发布版本。 |
-| `FORMAT_VERSION` | `"0.3.0"` | 受支持的 CARTOGRAPHY.md front matter 与 schema 版本。 |
+| `VERSION` | `"0.4.0"` | npm 包与 CLI 发布版本。 |
+| `FORMAT_VERSION` | `"0.4.0"` | 受支持的 CARTOGRAPHY.md front matter 与 schema 版本。 |
 | `parseCartography` | `(source: string) => ParsedCartography<CartographyConfig>` | 解析 front matter 和 Markdown 章节，并返回 parser finding。 |
-| `cartographySchema` | Zod schema | 校验 0.3.0 front-matter 值。 |
+| `cartographySchema` | Zod schema | 校验 0.4.0 front-matter 值。 |
 | `lint` | `(source: string, options?: LintOptions) => LintReport` | 对源码字符串运行 parser 检查和 document rule。 |
 | `lintCartography` | `lint` 的别名 | `lint` 的别名。 |
 | `lintFile` | `(file: string, options?: LintFileOptions) => Promise<LintReport>` | 读取并校验文件，在报告中记录其路径。 |
@@ -52,7 +54,7 @@ import {
 
 ```ts
 const parsed = parseCartography(`---
-version: "0.3.0"
+version: "0.4.0"
 name: Quiet Atlas
 colors:
   ink: "#24303A"
@@ -71,11 +73,11 @@ Parser 和 schema 错误位于 `parsed.findings`；普通无效输入不会抛�
 
 ## `cartographySchema`
 
-`cartographySchema` 是 0.3.0 front matter 的 Zod 结构模型。它与资料性发布 schema `schema/cartography-front-matter.schema.json` 对齐（`$id`：`urn:cartography-md:schema:front-matter:0.3.0`）。
+`cartographySchema` 是 0.4.0 front matter 的 Zod 结构模型。它与资料性发布 schema `schema/cartography-front-matter.schema.json` 对齐（`$id`：`urn:cartography-md:schema:front-matter:0.4.0`）。
 
 ```ts
 const result = cartographySchema.safeParse({
-  version: '0.3.0',
+  version: '0.4.0',
   name: 'Quiet Atlas',
   colors: {ink: '#24303A'},
 });
@@ -166,7 +168,7 @@ type TypographyToken = TokenReference | {
 };
 type MapElement = {geometry: string; [key: string]: unknown};
 interface CartographyConfig {
-  version: '0.3.0';
+  version: '0.4.0';
   name: string;
   description?: string;
   omitted?: OmittedSection[];

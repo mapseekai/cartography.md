@@ -1,7 +1,7 @@
 # TypeScript API
 
-**Package version:** 0.3.1-rc.1  
-**Format version:** 0.3.0  
+**Package version:** 0.4.0\
+**Format version:** 0.4.0\
 **Package:** `@mapseekai/cartography.md`  
 **中文版:** [api.zh-CN.md](api.zh-CN.md)
 
@@ -31,13 +31,15 @@ import {
 
 ## Public values and functions
 
+0.4.0 keeps the existing core structure and open extension preservation. `MapElement` size is the pre-rotation body bounding-box long side (circle diameter); casingWidth is per-side extra thickness, outlineWidth and haloWidth extend outward. Part opacity and color alpha precede component opacity after internal composition. Token values are stable base expressions; prose defines scale substitutions and explicit state combinations, without inheritance. The parser returns a `schema` finding at `version` for unsupported documents; it never upgrades 0.3.0 implicitly. See [migration](migrations/0.3-to-0.4.md).
+
 | Export | Signature | Purpose |
 |---|---|---|
 | `DEFAULT_RULES` | `LintRule[]` | Built-in document rules used by `lint` when no same-ID custom override is supplied. |
-| `VERSION` | `"0.3.1-rc.1"` | npm package and CLI release version. |
-| `FORMAT_VERSION` | `"0.3.0"` | Supported CARTOGRAPHY.md front-matter and schema version. |
+| `VERSION` | `"0.4.0"` | npm package and CLI release version. |
+| `FORMAT_VERSION` | `"0.4.0"` | Supported CARTOGRAPHY.md front-matter and schema version. |
 | `parseCartography` | `(source: string) => ParsedCartography<CartographyConfig>` | Parse front matter and Markdown sections and return parser findings. |
-| `cartographySchema` | Zod schema | Validate the 0.3.0 front-matter value. |
+| `cartographySchema` | Zod schema | Validate the 0.4.0 front-matter value. |
 | `lint` | `(source: string, options?: LintOptions) => LintReport` | Run parser checks and document rules against a source string. |
 | `lintCartography` | alias of `lint` | Alias of `lint`. |
 | `lintFile` | `(file: string, options?: LintFileOptions) => Promise<LintReport>` | Read and lint a file, recording its path in the report. |
@@ -52,7 +54,7 @@ import {
 
 ```ts
 const parsed = parseCartography(`---
-version: "0.3.0"
+version: "0.4.0"
 name: Quiet Atlas
 colors:
   ink: "#24303A"
@@ -71,11 +73,11 @@ Parser and schema errors appear in `parsed.findings`; ordinary invalid input doe
 
 ## `cartographySchema`
 
-`cartographySchema` is the Zod structural model for the 0.3.0 front matter. It is aligned with the published informational schema at `schema/cartography-front-matter.schema.json` (`$id`: `urn:cartography-md:schema:front-matter:0.3.0`).
+`cartographySchema` is the Zod structural model for the 0.4.0 front matter. It is aligned with the published informational schema at `schema/cartography-front-matter.schema.json` (`$id`: `urn:cartography-md:schema:front-matter:0.4.0`).
 
 ```ts
 const result = cartographySchema.safeParse({
-  version: '0.3.0',
+  version: '0.4.0',
   name: 'Quiet Atlas',
   colors: {ink: '#24303A'},
 });
@@ -166,7 +168,7 @@ type TypographyToken = TokenReference | {
 };
 type MapElement = {geometry: string; [key: string]: unknown};
 interface CartographyConfig {
-  version: '0.3.0';
+  version: '0.4.0';
   name: string;
   description?: string;
   omitted?: OmittedSection[];

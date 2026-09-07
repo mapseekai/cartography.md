@@ -66,7 +66,12 @@ function extractLayer(layer: JsonObject, extracted: ExtractedStyle): void {
 
   for (const [property, value] of Object.entries(paint)) {
     if (property === 'line-dasharray' && isNumericArray(value)) {
-      const dash = value.map((part) => px(part));
+      const width = paint['line-width'] ?? 1;
+      if (typeof width !== 'number' || width <= 0 || value.some(part => part <= 0) || value.length % 2 !== 0) {
+        extracted.skipped.push({ source: 'style', layer: name, reason: 'Dash lengths require a positive literal line width and an even positive pattern; adaptation warning' });
+        continue;
+      }
+      const dash = value.map((part) => px(part * width));
       style.dash = dash;
       extracted.dashes.push({ pattern: dash, nameHint: name, usedBy: [name] });
       continue;
@@ -83,8 +88,18 @@ function extractLayer(layer: JsonObject, extracted: ExtractedStyle): void {
     ? layout['text-font'] as string[]
     : undefined;
   const textSize = layout['text-size'];
+  if (typeof layout['symbol-spacing'] === 'number') {
+    style.spacing = px(layout['symbol-spacing']);
+    extracted.spacing.push({ value: style.spacing, nameHint: name, usedBy: [name] });
+    extracted.unresolved.push({ topic: 'spacing', detail: `${name}: symbol-spacing is repeat spacing along the path; confirm design guidance` });
+  }
+  if (layout['icon-size'] !== undefined) extracted.unresolved.push({ topic: 'size', detail: `${name}: icon-size is a scale factor; intrinsic asset dimensions are required to determine nominal body long side` });
   if (fontFamily && typeof textSize === 'number') {
     rawTypography = { fontFamily, fontSize: px(textSize), nameHint: name, usedBy: [name] };
+    if (typeof layout['text-letter-spacing'] === 'number') rawTypography.letterSpacing = { value: layout['text-letter-spacing'], unit: 'em' };
+    if (typeof layout['text-line-height'] === 'number') rawTypography.lineHeight = layout['text-line-height'];
+    const transform = layout['text-transform'];
+    if (transform === 'none' || transform === 'uppercase' || transform === 'lowercase') rawTypography.textTransform = transform;
     extracted.typography.push(rawTypography);
   }
   for (const [property, value] of Object.entries(layout)) {
@@ -119,11 +134,17 @@ function extractPaintLiteral(property: string, value: string | number | boolean 
     style.strokeWidth = px(value);
     extracted.widths.push({ value: style.strokeWidth, nameHint: name, usedBy: [name] });
   } else if (property === 'circle-radius') {
-    style.size = px(value);
-    extracted.widths.push({ value: style.size, nameHint: name, usedBy: [name] });
+    style.size = px(value * 2);
+    style.symbol = 'circle';
+    extracted.sizes.push({ value: style.size, nameHint: name, usedBy: [name] });
   } else if (property === 'text-size') {
-    style.size = px(value);
-    extracted.widths.push({ value: style.size, nameHint: name, usedBy: [name] });
+    extracted.skipped.push({ source: 'style', layer: name, reason: 'text-size belongs to layout typography; not a symbol size' });
+  } else if (property === 'circle-stroke-width') {
+    style.outlineWidth = px(value);
+    extracted.widths.push({ value: style.outlineWidth, nameHint: name, usedBy: [name] });
+  } else if (property === 'line-offset') {
+    style.offset = px(value);
+    extracted.unresolved.push({ topic: 'offset', detail: `${name}: confirm line-relative direction and signed offset convention in design prose` });
   } else if (property === 'text-halo-width') {
     style.haloWidth = px(value);
     extracted.widths.push({ value: style.haloWidth, nameHint: name, usedBy: [name] });
@@ -131,7 +152,10 @@ function extractPaintLiteral(property: string, value: string | number | boolean 
     extracted.opacities.push({ value, nameHint: name, usedBy: [name] });
     if (property === 'fill-opacity') style.fillOpacity = value;
     else if (property === 'line-opacity') style.strokeOpacity = value;
-    else style.opacity = value;
+    else if (property === 'circle-opacity') style.fillOpacity = value;
+    else if (property === 'circle-stroke-opacity') {
+      extracted.skipped.push({ source: 'style', layer: name, reason: 'Independent outline opacity has no equivalent core property; adaptation warning' });
+    } else style.opacity = value;
   }
 }
 

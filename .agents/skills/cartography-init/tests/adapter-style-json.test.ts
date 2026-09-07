@@ -11,7 +11,7 @@ describe('parseStyleJson', () => {
     expect(line?.geometry).toBe('line');
     expect(line?.style.strokeColor).toBe('#3388ff');
     expect(line?.style.strokeWidth).toEqual({ value: 2, unit: 'px' });
-    expect(line?.style.dash).toEqual([{ value: 4, unit: 'px' }, { value: 2, unit: 'px' }]);
+    expect(line?.style.dash).toEqual([{ value: 8, unit: 'px' }, { value: 4, unit: 'px' }]);
   });
 
   it('routes filters and source-layer to bindings, never to elements', () => {

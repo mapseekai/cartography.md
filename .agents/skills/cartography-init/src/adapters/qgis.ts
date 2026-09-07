@@ -192,7 +192,7 @@ function setDimensionValue(value: number | undefined, property: 'strokeWidth' | 
   if (value === undefined || !unit) return;
   const result = dimension(value, unit);
   style[property] = result;
-  extracted.widths.push({ value: result, nameHint: name, usedBy: [name] });
+  (property === 'size' ? extracted.sizes : extracted.widths).push({ value: result, nameHint: name, usedBy: [name] });
 }
 
 function setDash(value: string, unit: DimensionUnit, style: CoreStyleProps, name: string, extracted: ExtractedStyle): void {
@@ -230,7 +230,7 @@ function geometryFor(type: string | undefined): Geometry | undefined {
 }
 
 function roleFor(index: number): ExtractedElement['roleHint'] {
-  return index === 0 ? 'primary' : index === 1 ? 'secondary' : 'context';
+  return undefined; // Renderer order is not evidence of a stable design role.
 }
 
 function attribute(node: XmlNode | undefined, name: string): string | undefined {

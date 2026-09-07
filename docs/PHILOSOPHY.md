@@ -1,5 +1,9 @@
 # Philosophy
 
+Exact values stay stable; their application can change. Scale guidance selects a different declared token or component, controls visibility, or simplifies detail without changing token meaning. Preserve hierarchy and semantic state throughout those choices.
+
+Adaptation is not a rewrite of the design system. A dataset or target may require a substitution in the current output; report its rationale and losses. It does not automatically become a permanent component or rule in CARTOGRAPHY.md.
+
 cartography.md treats a map design system as persistent visual identity, not as a temporary production recipe. A `CARTOGRAPHY.md` should remain useful when the current task, dataset, toolchain, and output change.
 
 中文版：[PHILOSOPHY.zh-CN.md](PHILOSOPHY.zh-CN.md)

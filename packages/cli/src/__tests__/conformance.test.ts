@@ -1,7 +1,7 @@
 import {expect, it} from 'vitest';
 import {lint} from '../linter/index.js';
 import {parseCartography} from '../parser/parse.js';
-const doc = (yaml = '', prose = '## Overview\n\nText.') => `---\nversion: "0.3.0"\nname: Test\n${yaml}---\n\n${prose}`;
+const doc = (yaml = '', prose = '## Overview\n\nText.') => `---\nversion: "0.4.0"\nname: Test\n${yaml}---\n\n${prose}`;
 const passes = (yaml = '', prose?: string) => expect(lint(doc(yaml, prose)).summary.errors).toBe(0);
 const rejects = (yaml: string, rule: string) => expect(lint(doc(yaml)).findings.some((finding) => finding.ruleId === rule)).toBe(true);
 it('V01 accepts the minimal valid file', () => passes());

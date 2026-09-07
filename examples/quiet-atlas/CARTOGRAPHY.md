@@ -1,5 +1,5 @@
 ---
-version: "0.3.0"
+version: "0.4.0"
 name: Quiet Atlas
 description: "A restrained editorial atlas family for clear orientation and unhurried reading."
 colors:
@@ -15,6 +15,10 @@ widths:
   hairline: 0.5px
   road-primary: 2.5px
   road-secondary: 1.25px
+  waterway: 1.25px
+  road-overview: 1px
+  road-regional: 1.5px
+  road-detail: 4px
   label-halo: 1px
 sizes:
   point-small: 5px
@@ -63,7 +67,7 @@ elements:
     state: default
     layerRole: context
     strokeColor: "{colors.waterway}"
-    strokeWidth: "{widths.road-secondary}"
+    strokeWidth: "{widths.waterway}"
   road-primary:
     geometry: line
     family: road
@@ -177,6 +181,17 @@ details that cannot retain their family resemblance at small sizes.
 
 ## Scale & Generalization
 
+All declared elements use local as their base stage. Road-primary uses
+{widths.road-overview} at overview, {widths.road-regional} at regional,
+{widths.road-primary} at local and {widths.road-detail} at detail. Hide
+road-secondary at overview and regional; keep its base width when visible.
+Keep waterway width independent from road tokens even when values coincide.
+Other visible components retain their base values. Atlas points appear at
+detail; use {sizes.point-medium} only for reference places requiring emphasis.
+Optional smooth transitions must preserve primary above secondary, orientation
+labels above context labels, and quiet water beneath routes. Report stage
+switching if smooth transitions cannot be maintained.
+
 At `overview`, preserve the large spatial story and only the strongest names.
 At `regional`, establish major water and route relationships. At `local`, reveal
 supporting routes and contextual labels; at `detail`, add compact reference
@@ -184,6 +199,18 @@ marks selectively. Each stage simplifies before it shrinks and remains the same
 printed atlas rather than a different visual system.
 
 ## Map Elements
+
+This family maintains only default state. Interaction feedback is a task-level
+adaptation and must preserve feature meaning and the restrained hierarchy;
+permanent variants require an explicit design-system change.
+
+Use road components for orientation routes, not quantitative magnitude or risk.
+Use water components for contextual water, not an interchangeable route scale.
+Use primary labels for orientation, context labels for supporting names; remove
+context labels first. Atlas-point is a circular reference mark: size is diameter,
+not radius. Label-gap and symbol-label-gap are edge-to-edge clearances, not
+center distances. The road casing adds its thickness on each side. Boundaries
+remain references and must never appear as emphasized routes.
 
 `paper-ground` establishes the warm canvas. `water-area` and `waterway-line`
 form the quiet water family, while `road-primary` and `road-secondary` express

@@ -1,32 +1,28 @@
 import type { Consolidated, ConsolidatedElement, TypographyToken } from './consolidate.js';
-import type { Dimension, ExtractedStyle } from './ir.js';
+import type { ExtractedStyle } from './ir.js';
 
-type YamlScalar = string | number;
+type YamlScalar = string | number | boolean | null;
+const dimensionMarker = Symbol('dimension');
 interface YamlDimension {
-  kind: 'dimension';
+  [dimensionMarker]: true;
   value: string;
 }
 type YamlValue = YamlScalar | YamlDimension | YamlValue[] | { [key: string]: YamlValue };
 
-const tokenReference = /^\{[A-Za-z0-9_.\-[\]]+\}$/;
-
-function formatDimension({ value, unit }: Dimension): YamlDimension {
-  return { kind: 'dimension', value: `${value}${unit}` };
+function formatDimension({ value, unit }: { value: number; unit: string }): YamlDimension {
+  return { [dimensionMarker]: true, value: `${value}${unit}` };
 }
 
 function isDimension(value: YamlValue): value is YamlDimension {
-  return typeof value === 'object' && value !== null && !Array.isArray(value) && value.kind === 'dimension';
+  return typeof value === 'object' && value !== null && !Array.isArray(value) && dimensionMarker in value;
 }
 
 function quoted(value: string): string {
-  return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+  return JSON.stringify(value);
 }
 
 function scalar(value: YamlScalar, inArray = false): string {
-  if (typeof value === 'number') return String(value);
-  return inArray || value === '0.3.0' || tokenReference.test(value) || /[:#{}"']/.test(value)
-    ? quoted(value)
-    : value;
+  return JSON.stringify(value);
 }
 
 /** Emits the intentionally small YAML subset used by CARTOGRAPHY.md front matter. */
@@ -34,16 +30,17 @@ function emitYaml(value: YamlValue, indent = 0): string[] {
   if (isDimension(value)) return [quoted(value.value)];
   if (Array.isArray(value)) return [`[${value.map(item => {
     if (isDimension(item)) return quoted(item.value);
-    if (typeof item === 'object' && item !== null) throw new Error('YAML arrays only support scalars');
+    if (typeof item === 'object' && item !== null) return JSON.stringify(item);
     return scalar(item as YamlScalar, true);
   }).join(', ')}]`];
   if (typeof value !== 'object' || value === null) return [scalar(value)];
 
   const lines: string[] = [];
   for (const [key, child] of Object.entries(value)) {
-    const prefix = `${' '.repeat(indent)}${key}:`;
+    const prefix = `${' '.repeat(indent)}${/^[A-Za-z_][A-Za-z0-9_-]*$/.test(key) && !/^(true|false|null)$/i.test(key) ? key : quoted(key)}:`;
     if (typeof child === 'object' && child !== null && !Array.isArray(child) && !isDimension(child)) {
-      lines.push(prefix, ...emitYaml(child, indent + 2));
+      if (Object.keys(child).length === 0) lines.push(`${prefix} {}`);
+      else lines.push(prefix, ...emitYaml(child, indent + 2));
     } else {
       lines.push(`${prefix} ${emitYaml(child, indent)[0]}`);
     }
@@ -53,6 +50,7 @@ function emitYaml(value: YamlValue, indent = 0): string[] {
 
 function typographyYaml(token: TypographyToken): YamlValue {
   return {
+    ...token as Record<string, YamlValue>,
     fontFamily: token.fontFamily,
     fontSize: formatDimension(token.fontSize),
     ...(token.fontWeight === undefined ? {} : { fontWeight: token.fontWeight }),
@@ -72,7 +70,9 @@ function elementYaml(element: ConsolidatedElement): YamlValue {
       const group = property === 'typography' ? 'typography'
         : property === 'dash' ? 'dashes'
           : ['color', 'fillColor', 'strokeColor', 'outlineColor', 'casingColor', 'haloColor'].includes(property) ? 'colors'
-            : ['strokeWidth', 'outlineWidth', 'casingWidth', 'haloWidth', 'size', 'offset', 'spacing'].includes(property) ? 'widths'
+            : ['strokeWidth', 'outlineWidth', 'casingWidth', 'haloWidth'].includes(property) ? 'widths'
+              : property === 'size' ? 'sizes'
+                : property === 'spacing' ? 'spacing'
               : ['opacity', 'fillOpacity', 'strokeOpacity'].includes(property) ? 'opacities'
                 : undefined;
       style[property] = group ? `{${group}.${token}}` : token;
@@ -82,8 +82,8 @@ function elementYaml(element: ConsolidatedElement): YamlValue {
   return {
     geometry: element.geometry,
     ...(element.family === undefined ? {} : { family: element.family }),
-    role: element.role,
-    state: element.state,
+    ...(element.role === undefined ? {} : { role: element.role }),
+    ...(element.state === undefined ? {} : { state: element.state }),
     ...(element.layerRole === undefined ? {} : { layerRole: element.layerRole }),
     ...style,
   };
@@ -103,6 +103,9 @@ export function emitDocument(c: Consolidated, ir: ExtractedStyle, opts: { name: 
   if (Object.keys(c.tokens.widths).length) {
     tokens.widths = Object.fromEntries(Object.entries(c.tokens.widths).map(([name, value]) => [name, formatDimension(value)]));
   }
+  for (const group of ['sizes', 'spacing'] as const) {
+    if (Object.keys(c.tokens[group]).length) tokens[group] = Object.fromEntries(Object.entries(c.tokens[group]).map(([name, value]) => [name, formatDimension(value)]));
+  }
   if (Object.keys(c.tokens.dashes).length) {
     tokens.dashes = Object.fromEntries(Object.entries(c.tokens.dashes).map(([name, values]) => [name, values.map(formatDimension)]));
   }
@@ -112,49 +115,24 @@ export function emitDocument(c: Consolidated, ir: ExtractedStyle, opts: { name: 
   }
 
   const frontMatter: YamlValue = {
-    version: '0.3.0',
+    version: '0.4.0',
     name: opts.name,
     ...tokens,
     elements: Object.fromEntries(c.elements.map(element => [element.name, elementYaml(element)])),
   };
-  const sourceName = opts.sourceFile;
-  const lineElements = c.elements.filter(element => element.geometry === 'line');
-  const primaryLine = lineElements[0];
-  const lineStyle = primaryLine?.style;
-  const inferredLine = primaryLine && lineStyle?.strokeColor && lineStyle.strokeWidth
-    ? `主要线要素使用 \`{colors.${lineStyle.strokeColor}}\` 与 \`{widths.${lineStyle.strokeWidth}}\`。`
-    : '> TODO(agent): 说明主要线要素的视觉层级。';
-  const colors = Object.keys(c.tokens.colors);
-  const labels = c.elements.filter(element => element.geometry === 'label');
-  const scaleFacts = [...new Set(ir.scaleHints.map(hint => hint.fact))];
-
   const sections = [
-    section('Overview', [
-      `来源:${sourceName}`,
-      c.elements.length ? `已识别 ${c.elements.length} 个地图元素。` : '> TODO(agent): 说明地图的主题与使用场景。',
-      ir.skipped.length ? `有 ${ir.skipped.length} 项样式事实未能转换。` : '> TODO(agent): 说明需要人工确认的视觉意图。',
+    section('Overview', ['> TODO(agent): 说明稳定视觉身份、主题和适用边界。']),
+    section('Colors', ['> TODO(agent): 说明颜色的稳定语义、禁用组合与冗余视觉通道。']),
+    section('Typography & Labels', ['> TODO(agent): 说明标注层级、拥挤时的保留与舍弃顺序。']),
+    section('Composition & Density', ['> TODO(agent): 说明主体、上下文、留白与密度取舍。']),
+    section('Layering & Depth', ['> TODO(agent): 说明概念视觉层级与遮挡原则。']),
+    section('Geometry & Symbols', ['> TODO(agent): 说明符号家族；size 为旋转前主体长边。为非零 offset 定义参照、方向和正负含义，为 spacing 定义间距类型。']),
+    section('Scale & Generalization', ['> TODO(agent): 指定基础表达所在阶段、overview / regional / local / detail 的 Token 替换与显隐、可变化属性及不变量。']),
+    section('Map Elements', [
+      ...c.elements.map(element => `### ${element.name}\n\n> TODO(agent): 确认用途、使用边界、family/role、状态冲突与尺度不变量。`),
+      '> TODO(agent): 只有明确证据才能填写角色与状态；不按名称、颜色或排列推断。',
     ]),
-    section('Color', colors.length
-      ? [`已提取 ${colors.length} 个颜色 Token：${colors.map(name => `\`{colors.${name}}\``).join('、')}。`, '> TODO(agent): 说明颜色的语义与无障碍对比要求。']
-      : ['> TODO(agent): 说明底图、主题与强调色的关系。']),
-    section('Typography & Labels', labels.length
-      ? [`已识别 ${labels.length} 个标注元素。`, '> TODO(agent): 说明标注优先级、避让与字形策略。']
-      : ['> TODO(agent): 说明标注层级与避让策略。']),
-    section('Composition & Density', [inferredLine, '> TODO(agent): 说明信息密度、留白与视觉焦点。']),
-    section('Layering & Depth', c.elements.some(element => element.layerRole)
-      ? [`元素使用 ${[...new Set(c.elements.flatMap(element => element.layerRole ? [element.layerRole] : []))].join('、')} 图层角色。`, '> TODO(agent): 说明图层顺序与遮挡原则。']
-      : ['> TODO(agent): 说明图层顺序与深度关系。']),
-    section('Geometry & Symbols', c.elements.length
-      ? [`已识别几何类型：${[...new Set(c.elements.map(element => element.geometry))].join('、')}。`, '> TODO(agent): 说明符号形状与线面细节。']
-      : ['> TODO(agent): 说明几何与符号语言。']),
-    section('Scale & Generalization', scaleFacts.length
-      ? scaleFacts.map(fact => `- ${fact}`)
-      : ['> TODO(agent): 说明各尺度下的取舍与概化规则。']),
-    section('Map Elements', c.elements.length
-      ? [c.elements.map(element => `\`${element.name}\``).join('、') + ' 是已识别的视觉元素。', '> TODO(agent): 说明元素家族与状态扩展规则。']
-      : ['> TODO(agent): 说明应包含的地图元素与视觉组件。']),
-    section('Data & Legend', ['> TODO(agent): 说明图例、数据解释与读图提示；运行时数据绑定不写入本文件。']),
+    section("Do's and Don'ts", ['> TODO(agent): 说明最容易破坏视觉身份的错误；语义状态优先于操作反馈和装饰。']),
   ];
-
   return `---\n${emitYaml(frontMatter).join('\n')}\n---\n\n${sections.join('\n\n')}\n`;
 }

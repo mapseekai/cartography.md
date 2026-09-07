@@ -28,7 +28,10 @@ describe('runCli end-to-end', () => {
       ]);
       expect(code).toBe(0);
       expect(existsSync(out)).toBe(true);
-      expect(readFileSync(out, 'utf8')).toContain('version: "0.3.0"');
+      expect(readFileSync(out, 'utf8')).toContain('version: "0.4.0"');
+      expect(readFileSync(out, 'utf8')).not.toContain(source);
+      expect(readFileSync(out, 'utf8')).not.toContain(input.name);
+      expect(JSON.parse(readFileSync(reportJson, 'utf8')).source.file).toBe(path.basename(source));
       if (input.name === 'qgis-min.qgs') {
         const report = JSON.parse(readFileSync(reportJson, 'utf8')) as { unresolved: unknown[] };
         const topics = report.unresolved.map((item) => {
@@ -68,7 +71,7 @@ describe('runCli end-to-end', () => {
     const out = path.join(dir, 'CARTOGRAPHY.md');
     const code = await runCli(['--input', source, '--output', out]);
     expect(code).toBe(0);
-    expect(readFileSync(out, 'utf8')).toContain('version: "0.3.0"');
+    expect(readFileSync(out, 'utf8')).toContain('version: "0.4.0"');
   });
   it('refuses to write on unrecognised input', async () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'init-e2e-'));

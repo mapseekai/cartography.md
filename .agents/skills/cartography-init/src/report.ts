@@ -33,14 +33,16 @@ interface InitReport {
   bindings: BindingItem[];
   unresolved: UnresolvedItem[];
   notes: string[];
+  scaleHints: ExtractedStyle['scaleHints'];
+  statistics: { elements: number; colors: number; skipped: number };
 }
 
-function buildReport(ir: ExtractedStyle, c: Consolidated): InitReport {
+function buildReport(ir: ExtractedStyle, c: Consolidated, sourceFile?: string): InitReport {
   return {
     source: {
       kind: ir.source.kind,
       name: ir.source.name ?? '',
-      file: ir.source.name ?? '',
+      file: sourceFile ?? ir.source.name ?? '',
     },
     skipped: ir.skipped,
     datasources: ir.datasources,
@@ -50,12 +52,14 @@ function buildReport(ir: ExtractedStyle, c: Consolidated): InitReport {
     }),
     unresolved: ir.unresolved,
     notes: c.notes,
+    scaleHints: [...ir.scaleHints, ...ir.elements.flatMap(element => element.scaleHints)],
+    statistics: { elements: c.elements.length, colors: Object.keys(c.tokens.colors).length, skipped: ir.skipped.length },
   };
 }
 
 /** Render the machine-readable INIT_REPORT.json payload with two-space indentation. */
-export function renderReportJson(ir: ExtractedStyle, c: Consolidated): string {
-  return `${JSON.stringify(buildReport(ir, c), null, 2)}\n`;
+export function renderReportJson(ir: ExtractedStyle, c: Consolidated, sourceFile?: string): string {
+  return `${JSON.stringify(buildReport(ir, c, sourceFile), null, 2)}\n`;
 }
 
 function bulletList(items: string[]): string {
@@ -63,8 +67,8 @@ function bulletList(items: string[]): string {
 }
 
 /** Render the human-readable conversion report and Agent follow-up checklist. */
-export function renderReportMarkdown(ir: ExtractedStyle, c: Consolidated): string {
-  const report = buildReport(ir, c);
+export function renderReportMarkdown(ir: ExtractedStyle, c: Consolidated, sourceFile?: string): string {
+  const report = buildReport(ir, c, sourceFile);
   const skipped = report.skipped.map(item => `${item.source}/${item.layer}: ${item.reason}`);
   const datasources = report.datasources.map(item =>
     `${item.source}/${item.layer}: ${item.identity}${item.providerType ? ` (${item.providerType})` : ''}`,
@@ -84,9 +88,19 @@ export function renderReportMarkdown(ir: ExtractedStyle, c: Consolidated): strin
     '# 初始化报告',
     '',
     `- 来源：${report.source.kind}${report.source.name ? ` / ${report.source.name}` : ''}`,
+    `- 文件：${report.source.file}`,
     '',
     '## skipped',
     bulletList(skipped),
+    '',
+    '## statistics',
+    `- Elements: ${report.statistics.elements}; colors: ${report.statistics.colors}; skipped: ${report.statistics.skipped}`,
+    '',
+    '## scaleHints',
+    bulletList([...new Set(report.scaleHints.map(hint => hint.fact))]),
+    '',
+    '## notes',
+    bulletList(report.notes),
     '',
     '## datasources',
     bulletList(datasources),

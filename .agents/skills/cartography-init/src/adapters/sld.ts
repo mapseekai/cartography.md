@@ -94,6 +94,8 @@ function extractText(symbolizer: XmlNode, unit: DimensionUnit, name: string): Ex
   if (!family || size === undefined) return undefined;
   const rawTypography: ExtractedType = { fontFamily: [family], fontSize: dimension(size, unit), nameHint: name, usedBy: [name] };
   const weight = font.get('font-weight');
+  const fontStyle = font.get('font-style');
+  if (fontStyle) rawTypography.fontStyle = fontStyle;
   const numericWeight = numberOf(weight);
   if (weight === 'normal' || weight === 'bold') rawTypography.fontWeight = weight;
   else if (numericWeight !== undefined) rawTypography.fontWeight = numericWeight;
@@ -132,7 +134,7 @@ function setOpacity(value: string | undefined, property: 'fillOpacity' | 'stroke
 function setDimension(value: number, property: 'size' | 'strokeWidth', style: CoreStyleProps, unit: DimensionUnit, name: string, extracted: ExtractedStyle): void {
   const result = dimension(value, unit);
   style[property] = result;
-  extracted.widths.push({ value: result, nameHint: name, usedBy: [name] });
+  (property === 'size' ? extracted.sizes : extracted.widths).push({ value: result, nameHint: name, usedBy: [name] });
 }
 
 function extractFilters(rule: XmlNode, name: string, extracted: ExtractedStyle): void {

@@ -13,14 +13,14 @@ import type {
 export type ConsolidatedStyle = Partial<Record<keyof CoreStyleProps, string | string[]>>;
 
 /** consolidate 阶段与 ir.ts 的 ExtractedType 同形，但不保留抽取元数据。 */
-export type TypographyToken = Omit<ExtractedType, 'nameHint' | 'usedBy'>;
+export type TypographyToken = Pick<ExtractedType, 'fontFamily' | 'fontSize' | 'fontWeight' | 'lineHeight' | 'letterSpacing' | 'fontStyle' | 'textTransform' | 'fontFeature' | 'fontVariation'> & Record<string, unknown>;
 
 export interface ConsolidatedElement {
   name: string;
   geometry: Geometry;
   family?: string;
-  role: 'primary' | 'secondary' | 'context';
-  state: string;
+  role?: 'primary' | 'secondary' | 'context';
+  state?: string;
   layerRole?: LayerRole;
   style: ConsolidatedStyle;
   scaleHints: ScaleHint[];
@@ -30,6 +30,8 @@ export interface Consolidated {
   tokens: {
     colors: Record<string, string>;
     widths: Record<string, Dimension>;
+    sizes: Record<string, Dimension>;
+    spacing: Record<string, Dimension>;
     dashes: Record<string, Dimension[]>;
     opacities: Record<string, number>;
     typography: Record<string, TypographyToken>;
@@ -39,71 +41,23 @@ export interface Consolidated {
   notes: string[];
 }
 
-type TokenKind = 'color' | 'width' | 'dash' | 'opacity' | 'typography';
+type TokenGroup = keyof Consolidated['tokens'];
 
-interface NamedValue<T> {
-  value: T;
-  nameHint?: string | undefined;
-}
-
-const colorProperties: (keyof CoreStyleProps)[] = [
-  'color', 'fillColor', 'strokeColor', 'outlineColor', 'casingColor', 'haloColor',
-];
-const widthProperties: (keyof CoreStyleProps)[] = [
-  'strokeWidth', 'outlineWidth', 'casingWidth', 'haloWidth', 'size', 'offset', 'spacing',
-];
-const opacityProperties: (keyof CoreStyleProps)[] = ['opacity', 'fillOpacity', 'strokeOpacity'];
+const colorProperties = ['color', 'fillColor', 'strokeColor', 'outlineColor', 'casingColor', 'haloColor'];
+const widthProperties = ['strokeWidth', 'outlineWidth', 'casingWidth', 'haloWidth'];
+const opacityProperties = ['opacity', 'fillOpacity', 'strokeOpacity'];
 
 export function slugify(raw: string): string {
-  return raw
-    .toLowerCase()
-    .replace(/[^A-Za-z0-9_-]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
+  return raw.toLowerCase().replace(/[^A-Za-z0-9_-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
 }
 
-function dimensionKey(value: Dimension): string {
-  return JSON.stringify([value.value, value.unit]);
-}
-
-function dashKey(value: Dimension[]): string {
-  return JSON.stringify(value.map(({ value: length, unit }) => [length, unit]));
-}
-
-function typographyKey(value: TypographyToken): string {
-  return JSON.stringify([
-    value.fontFamily,
-    [value.fontSize.value, value.fontSize.unit],
-    value.fontWeight,
-  ]);
-}
-
-function addTokens<T>(
-  entries: NamedValue<T>[],
-  kind: TokenKind,
-  key: (value: T) => string,
-): { tokens: Record<string, T>; names: Map<string, string> } {
-  const tokens: Record<string, T> = {};
-  const names = new Map<string, string>();
-  const usedNames = new Set<string>();
-  let anonymous = 0;
-
-  for (const entry of entries) {
-    const valueKey = key(entry.value);
-    if (names.has(valueKey)) continue;
-
-    const hinted = entry.nameHint ? slugify(entry.nameHint) : '';
-    const base = hinted || `${kind}-${++anonymous}`;
-    let name = base;
-    let suffix = 2;
-    while (usedNames.has(name)) name = `${base}-${suffix++}`;
-
-    usedNames.add(name);
-    names.set(valueKey, name);
-    tokens[name] = entry.value;
-  }
-
-  return { tokens, names };
+/** Compare all core and extension fields, independently of mapping insertion order. */
+function stableKey(value: unknown): string {
+  if (Array.isArray(value)) return '[' + value.map(stableKey).join(',') + ']';
+  if (value && typeof value === 'object') return '{' + Object.entries(value)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => JSON.stringify(k) + ':' + stableKey(v)).join(',') + '}';
+  return JSON.stringify(value) ?? 'null';
 }
 
 function typeToken(value: ExtractedType): TypographyToken {
@@ -111,94 +65,83 @@ function typeToken(value: ExtractedType): TypographyToken {
   return token;
 }
 
-function styleValues(elements: ExtractedElement[], properties: (keyof CoreStyleProps)[]): unknown[] {
-  return elements.flatMap(({ style }) => properties.flatMap(property => {
-    const value = style[property];
-    return value === undefined ? [] : [value];
-  }));
-}
-
 export function consolidate(ir: ExtractedStyle): Consolidated {
-  const colorEntries: NamedValue<string>[] = [
-    ...ir.colors.map(({ value, nameHint }) => ({ value, nameHint })),
-    ...styleValues(ir.elements, colorProperties).filter((value): value is string => typeof value === 'string').map(value => ({ value })),
-  ];
-  const widthEntries: NamedValue<Dimension>[] = [
-    ...ir.widths.map(({ value, nameHint }) => ({ value, nameHint })),
-    ...styleValues(ir.elements, widthProperties).filter((value): value is Dimension => typeof value === 'object' && value !== null && 'unit' in value && 'value' in value).map(value => ({ value })),
-  ];
-  const dashEntries: NamedValue<Dimension[]>[] = [
-    ...ir.dashes.map(({ pattern, nameHint }) => ({ value: pattern, nameHint })),
-    ...styleValues(ir.elements, ['dash']).filter((value): value is Dimension[] => Array.isArray(value)).map(value => ({ value })),
-  ];
-  const opacityEntries: NamedValue<number>[] = [
-    ...ir.opacities.map(({ value, nameHint }) => ({ value, nameHint })),
-    ...styleValues(ir.elements, opacityProperties).filter((value): value is number => typeof value === 'number').map(value => ({ value })),
-  ];
-  const typographyEntries: NamedValue<TypographyToken>[] = [
-    ...ir.typography.map(value => ({ value: typeToken(value), nameHint: value.nameHint })),
-    ...ir.elements.flatMap(element => element.rawTypography ? [{ value: typeToken(element.rawTypography), nameHint: element.rawTypography.nameHint }] : []),
-  ];
-
-  const colors = addTokens(colorEntries, 'color', value => value);
-  const widths = addTokens(widthEntries, 'width', dimensionKey);
-  const dashes = addTokens(dashEntries, 'dash', dashKey);
-  const opacities = addTokens(opacityEntries, 'opacity', String);
-  const typography = addTokens(typographyEntries, 'typography', typographyKey);
+  const tokens: Consolidated['tokens'] = { colors: {}, widths: {}, sizes: {}, spacing: {}, dashes: {}, opacities: {}, typography: {} };
+  const notes: string[] = [];
+  const registry = new Map<string, string>();
+  const values = new Map<string, string>();
+  const facts = {
+    colors: ir.colors.map(f => ({ ...f })),
+    widths: ir.widths, sizes: ir.sizes, spacing: ir.spacing,
+    dashes: ir.dashes.map(f => ({ ...f, value: f.pattern })),
+    opacities: ir.opacities,
+    typography: ir.typography.map(f => ({ value: typeToken(f), nameHint: f.nameHint, usedBy: f.usedBy })),
+  };
+  const consumed = new Set<unknown>();
+  const register = (group: TokenGroup, value: unknown, hint: string): string => {
+    const scope = slugify(hint) || 'token';
+    const valueKey = stableKey(value);
+    const key = group + ':' + hint + ':' + valueKey;
+    const existing = registry.get(key);
+    if (existing) return existing;
+    const target = tokens[group] as Record<string, unknown>;
+    let name = scope;
+    let suffix = 2;
+    while (Object.hasOwn(target, name)) name = scope + '-' + suffix++;
+    const candidate = values.get(group + ':' + valueKey);
+    if (candidate) notes.push('Shared-value candidate: ' + group + '.' + candidate + ' and ' + group + '.' + name + '; confirm design semantics before merging.');
+    else values.set(group + ':' + valueKey, name);
+    target[name] = value;
+    registry.set(key, name);
+    return name;
+  };
+  const tokenFor = (group: TokenGroup, value: unknown, element: ExtractedElement, property: string, elementName: string): string => {
+    const matches = facts[group].filter(f => f.usedBy.includes(element.name) && stableKey(f.value) === stableKey(value));
+    for (const fact of matches) consumed.add(fact);
+    // A name hint is extraction provenance, not evidence that unrelated elements share a design scale.
+    return register(group, value, elementName + '-' + property);
+  };
   const nameMap = new Map<string, string>();
   const elementNames = new Set<string>();
-  let anonymousElements = 0;
-  const familySizes = new Map<string, number>();
-
-  for (const element of ir.elements) {
-    if (element.family) familySizes.set(element.family, (familySizes.get(element.family) ?? 0) + 1);
-  }
-
-  const elements = ir.elements.map(element => {
-    const base = slugify(element.name) || `element-${++anonymousElements}`;
+  const elements: ConsolidatedElement[] = ir.elements.map((element, index) => {
+    const base = slugify(element.name) || 'element-' + (index + 1);
     let name = base;
     let suffix = 2;
-    while (elementNames.has(name)) name = `${base}-${suffix++}`;
+    while (elementNames.has(name)) name = base + '-' + suffix++;
     elementNames.add(name);
     nameMap.set(element.name, name);
-
     const style: ConsolidatedStyle = {};
-    for (const [property, value] of Object.entries(element.style) as [keyof CoreStyleProps, CoreStyleProps[keyof CoreStyleProps]][]) {
+    for (const [property, value] of Object.entries(element.style)) {
       if (value === undefined) continue;
-      if (colorProperties.includes(property) && typeof value === 'string') style[property] = colors.names.get(value) ?? value;
-      else if (widthProperties.includes(property) && typeof value === 'object' && value !== null && !Array.isArray(value)) style[property] = widths.names.get(dimensionKey(value as Dimension)) ?? '';
-      else if (opacityProperties.includes(property) && typeof value === 'number') style[property] = opacities.names.get(String(value)) ?? '';
-      else if (property === 'dash' && Array.isArray(value)) style[property] = dashes.names.get(dashKey(value as Dimension[])) ?? [];
-      else if (property === 'typography' && typeof value === 'string') style[property] = value;
-      else if (typeof value === 'string') style[property] = value;
+      const prop = property as keyof CoreStyleProps;
+      if (property === 'offset') {
+        const d = value as Dimension;
+        style.offset = d.value + d.unit;
+        continue;
+      }
+      const group: TokenGroup | undefined = colorProperties.includes(property) ? 'colors'
+        : widthProperties.includes(property) ? 'widths'
+        : property === 'size' ? 'sizes'
+        : property === 'spacing' ? 'spacing'
+        : opacityProperties.includes(property) ? 'opacities'
+        : property === 'dash' ? 'dashes' : undefined;
+      if (group) style[prop] = tokenFor(group, value, element, property, name);
+      else if (typeof value === 'string') style[prop] = value;
     }
-    if (element.rawTypography) style.typography = typography.names.get(typographyKey(typeToken(element.rawTypography))) ?? '';
-
+    if (element.rawTypography) style.typography = tokenFor('typography', typeToken(element.rawTypography), element, 'typography', name);
     return {
-      name,
-      geometry: element.geometry,
+      name, geometry: element.geometry, style, scaleHints: element.scaleHints,
       ...(element.family === undefined ? {} : { family: element.family }),
-      role: element.roleHint ?? (element.family && familySizes.get(element.family) === 1 ? 'primary' : 'context'),
-      state: 'default',
+      ...(element.roleHint === undefined ? {} : { role: element.roleHint }),
+      ...(element.stateHint === undefined ? {} : { state: element.stateHint }),
       ...(element.layerRole === undefined ? {} : { layerRole: element.layerRole }),
-      style,
-      scaleHints: element.scaleHints,
     };
   });
-
-  return {
-    tokens: {
-      colors: colors.tokens,
-      widths: widths.tokens,
-      dashes: dashes.tokens,
-      opacities: opacities.tokens,
-      typography: typography.tokens,
-    },
-    elements,
-    nameMap,
-    notes: [
-      `Deduplicated ${ir.colors.length} color facts into ${Object.keys(colors.tokens).length} tokens.`,
-      `Assigned roles and default state to ${elements.length} elements.`,
-    ],
-  };
+  for (const group of Object.keys(facts) as TokenGroup[]) {
+    for (const [index, fact] of facts[group].entries()) {
+      if (!consumed.has(fact)) register(group, fact.value, (fact.nameHint ?? fact.usedBy.join('-')) || group + '-' + (index + 1));
+    }
+  }
+  notes.push('Extracted ' + elements.length + ' elements. Unconfirmed roles and states omitted; equal values do not establish shared semantics.');
+  return { tokens, elements, nameMap, notes };
 }

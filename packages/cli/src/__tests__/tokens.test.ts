@@ -2,7 +2,7 @@ import {describe, expect, it} from 'vitest';
 import {lint} from '../linter/index.js';
 
 function document(colors: string, extra = '') {
-  return `---\nversion: "0.3.0"\nname: Color test\ncolors:\n${colors}\n${extra}---\n\n## Overview\n\nColor test.\n`;
+  return `---\nversion: "0.4.0"\nname: Color test\ncolors:\n${colors}\n${extra}---\n\n## Overview\n\nColor test.\n`;
 }
 
 describe('design tokens', () => {
@@ -17,7 +17,7 @@ describe('design tokens', () => {
   });
   it('accepts cross-group references with matching resolved types', () => {
     const report = lint(`---
-version: "0.3.0"
+version: "0.4.0"
 name: Resolved token types
 custom:
   css: "#24303A"

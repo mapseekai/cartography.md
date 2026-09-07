@@ -40,11 +40,15 @@ export interface ExtractedOpacity {
 }
 
 export interface ExtractedType {
+  [extension: string]: unknown;
   fontFamily: string[]; // 非空
   fontSize: Dimension;
   fontWeight?: number | 'normal' | 'bold';
-  letterSpacing?: Dimension;
-  lineHeight?: number | Dimension;
+  letterSpacing?: { value: number; unit: DimensionUnit | 'em' };
+  lineHeight?: number | { value: number; unit: DimensionUnit | 'em' };
+  fontStyle?: string;
+  fontFeature?: string;
+  fontVariation?: string;
   textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
   nameHint?: string;
   usedBy: string[];
@@ -78,6 +82,7 @@ export interface ExtractedElement {
   geometry: Geometry;
   family?: string;
   roleHint?: 'primary' | 'secondary' | 'context'; // consolidate 决定最终 role/state
+  stateHint?: string;
   layerRole?: LayerRole;
   style: CoreStyleProps;
   rawTypography?: ExtractedType; // 标注元素携带,consolidate 转 Token
@@ -132,6 +137,8 @@ export interface ExtractedStyle {
   source: { kind: SourceKind; name?: string };
   colors: ExtractedColor[];
   widths: ExtractedWidth[];
+  sizes: ExtractedWidth[];
+  spacing: ExtractedWidth[];
   dashes: ExtractedDash[];
   opacities: ExtractedOpacity[];
   typography: ExtractedType[];
@@ -146,7 +153,7 @@ export interface ExtractedStyle {
 export function emptyExtracted(source: ExtractedStyle['source']): ExtractedStyle {
   return {
     source,
-    colors: [], widths: [], dashes: [], opacities: [], typography: [],
+    colors: [], widths: [], sizes: [], spacing: [], dashes: [], opacities: [], typography: [],
     elements: [], scaleHints: [], skipped: [], datasources: [], bindings: [], unresolved: [],
   };
 }

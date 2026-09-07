@@ -11,7 +11,7 @@ describe('slugify', () => {
 });
 
 describe('consolidate', () => {
-  it('dedups colors by value and prefers semantic name hints', () => {
+  it('preserves distinct name hints even when their slugs and values coincide', () => {
     const ir = emptyExtracted({ kind: 'style' });
     ir.colors.push(
       { value: '#3388ff', nameHint: 'Roads Primary', usedBy: ['l1'] },
@@ -19,9 +19,9 @@ describe('consolidate', () => {
       { value: '#ffffff', usedBy: ['l3'] },
     );
     const c = consolidate(ir);
-    expect(Object.values(c.tokens.colors)).toEqual(['#3388ff', '#ffffff']);
+    expect(Object.values(c.tokens.colors)).toEqual(['#3388ff', '#3388ff', '#ffffff']);
     expect(c.tokens.colors['roads-primary']).toBe('#3388ff');
-    expect(c.tokens.colors['color-1']).toBe('#ffffff');
+    expect(c.tokens.colors['l3']).toBe('#ffffff');
   });
 
   it('keeps distinct dimension values in separate width tokens', () => {
@@ -47,7 +47,8 @@ describe('consolidate', () => {
     ir.widths.push({ value: { value: 2, unit: 'px' }, nameHint: 'line', usedBy: ['a', 'b'] });
     const c = consolidate(ir);
     expect(c.elements[0]!.role).toBe('primary');
-    expect(c.elements[0]!.style.strokeColor).toBe('accent');
-    expect(c.elements[0]!.style.strokeWidth).toBe('line');
+    expect(c.tokens.colors[c.elements[0]!.style.strokeColor as string]).toBe('#3388ff');
+    expect(c.tokens.widths[c.elements[0]!.style.strokeWidth as string]).toEqual({value: 2, unit: 'px'});
+    expect(c.elements[0]!.style.strokeWidth).not.toBe(c.elements[1]!.style.strokeWidth);
   });
 });

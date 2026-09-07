@@ -23,15 +23,15 @@ function sample() {
 }
 
 describe('emitDocument', () => {
-  it('emits version 0.3.0 front matter with token references', () => {
+  it('emits version 0.4.0 front matter with token references', () => {
     const { ir, c } = sample();
     const doc = emitDocument(c, ir, { name: 'Demo Atlas', sourceFile: 'style-min.json' });
-    expect(doc).toContain('version: "0.3.0"');
-    expect(doc).toContain('name: Demo Atlas');
-    expect(doc).toContain('accent: "#3388ff"');
-    expect(doc).toContain('strokeColor: "{colors.accent}"');
-    expect(doc).toContain('strokeWidth: "{widths.line}"');
-    expect(doc).toContain('来源:style-min.json');
+    expect(doc).toContain('version: "0.4.0"');
+    expect(doc).toContain('name: "Demo Atlas"');
+    expect(doc).toContain('road-a-strokecolor: "#3388ff"');
+    expect(doc).toContain('strokeColor: "{colors.road-a-strokecolor}"');
+    expect(doc).toContain('strokeWidth: "{widths.road-a-strokewidth}"');
+    expect(doc).not.toContain('来源:style-min.json');
     expect(doc).toContain('"-2px"');
     expect(doc).toContain('["4px", "2px"]');
     expect(doc).toContain('symbol: "entry: #{}\\"\'"');
@@ -42,11 +42,11 @@ describe('emitDocument', () => {
     const doc = emitDocument(c, ir, { name: 'Demo Atlas', sourceFile: 'style-min.json' });
     for (const h of ['## Overview', '## Color', '## Typography & Labels', '## Composition & Density',
       '## Layering & Depth', '## Geometry & Symbols', '## Scale & Generalization',
-      '## Map Elements', '## Data & Legend']) {
+      '## Map Elements', "## Do's and Don'ts"]) {
       expect(doc).toContain(h);
     }
     expect(doc).toContain('TODO(agent)');
-    expect(doc).toContain('zoom 5–15 可见');
+    expect(doc).not.toContain('zoom 5–15 可见');
   });
 
   it('never leaks bindings into the document', () => {

@@ -4,6 +4,7 @@ import type {Finding, MarkdownSection, ParsedCartography} from '../model/types.j
 import {isRecord, walkObject} from '../utils/object.js';
 import {scanTopLevelSections} from './markdown.js';
 import {canonicalSectionName} from './sections.js';
+import {FORMAT_VERSION} from '../version.js';
 
 const RESERVED_ELEMENT_PROPERTY_SET: Record<string, true> = Object.fromEntries(
   RESERVED_ELEMENT_PROPERTIES.map((name) => [name, true]),
@@ -148,6 +149,11 @@ export function parseCartography(source: string): ParsedCartography<CartographyC
     } else {
       for (const issue of result.error.issues) {
         const path = issue.path.length > 0 ? issue.path.join('.') : '$';
+        if (path === 'version') {
+          findings.push({ruleId: 'schema', severity: 'error', path,
+            message: `Unsupported format version. Expected ${FORMAT_VERSION}; older documents require semantic migration, not just a version edit.`});
+          continue;
+        }
         const lastKey = issue.path[issue.path.length - 1];
         // Exact reserved MapElement property names are rejected by the schema;
         // re-tag them with the dedicated boundary diagnostic for clarity (§9.5).

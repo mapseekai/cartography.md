@@ -1,8 +1,10 @@
 # CARTOGRAPHY.md 格式规范
 
-**状态：** 草案 0.3.0（修订稿）  
+**状态：** 草案 0.4.0（修订稿）\
 **规范文件名：** `CARTOGRAPHY.md`  
 **语言：** 中文  
+
+0.4.0 的英文语义配套说明见 [Visual semantics](visual-semantics.md)；[迁移说明](migrations/0.3-to-0.4.zh-CN.md)列出升级前必须核查的历史含义。
 
 > 本文定义 `CARTOGRAPHY.md` 的文件结构、字段、Token 类型、引用规则、标准 Markdown 章节和消费者行为。设计理念、编写方法和示例库可以由其他文档补充，但不改变本文规定的格式语义。
 
@@ -93,7 +95,7 @@ Markdown 正文 SHOULD 使用 `##` 标题组织标准章节。文件 MAY 在标�
 
 ```md
 ---
-version: "0.3.0"
+version: "0.4.0"
 name: Quiet Civic Atlas
 colors:
   canvas: "#F7F5EF"
@@ -113,6 +115,14 @@ colors:
 - 正文 MUST NOT 通过另一个字面值重新定义同一 Token；发生直接矛盾时，消费者 SHOULD 使用 Token 的精确值并报告一致性警告。
 
 Token 不是渲染器属性。消费者负责将 Token 映射到目标技术。
+
+### 3.1.1 基础表达、尺度与应用
+
+MapElement 中声明的属性构成 base expression（基础表达）。Token 的精确值与语义保持稳定，不因任务或目标引擎重定义。作者 SHOULD 说明 overview、regional、local、detail 中哪个阶段使用基础表达，以及其他阶段的 Token 替换、显隐、允许变化的属性和不可破坏的关系。
+
+例如 road-primary 以 local 的 2.5px 为基础表达；可以声明 overview 使用单独的 1px Token、regional 使用 1.5px Token、detail 使用 4px Token。正文引用必须解析到实际声明的 Token。primary 不得弱于 secondary，critical 不得退到 context 以下，核心标注不得弱于上下文标注。作者 SHOULD 明确自己的尺度不变量。
+
+正文 MAY 声明相邻阶段平滑过渡，但本格式不增加插值 DSL、具体 zoom、运行时表达式或自动继承。目标不支持平滑变化时 MAY 阶段切换并报告差异。
 
 ### 3.2 文件发现与多文件共存
 
@@ -193,10 +203,10 @@ canvas: #F7F5EF
 
 ## 5. Front matter 根 Schema
 
-版本 0.3.0 定义以下标准根字段和 Token 组：
+版本 0.4.0 定义以下标准根字段和 Token 组：
 
 ```yaml
-version: "0.3.0"                                      # 必填
+version: "0.4.0"                                      # 必填
 name: <非空字符串>                                     # 必填
 description: <非空字符串>                              # 可选
 omitted: <(string | OmittedSection)[]>                 # 可选
@@ -223,7 +233,7 @@ elements: <map<TokenIdentifier, MapElement>>
 |---|---|
 | 类型 | 字符串 |
 | 必填 | 是 |
-| 允许值 | `"0.3.0"` |
+| 允许值 | `"0.4.0"` |
 | 含义 | 当前文件遵循的 `CARTOGRAPHY.md` 格式版本 |
 
 `version` 不是地图版本、项目版本、样式版本或渲染器版本，也 MUST NOT 使用 Token 引用。
@@ -424,7 +434,7 @@ JSON Schema 无法完整证明字符串符合 CSS Color Level 4；完整颜色�
 
 `AbsoluteDimension` 指使用非相对单位的 `Dimension`。单位换算采用 CSS 绝对长度的固定比例：`1in = 2.54cm = 25.4mm = 72pt = 96px`。其中 `px` 是逻辑参考像素，不是物理设备像素；目标渲染器 MAY 按设备像素比缩放输出，但 MUST 保持同一输出上下文中的单位比例。
 
-核心 0.3.0 不支持 `rem`，因为本格式没有定义稳定的根字号基准。
+核心 0.4.0 不支持 `rem`，因为本格式没有定义稳定的根字号基准。
 
 示例：
 
@@ -495,7 +505,7 @@ typography:
     lineHeight: 1.2
 ```
 
-`fontFamily` 数组按“首选字体到最后 fallback”的顺序解释，并 SHOULD 避免重复成员。`fontFeature` 和 `fontVariation` 在 0.3.0 中是开放提示：消费者无法解释其内部语法时 MUST 保留原值，MAY 给出能力提示；作者需要跨实现的机器可解释结构时 SHOULD 通过扩展规范另行定义，且不得写入目标渲染器属性路径。
+`fontFamily` 数组按“首选字体到最后 fallback”的顺序解释，并 SHOULD 避免重复成员。`fontFeature` 和 `fontVariation` 在 0.4.0 中是开放提示：消费者无法解释其内部语法时 MUST 保留原值，MAY 给出能力提示；作者需要跨实现的机器可解释结构时 SHOULD 通过扩展规范另行定义，且不得写入目标渲染器属性路径。
 
 由于 `Typography` 是开放对象，未知字段 MUST 被保留；消费者 MAY 对未知字段给出警告。未知字段不自动获得核心字段语义。
 
@@ -672,11 +682,11 @@ dashes:
 | `outlineColor` | `Color` 或引用 | 否 | 外轮廓颜色 |
 | `casingColor` | `Color` 或引用 | 否 | 线状要素套线颜色 |
 | `haloColor` | `Color` 或引用 | 否 | 标注或符号光晕颜色 |
-| `strokeWidth` | 非负 `AbsoluteDimension` 或引用 | 否 | 主线宽 |
-| `outlineWidth` | 非负 `AbsoluteDimension` 或引用 | 否 | 外轮廓宽度 |
-| `casingWidth` | 非负 `AbsoluteDimension` 或引用 | 否 | 套线宽度 |
-| `haloWidth` | 非负 `AbsoluteDimension` 或引用 | 否 | 光晕宽度 |
-| `size` | 非负 `AbsoluteDimension` 或引用 | 否 | 点符号或图标尺寸 |
+| `strokeWidth` | 非负 `AbsoluteDimension` 或引用 | 否 | 主描边完整宽度，不含套线、外轮廓、光晕 |
+| `outlineWidth` | 非负 `AbsoluteDimension` 或引用 | 否 | 从主体外缘向外增加的厚度，不改变名义尺寸 |
+| `casingWidth` | 非负 `AbsoluteDimension` 或引用 | 否 | 主线每侧向外增加的套线厚度 |
+| `haloWidth` | 非负 `AbsoluteDimension` 或引用 | 否 | 从字形或符号轮廓向外扩展的可读性光晕厚度 |
+| `size` | 非负 `AbsoluteDimension` 或引用 | 否 | 主体旋转前包围盒长边；圆形为直径，不含外轮廓、光晕、套线 |
 | `opacity` | `Opacity` 或引用 | 否 | 整体透明度 |
 | `fillOpacity` | `Opacity` 或引用 | 否 | 填充透明度 |
 | `strokeOpacity` | `Opacity` 或引用 | 否 | 线透明度 |
@@ -684,10 +694,10 @@ dashes:
 | `symbol` | 非空字符串或引用 | 否 | 符号家族或符号语义名称 |
 | `pattern` | 非空字符串、非空数组、非空对象或引用 | 否 | 开放的图案语义；核心规范只校验非空并保留内容 |
 | `dash` | `DashPattern` 或引用 | 否 | 标准化虚线节奏 |
-| `offset` | `AbsoluteDimension` 或引用 | 否 | 相对偏移，可为负 |
-| `spacing` | 非负 `AbsoluteDimension` 或引用 | 否 | 内部或重复间距 |
+| `offset` | `AbsoluteDimension` 或引用 | 否 | 可为负；非零时必须说明参照、方向与正负含义 |
+| `spacing` | 非负 `AbsoluteDimension` 或引用 | 否 | 必须结合语境说明边缘净距、中心距、重复距或外围版式间距 |
 
-`geometry` 的名称为 0.3.0 兼容字段；其枚举同时包含几何原语与视觉原语，因此 `label`、`background` 和 `mixed` 均合法。
+`geometry` 的名称为 0.4.0 兼容字段；其枚举同时包含几何原语与视觉原语，因此 `label`、`background` 和 `mixed` 均合法。
 
 每个 `MapElement` MUST：
 
@@ -722,6 +732,18 @@ spacing
 若同一 family 存在多个变体，作者 SHOULD 使用 `family`、`role` 和适用时的 `state` 明确它们的关系。
 
 未知属性 MUST 被保留。消费者 MAY 对未知属性或明显不适合当前 `geometry` 的属性组合给出警告，但不得仅因未知属性或可适配的组合差异拒绝文件。
+
+### 9.2.1 核心视觉语义（0.4.0）
+
+`strokeWidth` MUST 表示主线或边界描边自身的完整宽度，不含 casing、outline、halo。`casingWidth` MUST 表示主线每侧向外增加的厚度；同中心线视觉总宽为 `strokeWidth + 2 × casingWidth`。例如 4px 主线与 1px 套线的底线总宽为 6px，使用底线总宽的适配器 MUST 换算。
+
+`size` MUST 表示符号主体旋转前名义包围盒长边：圆形为直径，正方形为边长，非方形图标保持长宽比。size 不含 outline、halo、casing；12px 圆的半径为 6px。`outlineWidth` 是从主体外缘向外增加的厚度；10px 主体加 2px 外轮廓仍具有 10px 名义尺寸。`haloWidth` 是从字形或符号轮廓向外增加的可读性光晕厚度，不默认表示装饰性发光，也不改变名义尺寸。
+
+非零 `offset` 的作者 MUST 通过元素说明或正文定义参照对象、方向和正负含义；消费者 MUST NOT 猜测屏幕方向、沿线法向或文字偏移。offset SHOULD 保持字面 Dimension 或使用自定义扩展，不得放入 widths、sizes、spacing；本版本不增加 offsets 根组。`spacing` MUST 在语境中说明是边缘净距（edge gap）、中心距（center spacing）、路径重复距（repeat spacing）还是外围版式间距（surround spacing）；消费者不得混同。
+
+`color` 是通用主绘制颜色；具体 fillColor、strokeColor、outlineColor、casingColor、haloColor 优先。默认分别用于 label 的文字、line 的主描边、polygon 的主填充、point 的主符号和 background 的背景。raster 不定义自动映射；mixed 必须由正文或扩展定义。消费者 MUST NOT 因 color 自动创建不存在的描边、外轮廓或套线。
+
+`fillOpacity` 与 `strokeOpacity` 分别用于填充和描边部分；颜色自身 Alpha 保留；未声明的透明度系数为 1。`opacity` MUST 在组件内部绘制完成后施加于组件整体，不等同于分别乘入每个重叠部分。规范定义视觉效果，不要求相同内部合成实现。目标无法等价实现时 MUST 报告能力警告、替代方案和损失，MUST NOT 静默改变含义。
 
 ### 9.3 家族、角色与状态
 
@@ -775,6 +797,36 @@ water-area-highlighted
 
 消费者 MUST NOT 假定后缀具有固定含义；其关系由 `family`、`role`、`state` 和正文共同说明。
 
+family 回答可复用表达家族；role 回答家族中的基础职责；state 回答相对基础表达的状态；layerRole 回答整图的概念视觉层级。推荐 role 为 primary、secondary、context、reference、muted；state 为 default、hover、selected、critical、invalid、disabled。这些是开放词汇，不是封闭枚举。
+
+状态冲突 SHOULD 遵守“语义状态 > 操作反馈 > 装饰效果”。selected 不得覆盖 critical 的风险含义，hover 不得覆盖 selected。`critical-selected` 只是显式状态名称，消费者 MUST NOT 按连字符拆分、继承或自动合并其他元素。组合关系必须来自显式元素、正文或扩展。每个元素仍可独立解释。
+
+```yaml
+elements:
+  pipeline-primary-critical:
+    geometry: line
+    family: pipeline
+    role: primary
+    state: critical
+    layerRole: subject
+    strokeColor: "#A33A2B"
+    strokeWidth: 4px
+    dash: [4px, 2px]
+  pipeline-primary-critical-selected:
+    geometry: line
+    family: pipeline
+    role: primary
+    state: critical-selected
+    layerRole: subject
+    strokeColor: "#A33A2B"
+    strokeWidth: 4px
+    dash: [4px, 2px]
+    casingColor: "#163A5F"
+    casingWidth: 1px
+```
+
+此组合保持风险色和虚线，只用套线增加选中反馈。
+
 ### 9.4 通用组件与领域组件
 
 以下两种写法都符合规范。
@@ -808,7 +860,8 @@ elements:
   pipeline-critical:
     geometry: line
     family: pipeline
-    role: critical
+    role: primary
+    state: critical
     strokeColor: "{colors.critical}"
 ```
 
@@ -872,6 +925,18 @@ elements:
 本版本不定义元素继承或自动合并。一个元素 MUST NOT 依赖消费者隐式合并另一个元素。
 
 ---
+
+### 9.7 专题制图与 Agent 应用
+
+专题设计 SHOULD 说明：无序 qualitative 类别具有相近视觉重量，不以连续明度暗示大小，类别过多时改用分组或其他通道；sequential 强度方向一致且低高含义明确，不得中途反转；diverging 仅用于有语义中点的量，中性点明确且两侧可比较。missing ≠ zero，unknown ≠ lowest class，not applicable ≠ missing。关键区别 SHOULD 使用线宽、虚线、图案、符号、轮廓、文字或纹理等冗余通道。图例必须解释这些区别。
+
+field、breaks、method、filter、expression、valueMapping 等分类与数据绑定仍属于运行时，不新增 ramps/classifications/encodings 核心结构。
+
+Agent SHOULD 按顺序：完整阅读文档 → lint → 识别视觉身份 → 识别禁忌 → 选择 family/elements → 解析 Token → 结合 data-profile/任务 → 优先复用组件 → 缺失组件时为当前任务适配 → 处理尺度和状态 → 检查语义 → 按目标能力转换 → 验证目标 → 报告降级、偏离与未决项。
+
+冲突处理优先级为用户当前明确要求、文档明确禁止/要求、具体组件说明、章节原则、Overview、Agent 判断。用户要求的偏离可以应用于当前产物，但必须报告。缺少 valve 等组件时可以适配已有 family；未经用户明确要求，MUST NOT 自动写回永久组件或修改设计系统。
+
+格式有效、设计完整、目标产出验证是不同边界。报告 SHOULD 分为 Format validation、Design review、Target validation、Visual review。核心 lint 只验证格式、Schema、类型、引用、章节、确定性边界和已确认的禁止绑定，不宣称验证美观、状态可读性、专题分类科学性、实际视觉无障碍或 renderer 正确性。无法确定的设计问题需要独立评审。
 
 ## 10. Token 引用
 
@@ -1326,7 +1391,7 @@ place-label-primary
 一份格式有效的 `CARTOGRAPHY.md` MUST：
 
 - 以符合 §3 和 §4 的合法 front matter 开头，且根值为单一 mapping；
-- 声明 `version: "0.3.0"`；
+- 声明 `version: "0.4.0"`；
 - 声明非空 `name`；
 - 使用非空字符串根字段名，以及合法的 Token 名和元素键；
 - 满足标准 Token 组、`OmittedSection`、`Typography`、`DashPattern` 和 `MapElement` 的类型要求；
@@ -1411,7 +1476,7 @@ designRevision: "1.2.0"
 
 ```md
 ---
-version: "0.3.0"
+version: "0.4.0"
 name: Quiet Civic Atlas
 description: 一套温暖、克制、适合公共地图和技术专题的制图设计系统。
 
@@ -1544,6 +1609,8 @@ elements:
 
 概览（overview）阶段只保留整体结构；区域（regional）阶段增加主要联系；局部（local）阶段展示完整主体网络；细节（detail）阶段增加技术标注和次要节点。每次转换应逐步发生，不得同时引入大量低优先级信息。
 
+本示例以 local 为基础阶段，所有可见元素保持声明值；overview 隐藏次要技术线，regional 起可显示。主体始终强于上下文，核心标注优先于上下文标注；无法平滑切换时报告阶段切换。点尺寸为主体旋转前长边；label-gap 与 symbol-label-gap 均表示边缘净距。交互只维护 default 与 selected；其他语义状态需当前任务显式适配，不得自动继承或创建永久组件。
+
 ## Map Elements
 
 `technical-line-primary` 是该风格中最主要的技术线型，可由外部 data-profile 映射到道路、管线、线路或其他需要突出表达的线状数据。
@@ -1592,8 +1659,8 @@ elements:
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:cartography-md:schema:front-matter:0.3.0",
-  "title": "CARTOGRAPHY.md front matter 0.3.0",
+  "$id": "urn:cartography-md:schema:front-matter:0.4.0",
+  "title": "CARTOGRAPHY.md front matter 0.4.0",
   "description": "Informative schema for the parsed YAML front matter. It does not validate YAML representation or the restricted scalar-resolution profile, Markdown sections, deep reference graphs, complete CSS Color Level 4 syntax, same-unit dash rules, normalized reserved-key variants, or data-binding semantics.",
   "type": "object",
   "required": [
@@ -1605,7 +1672,7 @@ elements:
   },
   "properties": {
     "version": {
-      "const": "0.3.0"
+      "const": "0.4.0"
     },
     "name": {
       "$ref": "#/$defs/LiteralNonEmptyString"
@@ -2431,4 +2498,3 @@ Schema、解析器和 CLI SHOULD 共享同一组 fixtures，以避免不同语�
 | CSS Values and Units | 绝对长度单位比例与参考像素语义 |
 | Web Content Accessibility Guidelines 2.2 | 文字和关键非文字内容的对比度参考目标 |
 | JSON Schema Draft 2020-12 | 附录 A 的资料性 front matter Schema |
-

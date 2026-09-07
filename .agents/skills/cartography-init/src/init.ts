@@ -1,4 +1,3 @@
-import { basename } from 'node:path';
 import { consolidate, type Consolidated } from './consolidate.js';
 import { emitDocument } from './emit.js';
 import type { ExtractedStyle } from './ir.js';
@@ -27,15 +26,15 @@ export function initializeDocument(
 ): InitResult {
   const consolidated = consolidate(ir);
   const document = emitDocument(consolidated, ir, {
-    name: options.name ?? ir.source.name ?? basename(options.sourceFile),
+    name: options.name ?? 'Imported cartographic design',
     sourceFile: options.sourceFile,
   });
   const verification = verifyDocument(document, options.sourceFile);
   if (!verification.ok) throw new VerificationError(verification.errors);
   return {
     document,
-    reportJson: renderReportJson(ir, consolidated),
-    reportMarkdown: renderReportMarkdown(ir, consolidated),
+    reportJson: renderReportJson(ir, consolidated, options.sourceFile),
+    reportMarkdown: renderReportMarkdown(ir, consolidated, options.sourceFile),
     ir,
     consolidated,
   };

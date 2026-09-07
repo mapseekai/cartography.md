@@ -3,7 +3,7 @@ import {cartographySchema} from '../schema/cartography.js';
 import {lint} from '../linter/index.js';
 
 const parse = (value: unknown) => cartographySchema.safeParse(value).success;
-const base = {version: '0.3.0', name: ' Test '};
+const base = {version: '0.4.0', name: ' Test '};
 
 describe('cartography schema', () => {
   it('accepts the minimal document', () => expect(parse(base)).toBe(true));
@@ -15,7 +15,7 @@ describe('cartography schema', () => {
   it('requires typography fontFamily and fontSize', () => expect(parse({...base, typography: {label: {fontFamily: 'Noto'}}})).toBe(false));
   it('accepts typography references', () => expect(parse({...base, typography: {label: '{symbols.type}'}, symbols: {type: {fontFamily: 'Noto', fontSize: '12px'}}})).toBe(true));
   it('reports reserved MapElement properties', () => expect(lint(`---
-version: "0.3.0"
+version: "0.4.0"
 name: Reserved
 elements:
   road:

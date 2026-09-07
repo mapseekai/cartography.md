@@ -6,6 +6,24 @@ All notable changes to cartography.md will be documented here.
 
 The format and npm package follow semantic versioning. `0.1` and `0.2.0` were internal drafts that were never published or archived; `0.3.0` is the first public version line.
 
+## 0.4.0 - 2026-09-07
+
+### Breaking
+
+- Package and format version become 0.4.0. Consumers must use the new visual semantics; 0.3.0 documents require semantic review and are not automatically upgraded.
+
+### Changed
+
+- Defined body size, per-side casing, outward outlines/halos, stroke width, color precedence, spacing/offset context and compositing opacity.
+- Defined stable base expressions, semantic scale substitutions and invariants, role/state responsibilities, explicit combined states and conflict priority.
+- Added thematic encoding guidance, authoring and migration guides, adapter contracts, and technical-network/thematic-map examples; revised Quiet Atlas and agent decision order.
+
+### Tooling
+
+- Fixed init dimension grouping, radius-to-diameter conversion, conservative role/state handling, full typography comparison and extension preservation.
+- Kept equal-valued semantic tokens separate and reported sharing candidates; moved provenance, statistics and scale facts into reports; emit nine design chapters with evidence-limited TODOs.
+- Updated schemas, API docs, version diagnostics and regression coverage.
+
 ## 0.3.1-rc.1 - 2026-09-02
 
 ### Added

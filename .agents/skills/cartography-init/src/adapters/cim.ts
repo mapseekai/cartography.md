@@ -11,10 +11,17 @@ export interface CimSymbolStyle {
 export function cimColorToCss(color: unknown): string | null {
   if (!isNode(color)) return null;
   const values = numbers(color.values);
-  if (color.type === 'CIMRGBColor' && values.length >= 3) return hex(values[0]!, values[1]!, values[2]!);
-  if (color.type === 'CIMGrayColor' && values.length >= 1) return hex(values[0]!, values[0]!, values[0]!);
-  if (color.type === 'CIMHSVColor' && values.length >= 3) return hsvToHex(values[0]!, values[1]!, values[2]!);
-  return null;
+  let rgb: string;
+  if (color.type === 'CIMRGBColor' && values.length >= 3) rgb = hex(values[0]!, values[1]!, values[2]!);
+  else if (color.type === 'CIMGrayColor' && values.length >= 1) rgb = hex(values[0]!, values[0]!, values[0]!);
+  else if (color.type === 'CIMHSVColor' && values.length >= 3) rgb = hsvToHex(values[0]!, values[1]!, values[2]!);
+  else return null;
+
+  const channelCount = color.type === 'CIMGrayColor' ? 1 : 3;
+  const alpha = values.length > channelCount ? Math.max(0, Math.min(100, values.at(-1)!)) / 100 : 1;
+  if (alpha === 1) return rgb;
+  const channels = [1, 3, 5].map(index => parseInt(rgb.slice(index, index + 2), 16));
+  return `rgba(${channels.join(', ')}, ${alpha})`;
 }
 
 export function cimSymbolToStyle(sym: CimNode): CimSymbolStyle | null {

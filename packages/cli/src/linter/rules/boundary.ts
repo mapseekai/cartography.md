@@ -35,7 +35,7 @@ export const elementReservedPropertyRule: LintRule = {
     for (const [element, value] of Object.entries(cartography.elements ?? {})) {
       if (!isRecord(value)) continue;
       for (const key of Object.keys(value)) {
-        if (!RESERVED_NORMALIZED[normalizeReservedName(key)]) continue;
+        if (!Object.hasOwn(RESERVED_NORMALIZED, normalizeReservedName(key))) continue;
         findings.push({
           ruleId: this.id,
           severity: this.severity,
@@ -60,7 +60,7 @@ export const dataBindingSuspicionRule: LintRule = {
       // MapElement direct properties are handled by element-reserved-property.
       if (entry.path === '$.elements' || entry.path.startsWith('$.elements.')) continue;
       for (const key of Object.keys(entry.value)) {
-        if (!RESERVED_NORMALIZED[normalizeReservedName(key)]) continue;
+        if (!Object.hasOwn(RESERVED_NORMALIZED, normalizeReservedName(key))) continue;
         findings.push({
           ruleId: this.id,
           severity: this.severity,

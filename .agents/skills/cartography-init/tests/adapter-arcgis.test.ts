@@ -5,9 +5,37 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseLyrx, parseStylx } from '../src/adapters/arcgis.js';
 import { cimSymbolToStyle } from '../src/adapters/cim.js';
+import { initializeDocument } from '../src/init.js';
 import { loadFixture, makeStylx } from './helpers.js';
 
 describe('parseLyrx', () => {
+  it.each([
+    ['CIMRGBColor', [255, 0, 0], [255, 0, 0], '#ff0000'],
+    ['CIMGrayColor', [128], [128, 128, 128], '#808080'],
+    ['CIMHSVColor', [120, 100, 100], [0, 255, 0], '#00ff00'],
+  ] as const)('preserves %s alpha in generated color tokens', (type, values, channels, opaque) => {
+    const alphas = [0, 50, 100];
+    const ir = parseLyrx(Buffer.from(JSON.stringify({
+      layerDefinitions: alphas.map(alpha => ({
+        name: `water-${alpha}`,
+        renderer: {
+          type: 'CIMSimpleRenderer',
+          symbol: { symbol: {
+            type: 'CIMPolygonSymbol',
+            symbolLayers: [{ type: 'CIMSolidFill', color: { type, values: [...values, alpha] } }],
+          } },
+        },
+      })),
+    })), 'alpha.lyrx');
+    const expected = alphas.map(alpha => alpha === 100 ? opaque : `rgba(${channels.join(', ')}, ${alpha / 100})`);
+
+    expect(ir.elements.map(element => element.style.fillColor)).toEqual(expected);
+    const result = initializeDocument(ir, { sourceFile: 'alpha.lyrx' });
+    expect(Object.values(result.consolidated.tokens.colors)).toEqual(expected);
+    for (const color of expected) expect(result.document).toContain(color);
+    expect(ir.skipped).toEqual([]);
+  });
+
   it('extracts CIM solid stroke/fill with pt units and hex colors', () => {
     const ir = parseLyrx(loadFixture('arcgis-min.lyrx'), 'arcgis-min.lyrx');
     expect(ir.source.kind).toBe('lyrx');

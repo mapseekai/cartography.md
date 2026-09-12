@@ -147,9 +147,12 @@ export function scanTopLevelSections(markdown: string, lineOffset: number): Scan
   let fence: {marker: string; length: number} | undefined;
   let htmlBlock: {kind: HtmlBlockKind; closer?: RegExp} | undefined;
   let inComment = false;
-  let listIndent = 0;
+  const listIndents: number[] = [];
+  let previousLineBlank = true;
 
   lines.forEach((line, index) => {
+    const afterBlank = previousLineBlank;
+    previousLineBlank = /^\s*$/.test(line);
     const commentState: CommentState = {inComment};
     const masked = maskHtmlComments(line, commentState);
     const touchedByComment = inComment || line.includes('<!--');
@@ -161,34 +164,34 @@ export function scanTopLevelSections(markdown: string, lineOffset: number): Scan
       if (closing.test(line)) fence = undefined;
       return;
     }
+    if (htmlBlock) {
+      if (htmlBlockEnds(line, htmlBlock.kind, htmlBlock.closer)) htmlBlock = undefined;
+      return;
+    }
+    if (previousLineBlank) return;
+    const leading = /^ +/.exec(line)?.[0].length ?? 0;
+    const listMarker = /^( *)(?:[-+*]|\d+[.)])[ \t]+/.exec(line);
+    // An unindented paragraph line may lazily continue the current list item.
+    if (listIndents.length > 0 && leading < listIndents[0]! && !afterBlank && !listMarker &&
+        !/^ {0,3}(?:#{1,6}(?:[ \t]|$)|>|`{3,}|~{3,}|<)/.test(line)) return;
+    while (listIndents.length > 0 && leading < listIndents[listIndents.length - 1]!) listIndents.pop();
+    if (listMarker && (leading < 4 || listIndents.length > 0)) {
+      listIndents.push(listMarker[0].length);
+      return;
+    }
+    // Blank lines and nested blocks stay inside the list until content outdents.
+    if (listIndents.length > 0 || /^(?: {4}|\t)/.test(line)) return;
     const fenceOpen = /^ {0,3}(`{3,}|~{3,})/.exec(line);
     if (fenceOpen?.[1]) {
       fence = {marker: fenceOpen[1][0]!, length: fenceOpen[1].length};
       return;
     }
 
-    if (htmlBlock) {
-      if (htmlBlockEnds(line, htmlBlock.kind, htmlBlock.closer)) htmlBlock = undefined;
-      return;
-    }
     const blockStart = htmlBlockStart(line);
     if (blockStart) {
       if (!htmlBlockEnds(line, blockStart.kind, blockStart.closer)) htmlBlock = blockStart;
       return;
     }
-
-    const listMarker = /^( *)(?:[-+*]|\d+[.)])[ \t]+/.exec(line);
-    if (listMarker) {
-      listIndent = listMarker[0].length;
-      return;
-    }
-    if (/^\s*$/.test(line)) {
-      listIndent = 0;
-      return;
-    }
-    const leading = /^ +/.exec(line)?.[0].length ?? 0;
-    if (/^(?: {4}|\t)/.test(line)) return;
-    if (listIndent > 0 && leading >= listIndent) return;
 
     const match = HEADING_PATTERN.exec(masked);
     if (!match) return;

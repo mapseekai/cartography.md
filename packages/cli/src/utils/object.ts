@@ -41,9 +41,13 @@ export function getAtPath(root: unknown, path: string): {found: boolean; value?:
 }
 export type ResolutionReason = 'broken' | 'illegal-index' | 'traverses-reference' | 'metadata-root' | 'invalid-syntax' | 'cycle' | 'depth-limit';
 export interface Resolution { resolved: boolean; value?: unknown; path?: string; cycle?: boolean; reason?: ResolutionReason; }
-export function resolveTokenReference(root: unknown, path: string): Resolution { return resolvePath(root, path, new Set(), 0); }
-function resolvePath(root: unknown, path: string, seen: Set<string>, depth: number): Resolution {
+export function resolveTokenReference(root: unknown, path: string): Resolution { return resolvePath(root, path, new Set(), 0, new Map()); }
+function resolvePath(root: unknown, path: string, seen: Set<string>, depth: number, memo: Map<string, Resolution>): Resolution {
   if (depth >= 100) return {resolved: false, reason: 'depth-limit'};
+  if (seen.has(path)) return {resolved: false, path, cycle: true, reason: 'cycle'};
+  // Keep depth in the cache key so a short branch cannot bypass the hop limit on a longer one.
+  const memoKey = `${depth}:${path}`;
+  const cached = memo.get(memoKey); if (cached) return cached;
   const steps = parseReferencePath(path); if (!steps) return {resolved: false, reason: 'invalid-syntax'};
   const first = steps[0];
   if (!first || first.kind !== 'key') return {resolved: false, reason: 'invalid-syntax'};
@@ -56,9 +60,27 @@ function resolvePath(root: unknown, path: string, seen: Set<string>, depth: numb
     if (step.kind === 'index') { if (!Array.isArray(current)) return {resolved: false, reason: 'illegal-index'}; if (step.index >= current.length || !Object.hasOwn(current, step.index)) return {resolved: false, reason: 'broken'}; current = current[step.index]; }
     else { if (!isRecord(current) || !Object.prototype.hasOwnProperty.call(current, step.name)) return {resolved: false, reason: 'broken'}; current = current[step.name]; }
   }
-  const next = exactTokenReference(current); if (!next) return {resolved: true, value: current, path};
-  if (seen.has(next)) return {resolved: false, path: next, cycle: true, reason: 'cycle'};
-  const nextSeen = new Set(seen); nextSeen.add(path); return resolvePath(root, next, nextSeen, depth + 1);
+  seen.add(path);
+  const next = exactTokenReference(current);
+  let result: Resolution;
+  if (next) result = resolvePath(root, next, seen, depth + 1, memo);
+  else {
+    result = {resolved: true, value: current, path};
+    // Validate composite descendants without materializing the expanded reference graph.
+    const pending = [current];
+    while (pending.length > 0) {
+      const value = pending.pop();
+      const reference = exactTokenReference(value);
+      if (reference) {
+        const descendant = resolvePath(root, reference, seen, depth + 1, memo);
+        if (!descendant.resolved) { result = descendant; break; }
+      } else if (Array.isArray(value)) { for (const item of value) pending.push(item); }
+      else if (isRecord(value)) { for (const item of Object.values(value)) pending.push(item); }
+    }
+  }
+  seen.delete(path);
+  if (result.resolved) memo.set(memoKey, result);
+  return result;
 }
 export function resolveTokenValue(root: unknown, valueOrRef: unknown): Resolution { const ref = exactTokenReference(valueOrRef); return ref ? resolveTokenReference(root, ref) : {resolved: true, value: valueOrRef}; }
 export function resolveReferencesDeep(value: unknown, root: unknown = value, seen = new Set<string>()): unknown {
@@ -67,7 +89,14 @@ export function resolveReferencesDeep(value: unknown, root: unknown = value, see
   if (isRecord(value)) return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, resolveReferencesDeep(item, root, seen)]));
   return value;
 }
-export function flattenLeaves(value: unknown, path = '$'): Record<string, unknown> { if (Array.isArray(value)) return Object.assign({}, ...value.map((item, index) => flattenLeaves(item, `${path}[${index}]`))); if (isRecord(value)) return Object.assign({}, ...Object.entries(value).map(([key, item]) => flattenLeaves(item, `${path}.${key}`))); return {[path]: value}; }
+export function flattenLeaves(value: unknown, path = '$'): Record<string, unknown> {
+  if (Array.isArray(value)) return Object.assign({}, ...value.map((item, index) => flattenLeaves(item, `${path}[${index}]`)));
+  if (isRecord(value)) return Object.assign({}, ...Object.entries(value).map(([key, item]) => {
+    const segment = /^[A-Za-z0-9_-]+$/.test(key) ? `.${key}` : `[${JSON.stringify(key)}]`;
+    return flattenLeaves(item, `${path}${segment}`);
+  }));
+  return {[path]: value};
+}
 export function valueAtRelativePath(root: unknown, path: string): unknown { return getAtPath(root, path.replace(/^\$\.?/, '')).value; }
 export function containsValue(value: unknown, predicate: (candidate: unknown) => boolean): boolean { return walkObject(value).some((entry) => predicate(entry.value)); }
 export function stableStringify(value: unknown): string { if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`; if (isRecord(value)) return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`; return JSON.stringify(value); }

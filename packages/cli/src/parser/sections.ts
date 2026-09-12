@@ -50,7 +50,8 @@ const sectionLookup: Record<string, string> = Object.fromEntries(
 
 /** Resolve heading text to a canonical standard section name, or undefined for unknown headings. */
 export function canonicalSectionName(headingText: string): string | undefined {
-  return sectionLookup[normalizeSectionText(headingText)];
+  const name = normalizeSectionText(headingText);
+  return Object.hasOwn(sectionLookup, name) ? sectionLookup[name] : undefined;
 }
 
 /** `omitted.section` uses the same normalization and alias matching as headings (§5.4). */

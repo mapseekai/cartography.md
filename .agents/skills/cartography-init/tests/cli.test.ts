@@ -1,9 +1,46 @@
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { runCli } from '../src/cli.js';
 import { fixturesDir, makeStylx } from './helpers.js';
+
+describe('pnpm init entry point', () => {
+  it.each([true, false])('resolves root-relative paths with forwarding separator=%s', (separator) => {
+    const repoRoot = path.resolve(fixturesDir, '../../../..');
+    const directory = mkdtempSync(path.join(tmpdir(), 'init-pnpm-'));
+    const output = path.join(directory, 'CARTOGRAPHY.md');
+    const report = path.join(directory, 'INIT_REPORT.md');
+    const reportJson = path.join(directory, 'INIT_REPORT.json');
+    const env = { ...process.env };
+    delete env.INIT_CWD;
+    const invoke = (args: string[]) => spawnSync('pnpm', [
+      '--filter', '@cartographymd/init-skill', 'run', 'init', ...(separator ? ['--'] : []), ...args,
+    ], { cwd: repoRoot, env, encoding: 'utf8' });
+    try {
+      const generated = invoke([
+        '--input', path.relative(repoRoot, path.join(fixturesDir, 'style-boundary.json')),
+        '--output', path.relative(repoRoot, output),
+        '--report', path.relative(repoRoot, report),
+        '--report-json', path.relative(repoRoot, reportJson),
+      ]);
+      expect(generated.status, generated.stdout + generated.stderr).toBe(0);
+      expect(readFileSync(output, 'utf8')).toContain('version: "0.4.0"');
+      expect(readFileSync(report, 'utf8')).toContain('style-boundary.json');
+      const pending = invoke(['--check-report', path.relative(repoRoot, reportJson)]);
+      expect(pending.status, pending.stdout + pending.stderr).toBe(1);
+      const parsed = JSON.parse(readFileSync(reportJson, 'utf8'));
+      expect(parsed.bindings.length).toBeGreaterThan(0);
+      for (const binding of parsed.bindings) binding.triage = { decision: 'runtime' };
+      writeFileSync(reportJson, JSON.stringify(parsed));
+      const checked = invoke(['--check-report', path.relative(repoRoot, reportJson)]);
+      expect(checked.status, checked.stdout + checked.stderr).toBe(0);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  }, 30_000);
+});
 
 describe('runCli end-to-end', () => {
   const inputs: ReadonlyArray<{ name: string; fixture?: string; stylx?: true }> = [

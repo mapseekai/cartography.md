@@ -1,4 +1,4 @@
-import {isMap, parseDocument, visit, type Document} from 'yaml';
+import {isAlias, isMap, isScalar, LineCounter, parseDocument, visit, type Document} from 'yaml';
 import {cartographySchema, RESERVED_ELEMENT_PROPERTIES, type CartographyConfig} from '../schema/cartography.js';
 import type {Finding, MarkdownSection, ParsedCartography} from '../model/types.js';
 import {isRecord, walkObject} from '../utils/object.js';
@@ -27,39 +27,43 @@ function checkYamlLines(yamlSource: string, findings: Finding[]): void {
     if (/^\.\.\.$/.test(line)) {
       findings.push(errorFinding('yaml-document-end-prohibited', 'YAML document end markers are not permitted.', lineNumber));
     }
-    if (/(?:^|\s)<<\s*:/.test(line)) {
-      findings.push(errorFinding('yaml-merge-key-prohibited', 'YAML merge keys are not permitted.', lineNumber));
-    }
-    if (/(?:^|\s)[&*][A-Za-z0-9_-]+/.test(line)) {
-      findings.push(errorFinding('yaml-alias-prohibited', 'YAML anchors and aliases are not permitted.', lineNumber));
-    }
-    if (/(?:^|\s)!\S*/.test(line)) {
-      findings.push(errorFinding('yaml-custom-tag-prohibited', 'YAML tags are not permitted.', lineNumber));
-    }
-    if (/^[ \t]*[^#\s][^:]*:[ \t]*#[0-9A-Fa-f]{3,8}(?:[ \t]*(?:#.*)?)$/.test(line)) {
-      findings.push(errorFinding('yaml-hex-color-unquoted', 'Hex colors beginning with # must be quoted.', lineNumber));
-    }
   }
 }
 
-/** CST-level key checks: keys must parse as non-empty strings and may not use reference syntax. */
-function checkYamlKeys(document: Document, findings: Finding[]): void {
+/** Check YAML nodes so syntax-like text in strings and comments stays literal. */
+function checkYamlKeys(document: Document, findings: Finding[], lineCounter: LineCounter): void {
   visit(document, {
     Pair(_, pair) {
-      const key = pair.key as {value?: unknown} | null;
+      const key = pair.key;
       if (!key) {
         findings.push(errorFinding('yaml-non-string-key', 'Every mapping key must be a non-empty string.'));
         return;
       }
-      if (typeof key.value !== 'string' || !/\P{White_Space}/u.test(key.value)) {
+      if (!isScalar(key) || typeof key.value !== 'string' || !/\P{White_Space}/u.test(key.value)) {
         findings.push(errorFinding('yaml-non-string-key', 'Every mapping key must be a non-empty string.'));
         return;
       }
       if (/^\{[\s\S]*\}$/.test(key.value.trim())) {
         findings.push(errorFinding('reference-as-mapping-key', 'Token references are not allowed as mapping keys.'));
       }
+      const line = key.range ? lineCounter.linePos(key.range[0]).line + 1 : undefined;
+      if (key.type === 'PLAIN' && key.value === '<<') {
+        findings.push(errorFinding('yaml-merge-key-prohibited', 'YAML merge keys are not permitted.', line));
+      }
+      const value = pair.value;
+      if (isScalar(value) && value.source === '' && /^[0-9A-Fa-f]{3,8}(?:[ \t]*(?:#.*)?)$/.test(value.comment ?? '') &&
+          value.range && lineCounter.linePos(value.range[0]).line + 1 === line) {
+        findings.push(errorFinding('yaml-hex-color-unquoted', 'Hex colors beginning with # must be quoted.', line));
+      }
     },
     Node(_, node) {
+      const line = node.range ? lineCounter.linePos(node.range[0]).line + 1 : undefined;
+      if (isAlias(node) || ('anchor' in node && node.anchor !== undefined)) {
+        findings.push(errorFinding('yaml-alias-prohibited', 'YAML anchors and aliases are not permitted.', line));
+      }
+      if (node.tag !== undefined) {
+        findings.push(errorFinding('yaml-custom-tag-prohibited', 'YAML tags are not permitted.', line));
+      }
       // An unquoted `{path.to.token}` parses as a single-pair flow mapping with a null value.
       const pair = isMap(node) && node.flow && node.items.length === 1 ? node.items[0] : undefined;
       if (pair && pair.value == null) {
@@ -115,13 +119,14 @@ export function parseCartography(source: string): ParsedCartography<CartographyC
 
   // The yaml package defaults to the YAML 1.2 core schema: timestamps and
   // YAML 1.1 booleans stay strings, matching the restricted profile in §4.
-  const document = parseDocument(yamlSource, {prettyErrors: true, uniqueKeys: true});
+  const lineCounter = new LineCounter();
+  const document = parseDocument(yamlSource, {prettyErrors: true, uniqueKeys: true, lineCounter});
   for (const error of document.errors) {
     const line = error.linePos?.[0]?.line;
     findings.push(errorFinding('yaml-syntax', error.message, line !== undefined ? line + 1 : undefined));
   }
 
-  checkYamlKeys(document, findings);
+  checkYamlKeys(document, findings, lineCounter);
 
   let rawFrontmatter: unknown;
   try {
@@ -157,7 +162,7 @@ export function parseCartography(source: string): ParsedCartography<CartographyC
         const lastKey = issue.path[issue.path.length - 1];
         // Exact reserved MapElement property names are rejected by the schema;
         // re-tag them with the dedicated boundary diagnostic for clarity (§9.5).
-        if (issue.path[0] === 'elements' && typeof lastKey === 'string' && RESERVED_ELEMENT_PROPERTY_SET[lastKey]) {
+        if (issue.path[0] === 'elements' && typeof lastKey === 'string' && Object.hasOwn(RESERVED_ELEMENT_PROPERTY_SET, lastKey)) {
           findings.push({
             ruleId: 'element-reserved-property',
             severity: 'error',

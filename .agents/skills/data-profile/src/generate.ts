@@ -65,6 +65,15 @@ function sampledFragment(
 ): ProfileFragment[] {
   const sanitizedTemplate = sanitizeReference(template);
   const input = sanitizedTemplate.value;
+  // A field may be absent from every feature in one tile but present in another.
+  const sampledFields = new Map<string, Set<string>>();
+  for (const {observation} of sampling.observations) {
+    for (const [layerId, layer] of Object.entries(observation.layers)) {
+      const names = sampledFields.get(layerId) ?? new Set<string>();
+      for (const fieldId of Object.keys(layer.fields)) names.add(fieldId);
+      sampledFields.set(layerId, names);
+    }
+  }
   const fragments: ProfileFragment[] = sampling.observations.map(({coordinate, observation}) => {
     const evidence = {
       kind: 'tile-sampled' as const,
@@ -104,6 +113,15 @@ function sampledFragment(
             message: 'Observed categories exceeded the deterministic 256-value profile limit.',
             evidence: [evidence],
           });
+        }
+      }
+      if (observedLayer.featureCount > 0) {
+        for (const fieldId of sampledFields.get(layerId) ?? []) {
+          if (Object.hasOwn(fields, fieldId)) continue;
+          fields[fieldId] = {
+            types: [], categories: [], missingObserved: true, nullObserved: false,
+            evidence: [evidence],
+          };
         }
       }
       layers[layerId] = {

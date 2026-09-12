@@ -7,12 +7,12 @@ const cliManifestUrl = new URL('../../package.json', import.meta.url);
 const schemaUrl = new URL('../../../../schema/cartography-front-matter.schema.json', import.meta.url);
 
 describe('package and format versions', () => {
-  it('releases package and format 0.4.0 while rejecting unmigrated 0.3.0', async () => {
+  it('releases package 0.4.1 and format 0.4.0 while rejecting unmigrated 0.3.0', async () => {
     const [rootManifest, cliManifest, schema] = await Promise.all(
       [rootManifestUrl, cliManifestUrl, schemaUrl].map(async (url) => JSON.parse(await readFile(url, 'utf8'))),
     );
 
-    expect(api.VERSION).toBe('0.4.0');
+    expect(api.VERSION).toBe('0.4.1');
     expect(api.FORMAT_VERSION).toBe('0.4.0');
     expect(rootManifest.version).toBe(api.VERSION);
     expect(cliManifest.version).toBe(api.VERSION);

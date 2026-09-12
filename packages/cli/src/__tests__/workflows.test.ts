@@ -383,7 +383,7 @@ describe('GitHub workflows', () => {
       expect({status: packResult.status, stderr: packResult.stderr}).toEqual({status: 0, stderr: ''});
 
       const contractResult = runBash(contract, {
-        RELEASE_VERSION: '0.4.0',
+        RELEASE_VERSION: '0.4.1',
         RUNNER_TEMP: runnerTemp,
       });
       expect({status: contractResult.status, stderr: contractResult.stderr}).toEqual({status: 0, stderr: ''});
@@ -404,9 +404,9 @@ describe('GitHub workflows', () => {
       await writeExecutable(join(bin, 'npm'), '#!/usr/bin/env bash\nprintf "%s\\n" "sha512-exact"');
       await writeExecutable(join(bin, 'npx'), '#!/usr/bin/env bash\nprintf "%s\\n" "$CLI_OUTPUT"');
       await writeExecutable(join(bin, 'sleep'), '#!/usr/bin/env bash\nexit 0');
-      for (const [output, status] of [['0.4.0', 0], ['[log] 0.4.0', 0], ['[log] 0.3.0', 1], ['0.4.0\nunexpected', 1]] as const) {
+      for (const [output, status] of [['0.4.1', 0], ['[log] 0.4.1', 0], ['[log] 0.3.0', 1], ['0.4.1\nunexpected', 1]] as const) {
         const result = runBash(verify, {PATH: `${bin}:${process.env.PATH ?? ''}`, RUNNER_TEMP: root,
-          PACKAGE_NAME: '@mapseekai/cartography.md', RELEASE_VERSION: '0.4.0', CLI_OUTPUT: output});
+          PACKAGE_NAME: '@mapseekai/cartography.md', RELEASE_VERSION: '0.4.1', CLI_OUTPUT: output});
         expect(result.status, output).toBe(status);
       }
     } finally {

@@ -1,6 +1,6 @@
 {
   "name": "@mapseekai/cartography.md",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Agent-first format and validator for persistent cartographic design systems.",
   "keywords": [
     "cartography.md",

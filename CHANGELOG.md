@@ -6,6 +6,13 @@ All notable changes to cartography.md will be documented here.
 
 The format and npm package follow semantic versioning. `0.1` and `0.2.0` were internal drafts that were never published or archived; `0.3.0` is the first public version line.
 
+## 0.4.1 - 2026-09-12
+
+### Fixed
+
+- Hardened YAML representation checks, Markdown section boundaries, token cycle detection, semantic diff paths, and prototype-safe lookups.
+- Preserved ArcGIS CIM color alpha, cross-tile field absence evidence, and documented initializer CLI invocation.
+
 ## 0.4.0 - 2026-09-07
 
 ### Breaking

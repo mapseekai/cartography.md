@@ -1,146 +1,220 @@
 # cartography.md
 
-**A persistent cartographic visual identity for agents.**
+**Define map design systems in Markdown for people and agents.**
 
-`CARTOGRAPHY.md` is a portable, agent-readable design-system format for maps. It keeps the visual identity and long-lived cartographic judgment of a map family in one self-contained Markdown document, so agents can apply the same character across datasets, tasks, tools, and outputs.
+`CARTOGRAPHY.md` keeps a map's visual identity, design principles, reusable tokens, and map-element styles in one document. YAML front matter records exact values. Markdown explains visual hierarchy, labeling, scale behavior, and state expression so the same design decisions can guide different cartographic tasks.
 
-The core package parses, lints, compares, and explains that document. It validates only document structure and deterministic internal relationships. Current task inputs, data inspection, target-specific production, and output review happen outside core validation.
+This repository provides the format specification, a CLI, a TypeScript API, design examples, and agent workflows for authoring, parsing, validating, comparing, and applying cartographic design systems.
 
-中文版：[README.zh-CN.md](README.zh-CN.md) · [Specification](docs/spec.md) · [TypeScript API](docs/api.md) · [Philosophy](docs/PHILOSOPHY.md)
+[中文](README.zh-CN.md) · [Specification](docs/spec.md) · [Authoring guide](docs/authoring.md) · [API reference](docs/api.md)
 
-## Why it exists
+## Key capabilities
 
-Map-making decisions often disappear into a one-off implementation: which marks deserve attention, how hierarchy changes with scale, how labels feel, how interaction states preserve meaning, and what makes the result recognizably part of one family.
+| Capability | Description |
+| --- | --- |
+| Design-system expression | Organize colors, typography, widths, sizes, opacities, spacing, dashes, and map elements, with prose explaining their purpose and relationships. |
+| Document validation | Check YAML representation, front-matter structure, sections, token types, references, and map-element properties; return diagnostics by severity. |
+| Reference resolution | Resolve token aliases, nested paths, array indices, and references inside objects and arrays into deeply resolved values. |
+| Semantic comparison | Report added, removed, and modified front-matter leaf paths and Markdown sections, together with changes in diagnostic counts. |
+| Tool integration | Use the CLI, ES-module TypeScript API, runtime schema, JSON Schema, and custom validation-rule interface. |
 
-`CARTOGRAPHY.md` makes those decisions durable. Prose carries the professional judgment; root-level token groups provide exact reusable values. An agent can understand both what the visual system is and why its constraints matter.
+## Quickstart
 
-## The two-layer format
+Use **Node.js 20 or newer** and pnpm. Copy a `CARTOGRAPHY.md` from the [design examples](#design-examples) into your working directory, then install and run the validator:
 
-Every document has two complementary layers:
+```bash
+pnpm add -D @mapseekai/cartography.md
+pnpm exec cartographymd lint CARTOGRAPHY.md --format text
+```
 
-1. YAML front matter holds identity, version, optional omissions, and root-level `colors`, `typography`, `widths`, `sizes`, `opacities`, `spacing`, `dashes`, and `elements` groups.
-2. Markdown explains the nine standard chapters: Overview; Colors; Typography & Labels; Composition & Density; Layering & Depth; Geometry & Symbols; Scale & Generalization; Map Elements; and Do's and Don'ts.
+For a one-off invocation:
+
+```bash
+pnpm dlx --package=@mapseekai/cartography.md cartographymd lint CARTOGRAPHY.md --format text
+```
+
+The current package version is `0.4.1`. Documents use format version `0.4.0`:
+
+```yaml
+version: "0.4.0"
+```
+
+## Document format
+
+### Exact values and design guidance
+
+YAML front matter holds the design-system name, format version, and tokens. Markdown explains how those values form a visual family and how to apply them in different contexts.
+
+This technical-network excerpt shows references between colors, widths, and a map element:
 
 ```markdown
 ---
 version: "0.4.0"
-name: Quiet Atlas
-description: "A restrained editorial atlas family for clear orientation and unhurried reading."
+name: Technical Network
 colors:
-  paper: "#f8f4f0"
-  water: "#aecfe2"
-  ink: "#000000"
+  canvas: "#F4F6F8"
+  primary: "#236A85"
 widths:
-  route: 2px
+  primary: 4px
+  casing: 1px
 elements:
-  route-primary:
+  pipeline-primary:
     geometry: line
-    family: route
+    family: pipeline
     role: primary
     state: default
     layerRole: subject
-    strokeColor: "{colors.ink}"
-    strokeWidth: "{widths.route}"
+    strokeColor: "{colors.primary}"
+    strokeWidth: "{widths.primary}"
+    casingColor: "{colors.canvas}"
+    casingWidth: "{widths.casing}"
 ---
 
 ## Overview
 
-Quiet Atlas is a restrained editorial map family: warm paper, pale blue water,
-and near-black ink make the page feel calmly printed rather than brightly lit.
+Organize the technical network around continuous structure, clear junctions,
+and a distinct visual hierarchy.
 
 ## Colors
 
-Use {colors.paper} as the warm canvas and reserve {colors.ink} for essential names.
+Use {colors.primary} for the subject network and {colors.canvas} for the
+pale background and casing.
 ```
 
-YAML token values are normative when an exact value is needed. Prose explains their roles, boundaries, tradeoffs, and exceptions. References such as `{colors.ink}` and `{symbols.facility.fallbacks[0]}` can be used in either layer.
+`{colors.primary}` references a color, and `{widths.primary}` references a width. References can also address complete typography objects, dash arrays, and individual array items. See [Technical Network](examples/technical-network/CARTOGRAPHY.md) for the complete example.
 
-## Quick start
+### Tokens and map elements
 
-Requirements: Node.js 20 or newer.
+| Root group | Contents |
+| --- | --- |
+| `colors` | Color values and aliases. |
+| `typography` | Font families, sizes, weights, line heights, and letter spacing. |
+| `widths` | Stroke, casing, outline, and halo widths. |
+| `sizes` | Dimensions for point symbols, icons, and other visual objects. |
+| `opacities` | Opacity values. |
+| `spacing` | Gaps and spacing for labels, symbols, and map composition. |
+| `dashes` | Alternating dash and gap lengths. |
+| `elements` | Map-element styles composed from tokens. |
+
+Map elements use `geometry` for their visual type and `family`, `role`, `state`, and `layerRole` for their family, purpose, state, and conceptual hierarchy. The format also accommodates persistent metadata, custom token groups, and extension properties.
+
+### Standard sections
+
+The body is organized around nine topics: Overview; Colors; Typography & Labels; Composition & Density; Layering & Depth; Geometry & Symbols; Scale & Generalization; Map Elements; and Do's and Don'ts.
+
+Sections accept the English and Chinese heading aliases defined in the specification. Authors can record intentional omissions in `omitted` and add custom sections. See the [authoring guide](docs/authoring.md) for writing guidance.
+
+## CLI usage
+
+After installing the package, invoke these commands with `pnpm exec cartographymd`:
+
+| Command | Purpose |
+| --- | --- |
+| `lint CARTOGRAPHY.md` | Validate a document and return a JSON report by default. |
+| `lint CARTOGRAPHY.md --format text` | Return a readable text report. |
+| `lint CARTOGRAPHY.md --strict` | Include warnings in the acceptance criteria. |
+| `parse CARTOGRAPHY.md` | Return front matter, sections, and parser diagnostics. |
+| `diff before.md after.md` | Compare document values, sections, and diagnostics. |
+| `rules` | Print the built-in rule catalog. |
+| `spec` | Print the bundled format specification. |
+| `spec --output cartography-spec.md` | Save the format specification to a file. |
+
+`lint` and `parse` accept `-` for standard input:
 
 ```bash
-pnpm dlx --package=@mapseekai/cartography.md cartographymd lint CARTOGRAPHY.md
+cat CARTOGRAPHY.md | pnpm exec cartographymd lint - --format text
 ```
 
-Use strict mode when warnings must block success:
+### Validation reports
 
-```bash
-pnpm dlx --package=@mapseekai/cartography.md cartographymd lint CARTOGRAPHY.md --strict
-```
+Reports contain `valid`, `summary`, `findings`, `sections`, and document information. When parsing produces a configuration, reports also include `cartography` and the reference-resolution result `resolved`. Diagnostics use `error`, `warning`, and `info`, with a rule ID, message, and applicable location, suggestion, or evidence.
 
-Compare two design-system documents:
-
-```bash
-pnpm dlx --package=@mapseekai/cartography.md cartographymd diff before.md after.md
-```
-
-Read the bundled normative specification:
-
-```bash
-pnpm dlx --package=@mapseekai/cartography.md cartographymd spec
-```
-
-The CLI also provides `parse` for structured document output and `rules` for the built-in rule catalog. Exit code `0` means the document passed, `1` means blocking findings exist, and `2` means usage, file access, or an internal operation failed.
-
-## Quiet Atlas example
-
-[`examples/quiet-atlas/CARTOGRAPHY.md`](examples/quiet-atlas/CARTOGRAPHY.md) is a complete, independently lintable example. Its warm paper, pale water, economical ink, measured typography, and restrained emphasis form a specific visual family without binding the document to current data or a production target.
-
-From this repository:
-
-```bash
-pnpm install
-pnpm lint:example
-```
+Normal mode passes with zero errors; strict mode also requires zero warnings. `diff` sets `regression` to `true` when the error or warning count increases, allowing design-change workflows to check diagnostic changes.
 
 ## TypeScript API
 
+Install the package in an application:
+
+```bash
+pnpm add @mapseekai/cartography.md
+```
+
+Read a file and inspect its validation report:
+
 ```ts
-import {diffCartography, lintFile} from '@mapseekai/cartography.md';
+import {lintFile} from '@mapseekai/cartography.md';
 
 const report = await lintFile('CARTOGRAPHY.md', {strict: true});
 
-if (!report.valid) {
-  for (const finding of report.findings) {
-    console.error(finding.ruleId, finding.message);
-  }
-}
+console.log(report.valid);
+console.log(report.summary);
 
-const changes = diffCartography(previousSource, currentSource);
-console.log(changes.values, changes.sections);
+for (const finding of report.findings) {
+  console.log(finding.severity, finding.ruleId, finding.message);
+}
 ```
 
-The public API includes parsing, the runtime schema, document linting, reference resolution, semantic diffing, the specification, and the rule catalog. See [docs/api.md](docs/api.md) for exact signatures and exported types.
+| Export | Purpose |
+| --- | --- |
+| `parseCartography(source)` | Parse document source. |
+| `lint(source, options)` / `lintFile(file, options)` | Validate a string or file. |
+| `resolveReferences(frontmatter)` | Return a deeply copied value with references resolved. |
+| `diffCartography(beforeSource, afterSource)` | Compare two document sources. |
+| `cartographySchema` | Validate the front-matter data structure. |
+| `getRuleCatalog()` / `getSpecification()` | Read the rule catalog and format specification. |
 
-## What core validation guarantees
+Use `LintOptions.rules` to add rules or replace default implementations by rule ID. See the [TypeScript API reference](docs/api.md) for exported types and complete signatures.
 
-Core linting checks deterministic properties of one `CARTOGRAPHY.md`, including:
+## Agent workflows
 
-- safe, deterministic YAML representation rules;
-- the `0.4.0` front-matter schema;
-- the nine standard sections, their omissions, duplicates, and order;
-- complete references, including indexed paths and deep resolution;
-- standard token types, dash patterns, and root-level group boundaries;
-- map-element geometry, required core styling, and data-binding boundaries;
-- document size and unknown or likely misspelled root keys.
+The repository includes three cartographic workflows under `.agents/skills`. Design rules reside in `CARTOGRAPHY.md`; data context is organized in `DATA_PROFILE.json`. Agents combine both with the current task.
 
-A passing report means only that the document and its internal relationships are valid. It does not establish that current data is correct, that an output satisfies the user's task, that a target-specific artifact is valid, or that visual and accessibility review is complete.
+| Skill | Capabilities and outputs |
+| --- | --- |
+| [cartography-md](.agents/skills/cartography-md/SKILL.md) | Guides agents through reading a design system, selecting components, resolving tokens, applying scale and state rules, and separately performing format validation, design review, target validation, and visual review. |
+| [cartography-init](.agents/skills/cartography-init/SKILL.md) | Extracts style information from `style.json`, QGIS `.qgs` / `.qgz`, ArcGIS `.lyrx` / `.stylx`, and SLD `.sld`; produces an editable `CARTOGRAPHY.md` draft and initialization reports in Markdown and JSON. |
+| [data-profile](.agents/skills/data-profile/SKILL.md) | Generates `DATA_PROFILE.json` from style references, TileJSON metadata, and MVT sampling, retaining declared, sampled, and style-inferred evidence separately. |
 
-## Repository map
+Run initialization and data-profile scripts through the repository workspace. Each skill document describes its commands and outputs.
+
+## Design examples
+
+| Example | Focus |
+| --- | --- |
+| [Quiet Atlas](examples/quiet-atlas/CARTOGRAPHY.md) | Warm paper, pale water, road hierarchy, and restrained labeling. |
+| [Technical Network](examples/technical-network/CARTOGRAPHY.md) | Pipelines, valves, facilities, and technical labels, with scale behavior and combined selection and critical states. |
+| [Thematic Evidence](examples/thematic-map/CARTOGRAPHY.md) | Qualitative, sequential, and diverging colors, plus distinct missing, unknown, zero, and not-applicable states. |
+
+## Development and verification
+
+The repository uses a pnpm workspace with `packageManager` pinned to `pnpm@10.34.5`.
+
+```bash
+git clone https://github.com/mapseekai/cartography.md.git
+cd cartography.md
+pnpm install --frozen-lockfile
+pnpm check
+pnpm lint:example
+```
+
+`pnpm check` runs schema parity checks, type checks, the build, core tests, data-profile and initialization workflow tests, release-metadata tests, and package-artifact checks. `pnpm lint:example` validates the Quiet Atlas example.
 
 ```text
-docs/spec.md                                  normative format specification
-docs/api.md                                   TypeScript API reference
-docs/PHILOSOPHY.md                           design philosophy
-schema/cartography-front-matter.schema.json  published editor and tooling schema
-packages/cli                                  CLI and TypeScript package
-examples/quiet-atlas                          self-contained design-system example
-.agents/skills                                optional agent workflows
+cartography.md/
+├── docs/           Specification, API, authoring, and migration guides
+├── schema/         Front-matter JSON Schema
+├── packages/cli/   CLI and TypeScript API
+├── examples/       Three cartographic design-system examples
+├── .agents/skills/ Cartographic application, initialization, and profiling workflows
+└── scripts/        Release-metadata validation scripts and tests
 ```
 
-## Status and license
+## Documentation and contributing
 
-Version `0.4.0` defines precise visual semantics, stable token application across scales, state preservation, and agent-safe adaptation. Older files are not silently reinterpreted. See the [0.3 → 0.4 migration guide](docs/migrations/0.3-to-0.4.md), [authoring guide](docs/authoring.md), [technical network](examples/technical-network/CARTOGRAPHY.md), and [thematic map](examples/thematic-map/CARTOGRAPHY.md).
+Read the [philosophy](docs/PHILOSOPHY.md) for the design approach and [visual semantics](docs/visual-semantics.md) for properties such as size, casing, and opacity. Version changes are recorded in the [changelog](CHANGELOG.md); format upgrades are covered in the [0.3 → 0.4 migration guide](docs/migrations/0.3-to-0.4.md).
 
-Apache-2.0. See [LICENSE](LICENSE).
+See the [contribution guide](CONTRIBUTING.md) for work on the format, rules, tools, examples, and documentation.
+
+## License
+
+[Apache-2.0](LICENSE).
